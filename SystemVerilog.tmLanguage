@@ -121,10 +121,24 @@
 					</dict>
 				</dict>
 				<key>match</key>
-				<string>(begin)\s*:?\s*([a-zA-Z_][a-zA-Z0-9_]*)?\b</string>
+				<string>(begin)\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)?\b</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
 			</dict>
+			<dict>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.other.systemverilog</string>
+					</dict>
+				</dict>
+				<key>match</key>
+				<string>\b(begin)\b</string>
+				<key>name</key>
+				<string>meta.definition.systemverilog</string>
+			</dict>			
 			<dict>
 				<key>captures</key>
 				<dict>
@@ -148,7 +162,8 @@
 				<string>\b(function)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*\(</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
-			</dict>			<dict>
+				</dict>			
+				<dict>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -183,6 +198,25 @@
 				</dict>
 				<key>match</key>
 				<string>^\s*(module|task|primitive|class|package|constraint|interface|covergroup|program)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<key>name</key>
+				<string>meta.definition.systemverilog</string>
+			</dict>
+			<dict>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>storage.type.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.type.class.systemverilog</string>
+					</dict>
+				</dict>
+				<key>match</key>
+				<string>^\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\s+(\#\(.+\))?\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(\(|$)</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
 			</dict>

@@ -3,6 +3,6 @@
     <content><![CDATA[if (${1:/* condition */}) begin
 	${0:/* code */}
 end]]></content>
-    <tabTrigger>if(</tabTrigger>
+    <tabTrigger>if</tabTrigger>
     <scope>source.systemverilog</scope>
 </snippet>
