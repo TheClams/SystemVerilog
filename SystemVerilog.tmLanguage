@@ -202,25 +202,6 @@
 				<string>meta.definition.systemverilog</string>
 			</dict>
 			<dict>
-				<key>captures</key>
-				<dict>
-					<key>1</key>
-					<dict>
-						<key>name</key>
-						<string>storage.type.systemverilog</string>
-					</dict>
-					<key>3</key>
-					<dict>
-						<key>name</key>
-						<string>entity.name.type.class.systemverilog</string>
-					</dict>
-				</dict>
-				<key>match</key>
-				<string>^\s*\b(?!else\b)([a-zA-Z_][a-zA-Z0-9_]*)\s+(\#\(.+\))?\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(\(|$)</string>
-				<key>name</key>
-				<string>meta.definition.systemverilog</string>
-			</dict>
-			<dict>
 				<key>include</key>
 				<string>#all-types</string>
 			</dict>
@@ -351,6 +332,25 @@
 						<key>name</key>
 						<string>storage.type.uvm.systemverilog</string>
 					</dict>
+					<dict>
+						<key>captures</key>
+						<dict>
+							<key>1</key>
+							<dict>
+								<key>name</key>
+								<string>storage.type.systemverilog</string>
+							</dict>
+							<key>3</key>
+							<dict>
+								<key>name</key>
+								<string>entity.name.type.class.systemverilog</string>
+							</dict>
+						</dict>
+						<key>match</key>
+						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+(\#\(.+\))?\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(\(|$)</string>
+						<key>name</key>
+						<string>meta.definition.systemverilog</string>
+					</dict>
 				</array>
 			</dict>
 			<key>storage-modifier-systemverilog</key>
@@ -395,41 +395,28 @@
 								<key>name</key>
 								<string>constant.character.escape.systemverilog</string>
 							</dict>
-						</array>
-					</dict>
-<!-- 					<dict>
-						<key>begin</key>
-						<string>'</string>
-						<key>beginCaptures</key>
-						<dict>
-							<key>0</key>
-							<dict>
-								<key>name</key>
-								<string>punctuation.definition.string.begin.systemverilog</string>
-							</dict>
-						</dict>
-						<key>end</key>
-						<string>'</string>
-						<key>endCaptures</key>
-						<dict>
-							<key>0</key>
-							<dict>
-								<key>name</key>
-								<string>punctuation.definition.string.end.systemverilog</string>
-							</dict>
-						</dict>
-						<key>name</key>
-						<string>string.quoted.single.systemverilog</string>
-						<key>patterns</key>
-						<array>
 							<dict>
 								<key>match</key>
-								<string>\\.</string>
+								<string>(?x)%
+										(\d+\$)?                             # field (argument #)
+										[#0\- +']*                           # flags
+										[,;:_]?                              # separator character (AltiVec)
+										((-?\d+)|\*(-?\d+\$)?)?              # minimum field width
+										(\.((-?\d+)|\*(-?\d+\$)?)?)?         # precision
+										(hh|h|ll|l|j|t|z|q|L|vh|vl|v|hv|hl)? # length modifier
+										[diouxXDOUeEfFgGaACcSspn%]           # conversion type
+									</string>
 								<key>name</key>
-								<string>constant.character.escape.systemverilog</string>
+								<string>constant.other.placeholder.systemverilog</string>
+							</dict>
+							<dict>
+								<key>match</key>
+								<string>%</string>
+								<key>name</key>
+								<string>invalid.illegal.placeholder.systemverilog</string>
 							</dict>
 						</array>
-					</dict> -->
+					</dict>
 				</array>
 			</dict>
 		</dict>
