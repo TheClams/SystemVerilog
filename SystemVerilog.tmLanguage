@@ -25,19 +25,19 @@
 		<array>
 			<dict>
 				<key>match</key>
-				<string>\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored|new)\b</string>
+				<string>\s*(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored|new)\b</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(#|@|end|fork|join|join_any|join_none|forkjoin|{|})\b</string>
+				<string>\s*(#|@|end|fork|join|join_any|join_none|forkjoin|{|})</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|bind|extends|sequence|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
+				<string>\s*(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|bind|extends|sequence|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)</string>
 				<key>name</key>
 				<string>keyword.control.systemverilog</string>
 			</dict>
@@ -322,13 +322,13 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>\b(wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|parameter|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real)\b</string>
+						<string>^\s*(wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|parameter|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real)\b</string>
 						<key>name</key>
 						<string>storage.type.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\b(uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence|uvm_sequence_item|uvm_sequencer|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection)\b</string>
+						<string>^\s*(uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence|uvm_sequence_item|uvm_sequencer|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection)\b</string>
 						<key>name</key>
 						<string>storage.type.uvm.systemverilog</string>
 					</dict>
@@ -338,7 +338,7 @@
 							<key>1</key>
 							<dict>
 								<key>name</key>
-								<string>storage.type.systemverilog</string>
+								<string>storage.module.systemverilog</string>
 							</dict>
 							<key>3</key>
 							<dict>
