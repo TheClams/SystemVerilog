@@ -31,7 +31,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*(|end|fork|join|join_any|join_none|forkjoin|{|})\b</string>
+				<string>\s*(end|fork|join|join_any|join_none|forkjoin|{|})\b</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
 			</dict>
@@ -231,7 +231,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>(&amp;|\||\^|~|{|}|&lt;&lt;|&gt;&gt;|\?|:)</string>
+				<string>(&amp;|\||\^|~|{|'{|}|&lt;&lt;|&gt;&gt;|\?|:)</string>
 				<key>name</key>
 				<string>keyword.operator.bitwise.systemverilog</string>
 			</dict>
