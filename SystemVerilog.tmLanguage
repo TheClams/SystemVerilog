@@ -25,15 +25,21 @@
 		<array>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored|new)\b</string>
+				<string>\s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|parameter|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored|new)\b</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(#|@|end|fork|join|join_any|join_none|forkjoin|{|})\b</string>
+				<string>\s*(|end|fork|join|join_any|join_none|forkjoin|{|})\b</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
+			</dict>
+			<dict>
+				<key>match</key>
+				<string>(#|@)</string>
+				<key>name</key>
+				<string>keyword.operator.other.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -188,7 +194,7 @@
 					<key>1</key>
 					<dict>
 						<key>name</key>
-						<string>storage.type.systemverilog</string>
+						<string>keyword.control.systemverilog</string>
 					</dict>
 					<key>2</key>
 					<dict>
@@ -207,7 +213,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>(==|===|!=|!==|&lt;=|&gt;=|&lt;|&gt;)</string>
+				<string>(=|==|===|!=|!==|&lt;=|&gt;=|&lt;|&gt;)</string>
 				<key>name</key>
 				<string>keyword.operator.comparison.systemverilog</string>
 			</dict>
@@ -231,7 +237,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(output|input|inout|and|nand|nor|or|xor|xnor|buf|not|bufif[01]|notif[01]|r?[npc]mos|tran|r?tranif[01]|pullup|pulldown)\b</string>
+				<string>\s*\b(output|input|inout|and|nand|nor|or|xor|xnor|buf|not|bufif[01]|notif[01]|r?[npc]mos|tran|r?tranif[01]|pullup|pulldown)\b</string>
 				<key>name</key>
 				<string>support.type.systemverilog</string>
 			</dict>
@@ -322,13 +328,13 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>^\s*(wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|parameter|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real)\b</string>
+						<string>\s*\b(wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real)\b</string>
 						<key>name</key>
 						<string>storage.type.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>^\s*(uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence|uvm_sequence_item|uvm_sequencer|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection)\b</string>
+						<string>\s*\b(uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence|uvm_sequence_item|uvm_sequencer|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection)\b</string>
 						<key>name</key>
 						<string>storage.type.uvm.systemverilog</string>
 					</dict>
@@ -347,9 +353,11 @@
 							</dict>
 						</dict>
 						<key>match</key>
-						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+(\#\(.+\))?\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(\(|$)</string>
+						<string>^\s*(?!(?:input|output))([a-zA-Z_][a-zA-Z0-9_]*)\s+(\#\(.+\))?\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(\(|$)</string>
 						<key>name</key>
 						<string>meta.definition.systemverilog</string>
+						<!-- <key>include</key>
+						<string>$self</string> -->
 					</dict>
 				</array>
 			</dict>
