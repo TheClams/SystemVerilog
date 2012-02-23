@@ -1,6 +1,6 @@
 <snippet>
    <name>Always FF noreset</name>
-   <content><![CDATA[always @(posedge clk) begin : ${0}_proc
+   <content><![CDATA[always @(posedge clk) begin : proc_${0}
    if(clk_en) begin
 
    end
