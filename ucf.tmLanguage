@@ -16,19 +16,25 @@
                 <key>name</key>
                 <string>storage.type.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(CONFIG|NET|TIMESPEC|TIMEGRP|INST|AREA_GROUP|RANGE|TNM)\b</string>
+                <string>\b(?i)(DEFAULT|CONFIG|NET|TIMESPEC|TIMEGRP|INST|AREA_GROUP|RANGE|TNM)\b</string>
+            </dict>
+            <dict>
+                <key>name</key>
+                <string>support.function.ucfconstraints</string>
+                <key>match</key>
+                <string>\b(?i)(RAMS|FFS|FROM|TO|RISING|FALLING)\b</string>
             </dict>
             <dict>
                 <key>name</key>
                 <string>keyword.control.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(LOC|TIG|TNM_NET|PERIOD|SLEW|PULLUP|PULLDOWN|STEPPING)\b</string>
+                <string>\b(?i)(LOC|IOSTANDARD|TIG|TNM_NET|DRIVE|PERIOD|SLEW|PULLUP|PULLDOWN|STEPPING|CLOCK_DEDICATED_ROUTE)\b</string>
             </dict>
             <dict>
                 <key>name</key>
                 <string>constant.other.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(FAST)\b</string>
+                <string>\b(?i)(FALSE|TRUE|LVCMOS15|LVCMOS33|SSTL15_T_DCI|SSTL15|DIFF_SSTL15_T_DCI)\b</string>
             </dict>
             <dict>
                 <key>match</key>
