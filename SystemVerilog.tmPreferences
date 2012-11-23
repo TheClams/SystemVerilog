@@ -29,10 +29,6 @@
 				<string>*/</string>
 			</dict>
 		</array>
-<!-- 		<key>decreaseIndentPattern</key>
-		<string>\s*(end)\b</string>
-		<key>increaseIndentPattern</key>
-		<string>.*\b(begin)\b</string> -->
 		<key>decreaseIndentPattern</key>
 		<string>\s*(end|endfunction|endcase|endmodule|endclass|endgenerate|endinterface|join|join_any|join_none|endsequence|endproperty|endgroup|endclocking|endprogram|endpackage|endconfig|endtable|endprimitive)\b</string>
 		<!-- <string>(\s*end\b)|(^\s*(endfunction|endcase|endmodule||endgenerate|join|join_any|join_none)\b)</string> -->
