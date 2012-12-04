@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Comments</string>
+	<key>scope</key>
+	<string>source.systemverilog</string>
+	<key>settings</key>
+	<dict>
+		<key>shellVariables</key>
+		<array>
+			<dict>
+				<key>name</key>
+				<string>TM_COMMENT_START</string>
+				<key>value</key>
+				<string>// </string>
+			</dict>
+			<dict>
+				<key>name</key>
+				<string>TM_COMMENT_START_2</string>
+				<key>value</key>
+				<string>/*</string>
+			</dict>
+			<dict>
+				<key>name</key>
+				<string>TM_COMMENT_END_2</string>
+				<key>value</key>
+				<string>*/</string>
+			</dict>
+		</array>
+<!-- 		<key>decreaseIndentPattern</key>
+		<string>\s*(end)\b</string>
+		<key>increaseIndentPattern</key>
+		<string>.*\b(begin)\b</string> -->
+		<key>decreaseIndentPattern</key>
+		<string>\s*(end|endfunction|endcase|endmodule|endclass|endgenerate|endinterface|join|join_any|join_none|endsequence|endproperty|endgroup|endclocking|endprogram|endpackage|endconfig|endtable|endprimitive)\b</string>
+		<!-- <string>(\s*end\b)|(^\s*(endfunction|endcase|endmodule||endgenerate|join|join_any|join_none)\b)</string> -->
+		<key>increaseIndentPattern</key>
+		<string>(.*\bbegin\b)|(^\s*(function|case|module|class|task|generate|interface|fork|sequence|property|covergroup|clocking|program|package|config|table|primitive)\b)</string>
+		<!-- <key>indentNextLinePattern</key>
+		<string>\b(if|else|for|foreach)\b</string> -->
+	</dict>
+	<key>uuid</key>
+	<string>38DBCCE5-2005-410C-B7D7-013097751AC8</string>
+</dict>
+</plist>

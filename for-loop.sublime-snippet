@@ -1,0 +1,9 @@
+<snippet>
+	<description>For Loop</description>
+    <content><![CDATA[for (int ${2:i} = 0; $2 < ${1:count}; ${3:++$2})
+begin
+	${0:/* code */}
+end]]></content>
+    <tabTrigger>for</tabTrigger>
+    <scope>source.systemverilog</scope>
+</snippet>

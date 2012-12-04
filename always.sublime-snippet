@@ -1,0 +1,12 @@
+<snippet>
+   <name>Always FF Async</name>
+   <content><![CDATA[always @(posedge clk or negedge rst_n) begin : proc_${0}
+   if(~rst_n) begin
+
+   end else if(clk_en) begin
+
+   end
+end]]></content>
+    <tabTrigger>always</tabTrigger>
+    <scope>source.systemverilog</scope>
+</snippet>

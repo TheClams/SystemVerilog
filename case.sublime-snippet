@@ -1,0 +1,9 @@
+<snippet>
+	<description>Case</description>
+    <content><![CDATA[case (${1:/* switch */})
+
+   default : ${0:/* default */};
+endcase]]></content>
+    <tabTrigger>case</tabTrigger>
+    <scope>source.systemverilog</scope>
+</snippet>
