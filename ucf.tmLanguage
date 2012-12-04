@@ -22,19 +22,19 @@
                 <key>name</key>
                 <string>support.function.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(RAMS|FFS|FROM|TO|RISING|FALLING)\b</string>
+                <string>\b(?i)(RAMS|FFS|FROM|TO|FROM-TO|FROM-THRU-TO|RISING|FALLING)\b</string>
             </dict>
             <dict>
                 <key>name</key>
                 <string>keyword.control.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(LOC|IOSTANDARD|TIG|TNM_NET|DRIVE|PERIOD|SLEW|PULLUP|PULLDOWN|STEPPING|CLOCK_DEDICATED_ROUTE)\b</string>
+                <string>\b(?i)(LOC|IOSTANDARD|TIG|TNM_NET|DRIVE|PERIOD|SLEW|PULLUP|PULLDOWN|STEPPING|CLOCK_DEDICATED_ROUTE|MAX_FANOUT|FILE|FLOAT|USE_RLOC|RLOC|RLOC_ORIGIN|RLOC_RANGE)\b</string>
             </dict>
             <dict>
                 <key>name</key>
                 <string>constant.other.ucfconstraints</string>
                 <key>match</key>
-                <string>\b(?i)(FALSE|TRUE|LVCMOS15|LVCMOS33|SSTL15_T_DCI|SSTL15|DIFF_SSTL15_T_DCI)\b</string>
+                <string>\b(?i)(FALSE|TRUE|LVCMOS12|LVCMOS15|LVCMOS18|LVCMOS25|LVCMOS33|LVPECL_25|LVDCI_15|LVDCI_18|LVDS_25|LVDSEXT_25|LVDCI_25|LVDCI_DV2_15|LVDCI_DV2_18|LVDCI_DV2_25|SSTL15_DCI|SSTL15_T_DCI|SSTL15|DIFF_SSTL15|DIFF_SSTL15_T_DCI)\b</string>
             </dict>
             <dict>
                 <key>match</key>
