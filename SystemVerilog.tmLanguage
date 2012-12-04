@@ -162,6 +162,11 @@
 			<dict>
 				<key>captures</key>
 				<dict>
+					<key>0</key>
+					<dict>
+						<key>name</key>
+						<string>meta.section.begin.systemverilog</string>
+					</dict>
 					<key>1</key>
 					<dict>
 						<key>name</key>
@@ -173,8 +178,9 @@
 						<string>entity.name.section.systemverilog</string>
 					</dict>
 				</dict>
+				<!-- This matches leading spaces to make the symbol list work -->
 				<key>match</key>
-				<string>(begin)\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)?\b</string>
+				<string>\s*(begin)\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)?\b</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
 			</dict>
