@@ -418,6 +418,12 @@
 					</dict>
 					<dict>
 						<key>match</key>
+						<string>\b(\d+(e|E)(\+|-)?[0-9]+)\b</string>
+						<key>name</key>
+						<string>constant.numeric.systemverilog</string>
+					</dict>
+					<dict>
+						<key>match</key>
 						<string>\b(\d+(fs|ps|ns|us|ms|s)?)\b</string>
 						<key>name</key>
 						<string>constant.numeric.systemverilog</string>
