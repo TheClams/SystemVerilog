@@ -82,6 +82,25 @@
 				<string>meta.function.systemverilog</string>
 			</dict>
 			<dict>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.function.systemverilog</string>
+					</dict>
+				</dict>
+				<key>match</key>
+				<string>\b(sequence)\s+([a-zA-Z_][a-zA-Z0-9_]*)</string>
+				<key>name</key>
+				<string>meta.function.systemverilog</string>
+			</dict>
+			<dict>
 				<key>match</key>
 				<string>\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|parameter|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b</string>
 				<key>name</key>
@@ -101,7 +120,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|bind|sequence|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
+				<string>\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|bind|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
 				<key>name</key>
 				<string>keyword.control.systemverilog</string>
 			</dict>
@@ -141,18 +160,18 @@
 					<key>1</key>
 					<dict>
 						<key>name</key>
-						<string>constant.other.include.systemverilog</string>
+						<string>constant.other.define.systemverilog</string>
 					</dict>
 					<key>2</key>
 					<dict>
 						<key>name</key>
-						<string>entity.name.type.include.systemverilog</string>
+						<string>entity.name.type.define.systemverilog</string>
 					</dict>
 				</dict>
 				<key>match</key>
-				<string>^\s*(`include)\s+(["&lt;].*["&gt;])</string>
+				<string>^\s*(`define)\s+([a-zA-Z_][a-zA-Z0-9_]*)</string>
 				<key>name</key>
-				<string>meta.include.systemverilog</string>
+				<string>meta.define.systemverilog</string>
 			</dict>
 
 			<dict>
@@ -281,7 +300,7 @@
 			</dict>
 			<dict>
 				<key>begin</key>
-				<string>([a-zA-Z_][a-zA-Z0-9_]*)\s*(\#)</string>
+				<string>([a-zA-Z_][a-zA-Z0-9_]*)\s*(#)[^#]</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -329,7 +348,7 @@
 			</dict>
 			<dict>
 				<key>begin</key>
-				<string>([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)</string>
+				<string>([a-zA-Z_][a-zA-Z0-9_]*)\s+(?!intersect|and|or|throughout|within)([a-zA-Z_][a-zA-Z0-9_]*)\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
