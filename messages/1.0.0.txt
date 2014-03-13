@@ -1,0 +1,4 @@
+SystemVerilog 1.0.0 Changelog:
+ - Repo reorg to support explicit versioning and Package Control upgrade messages.
+ - Better support for task/function highlight
+ - Start supporting highlight/symbol for typedef struct and enum (simple typedef not supported yet)
