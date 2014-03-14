@@ -1,12 +1,12 @@
 <snippet>
-   <name>Always FF SystemVerilog</name>
-   <content><![CDATA[always_ff@(posedge clk or negedge rst_n) begin : proc_${0}
-   if(~rst_n) begin
+	<name>Always FF SystemVerilog</name>
+	<content><![CDATA[always_ff@(posedge clk or negedge rst_n) begin : proc_${0}
+	if(~rst_n) begin
 
-   end else if(clk_en) begin
+	end else if(clk_en) begin
 
-   end
+	end
 end]]></content>
-    <tabTrigger>always_f</tabTrigger>
-    <scope>source.systemverilog</scope>
+	<tabTrigger>always_f</tabTrigger>
+	<scope>source.systemverilog</scope>
 </snippet>

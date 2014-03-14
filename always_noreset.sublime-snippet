@@ -1,10 +1,10 @@
 <snippet>
-   <name>Always FF noreset</name>
-   <content><![CDATA[always @(posedge clk) begin : proc_${0}
-   if(clk_en) begin
+	<name>Always FF noreset</name>
+	<content><![CDATA[always @(posedge clk) begin : proc_${0}
+	if(clk_en) begin
 
-   end
+	end
 end]]></content>
-    <tabTrigger>alwaysn</tabTrigger>
-    <scope>source.systemverilog</scope>
+	 <tabTrigger>alwaysn</tabTrigger>
+	 <scope>source.systemverilog</scope>
 </snippet>

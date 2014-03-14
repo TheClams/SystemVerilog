@@ -1,11 +1,11 @@
 <snippet>
 	<name>Class</name>
-   <content><![CDATA[module ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} (
-   input clk, // Clock
-   input clk_en, // Clock Enable
-   input rst_n, // Asynchronous reset active low
-   ${0}
-   );]]></content>
-    <tabTrigger>module</tabTrigger>
-    <scope>source.systemverilog</scope>
+	<content><![CDATA[module ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} (
+	input clk,    // Clock
+	input clk_en, // Clock Enable
+	input rst_n,  // Asynchronous reset active low
+	${0}
+	);]]></content>
+	<tabTrigger>module</tabTrigger>
+	<scope>source.systemverilog</scope>
 </snippet>

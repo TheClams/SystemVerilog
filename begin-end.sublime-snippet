@@ -1,7 +1,7 @@
 <snippet>
 	<description>begin .. end</description>
-    <content><![CDATA[begin ${0:: }
+	<content><![CDATA[begin ${0:: }
 end]]></content>
-    <tabTrigger>beg</tabTrigger>
-    <scope>source.systemverilog</scope>
+	<tabTrigger>beg</tabTrigger>
+	<scope>source.systemverilog</scope>
 </snippet>

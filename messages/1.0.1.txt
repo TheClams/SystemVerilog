@@ -1,0 +1,7 @@
+SystemVerilog 1.0.1 Changelog:
+ - Fix all snippets to use tab so that indentation is correct for all user (sublime auto replace tab :) )
+ - Add snippet for function
+ - Continue support for typedef (add typedef class and simple typedef)
+ - Add support for interface declaration in module port list (ANSI-C style only)
+ - Highlight of scope like uvm_pkg::
+ - Better highlight for bind
