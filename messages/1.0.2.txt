@@ -1,0 +1,2 @@
+SystemVerilog 1.0.2 Changelog:
+ - Merge contribution from Matthew on interface highlight in module
