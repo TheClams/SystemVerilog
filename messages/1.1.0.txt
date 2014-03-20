@@ -1,0 +1,4 @@
+SystemVerilog 1.1.0 Changelog:
+ - Add Module instantiation feature
+ - Fix a few highlight issue around typedef, userdefined type and interface
+ - Change module declaration highlight to start having context information (to be used by incoming feature)

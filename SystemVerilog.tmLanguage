@@ -92,7 +92,7 @@
 			<!-- Typedef Struct/enum-->
 			<dict>
 				<key>begin</key>
-				<string>\b(typedef\s+(struct|enum))\s*(packed)?</string>
+				<string>\s*\b(typedef\s+(struct|enum))\s*(packed)?</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -150,12 +150,12 @@
 					</dict>
 				</array>
 				<key>name</key>
-				<string>meta.struct.systemverilog</string>
+				<string>meta.typdef.systemverilog</string>
 			</dict>
 			<!-- Typedef class -->
 			<dict>
 				<key>match</key>
-				<string>\b(typedef\s+class)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;</string>
+				<string>\s*\b(typedef\s+class)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -170,12 +170,12 @@
 					</dict>
 				</dict>
 				<key>name</key>
-				<string>meta.struct.systemverilog</string>
+				<string>meta.typdef.systemverilog</string>
 			</dict>
 			<!-- Typedef simple -->
 			<dict>
 				<key>begin</key>
-				<string>\b(typedef)\b</string>
+				<string>\s*\b(typedef)\b</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -218,7 +218,83 @@
 					</dict>
 				</array>
 				<key>name</key>
-				<string>meta.struct.systemverilog</string>
+				<string>meta.typdef.systemverilog</string>
+			</dict>
+			<!-- Module declaration -->
+			<dict>
+				<key>begin</key>
+				<string>\s*(module)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<key>beginCaptures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.type.module.systemverilog</string>
+					</dict>
+				</dict>
+				<key>end</key>
+				<string>;</string>
+				<key>endCaptures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.function.systemverilog</string>
+					</dict>
+				</dict>
+				<key>patterns</key>
+				<array>
+					<dict>
+						<key>include</key>
+						<string>#port-dir</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#all-types</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#ifmodport</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#comments</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#operators</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#constants</string>
+					</dict>
+					<dict>
+						<key>match</key>
+						<string>\s*(parameter)</string>
+						<key>name</key>
+						<string>keyword.other.systemverilog</string>
+					</dict>
+					<!-- Signals with user-defined type -->
+					<dict>
+						<key>match</key>
+						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,\s]*+</string>
+						<key>captures</key>
+						<dict>
+							<key>1</key>
+							<dict>
+								<key>name</key>
+								<string>storage.type.interface.systemverilog</string>
+							</dict>
+						</dict>
+					</dict>
+				</array>
+				<key>name</key>
+				<string>meta.module.systemverilog</string>
 			</dict>
 			<!-- Sequence -->
 			<dict>
@@ -238,7 +314,7 @@
 				<key>match</key>
 				<string>\b(sequence)\s+([a-zA-Z_][a-zA-Z0-9_]*)</string>
 				<key>name</key>
-				<string>meta.function.systemverilog</string>
+				<string>meta.sequence.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -259,9 +335,15 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|parameter|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b</string>
-				<key>name</key>
-				<string>keyword.other.systemverilog</string>
+				<string>\s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|localparam|parameter|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.other.systemverilog</string>
+					</dict>
+				</dict>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -277,9 +359,15 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
-				<key>name</key>
-				<string>keyword.control.systemverilog</string>
+				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+				</dict>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -372,7 +460,7 @@
 				<key>match</key>
 				<string>\b(begin)\b</string>
 				<key>name</key>
-				<string>meta.definition.systemverilog</string>
+				<string>meta.definition.block.systemverilog</string>
 			</dict>
 			<dict>
 				<key>captures</key>
@@ -389,7 +477,7 @@
 					</dict>
 				</dict>
 				<key>match</key>
-				<string>^\s*(module|primitive|package|constraint|interface|covergroup|program)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<string>\s*(primitive|package|constraint|interface|covergroup|program)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
 			</dict>
@@ -410,7 +498,7 @@
 				<key>match</key>
 				<string>\b(class)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
 				<key>name</key>
-				<string>meta.definition.systemverilog</string>
+				<string>meta.definition.class.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -478,9 +566,10 @@
 				<key>name</key>
 				<string>support.function.systemverilog</string>
 			</dict>
+			<!-- Signals with user-defined type -->
 			<dict>
 				<key>match</key>
-				<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,\s]*(;|,)</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -488,13 +577,9 @@
 						<key>name</key>
 						<string>storage.type.interface.systemverilog</string>
 					</dict>
-					<key>2</key>
-					<dict>
-						<key>name</key>
-						<string>support.modport.systemverilog</string>
-					</dict>
 				</dict>
 			</dict>
+			<!-- Module instantiation with parameter -->
 			<dict>
 				<key>begin</key>
 				<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(#)[^#]</string>
@@ -547,9 +632,10 @@
 					</dict>
 				</array>
 			</dict>
+			<!-- Module instantiation with no param -->
 			<dict>
 				<key>begin</key>
-				<string>([a-zA-Z_][a-zA-Z0-9_]*)\s+(?!intersect|and|or|throughout|within)([a-zA-Z_][a-zA-Z0-9_]*)\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$|,)</string>
+				<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\s+(?!intersect|and|or|throughout|within)([a-zA-Z_][a-zA-Z0-9_]*)\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -574,7 +660,8 @@
 					</dict>
 				</dict>
 				<key>end</key>
-				<string>;|=|,|$</string>
+				<string>;</string>
+				<!-- <string>;|=|,|$</string> -->
 				<key>patterns</key>
 				<array>
 					<dict>
@@ -755,9 +842,28 @@
 			<key>port-dir</key>
 			<dict>
 				<key>match</key>
-				<string>\b(output|input|inout|ref)\b</string>
+				<string>\s*\b(output|input|inout|ref)\b</string>
 				<key>name</key>
 				<string>support.type.systemverilog</string>
+			</dict>
+			<!-- Interface with modport declaration -->
+			<key>ifmodport</key>
+			<dict>
+				<key>match</key>
+				<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>storage.type.interface.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>support.modport.systemverilog</string>
+					</dict>
+				</dict>
 			</dict>
 			<key>storage-type-systemverilog</key>
 			<dict>
