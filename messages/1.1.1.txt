@@ -1,0 +1,5 @@
+SystemVerilog 1.1.1 Changelog:
+ - Fix issue with ( ) not being recognised properby by Sublime near function
+ - Minor fix to get null correctly highlighted inside function parameter list
+ - Better highlight of user-define type with assignement
+ - Highlight end label (e.g. endfunction : funcname)

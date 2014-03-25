@@ -40,6 +40,7 @@ timeprecision 1fs;
     typedef logic[7:0]  t_byte;
     t_byte  b0, // Comments
             b1;
+t_byte b2 = 8'hFF;
 
 logic [3:0]  sig_logic;
 
@@ -59,3 +60,6 @@ parameter
     typedef my_module#(16)  t_my_module_16;
 
 function void my_func(ref logic d, input int din, output dout);
+    $display("d=%0d",d);
+endfunction : my_func
+

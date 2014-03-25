@@ -63,23 +63,7 @@
 					</dict>
 					<dict>
 						<key>include</key>
-						<string>#all-types</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#comments</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#operators</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#constants</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#strings</string>
+						<string>#base-grammar</string>
 					</dict>
 					<dict>
 						<key>include</key>
@@ -130,23 +114,7 @@
 				<array>
 					<dict>
 						<key>include</key>
-						<string>#all-types</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#comments</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#operators</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#constants</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#strings</string>
+						<string>#base-grammar</string>
 					</dict>
 				</array>
 				<key>name</key>
@@ -198,23 +166,7 @@
 				<array>
 					<dict>
 						<key>include</key>
-						<string>#all-types</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#comments</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#operators</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#constants</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#strings</string>
+						<string>#base-grammar</string>
 					</dict>
 				</array>
 				<key>name</key>
@@ -255,23 +207,11 @@
 					</dict>
 					<dict>
 						<key>include</key>
-						<string>#all-types</string>
+						<string>#base-grammar</string>
 					</dict>
 					<dict>
 						<key>include</key>
 						<string>#ifmodport</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#comments</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#operators</string>
-					</dict>
-					<dict>
-						<key>include</key>
-						<string>#constants</string>
 					</dict>
 					<dict>
 						<key>match</key>
@@ -282,7 +222,7 @@
 					<!-- Signals with user-defined type -->
 					<dict>
 						<key>match</key>
-						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,\s]*+</string>
+						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,=\s]*+</string>
 						<key>captures</key>
 						<dict>
 							<key>1</key>
@@ -359,7 +299,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|local|const|typedef|enum|protected|this|super|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b</string>
+				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|typedef|enum|this|super)\b</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -368,6 +308,30 @@
 						<string>keyword.control.systemverilog</string>
 					</dict>
 				</dict>
+			</dict>
+			<dict>
+				<key>match</key>
+				<string>\s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b(\s*(:)\s*(\w+))?\s*$</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.systemverilog</string>
+					</dict>
+					<key>4</key>
+					<dict>
+						<key>name</key>
+						<string>entity.label.systemverilog</string>
+					</dict>
+				</dict>
+				<key>name</key>
+				<string>meta.object.end.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
@@ -394,12 +358,6 @@
 				<string>support.function.uvm.systemverilog</string>
 			</dict>
 			<dict>
-				<key>match</key>
-				<string>\b(null)\b</string>
-				<key>name</key>
-				<string>support.constant.systemverilog</string>
-			</dict>
-			<dict>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -418,7 +376,6 @@
 				<key>name</key>
 				<string>meta.define.systemverilog</string>
 			</dict>
-
 			<dict>
 				<key>include</key>
 				<string>#comments</string>
@@ -569,13 +526,30 @@
 			<!-- Signals with user-defined type -->
 			<dict>
 				<key>match</key>
-				<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,\s]*(;|,)</string>
+				<string>^\s*(const\s+|local\s+|protected\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s+(?=[a-zA-Z0-9_,=\s\[\]']*(;|,))</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
 					<dict>
 						<key>name</key>
+						<string>keyword.other.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
 						<string>storage.type.interface.systemverilog</string>
+					</dict>
+				</dict>
+			</dict>
+			<dict>
+				<key>match</key>
+				<string>\s*\b(local|const|protected)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.other.systemverilog</string>
 					</dict>
 				</dict>
 			</dict>
@@ -765,6 +739,12 @@
 						<key>name</key>
 						<string>constant.other.define.systemverilog</string>
 					</dict>
+					<dict>
+						<key>match</key>
+						<string>\b(null)\b</string>
+						<key>name</key>
+						<string>support.constant.systemverilog</string>
+					</dict>
 				</array>
 			</dict>
 			<key>operators</key>
@@ -845,6 +825,32 @@
 				<string>\s*\b(output|input|inout|ref)\b</string>
 				<key>name</key>
 				<string>support.type.systemverilog</string>
+			</dict>
+			<key>base-grammar</key>
+			<dict>
+				<key>patterns</key>
+				<array>
+					<dict>
+						<key>include</key>
+						<string>#all-types</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#comments</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#operators</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#constants</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#strings</string>
+					</dict>
+				</array>
 			</dict>
 			<!-- Interface with modport declaration -->
 			<key>ifmodport</key>
@@ -1009,10 +1015,6 @@
 				<string>\)</string>
 				<key>patterns</key>
 				<array>
-					<dict>
-						<key>include</key>
-						<string>#constants</string>
-					</dict>
 					<dict>
 						<key>include</key>
 						<string>#comments</string>
