@@ -1,0 +1,6 @@
+SystemVerilog 1.1.2 Changelog:
+ - Fix incorrect highlight of module parameter default assignement
+ - Fix highlight of the : in the end label
+ - Fix keybinding example
+ - Highlight fork label and add them to the symbol list
+ - Fix highlight of signed numerals (like 'sh)

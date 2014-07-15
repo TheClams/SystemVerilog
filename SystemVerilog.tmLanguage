@@ -222,7 +222,7 @@
 					<!-- Signals with user-defined type -->
 					<dict>
 						<key>match</key>
-						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z0-9_,=\s]*+</string>
+						<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*</string>
 						<key>captures</key>
 						<dict>
 							<key>1</key>
@@ -287,19 +287,13 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\bend\b</string>
-				<key>name</key>
-				<string>keyword.other.block.systemverilog</string>
-			</dict>
-			<dict>
-				<key>match</key>
-				<string>\b(fork|join|join_any|join_none|forkjoin|{|})\b</string>
+				<string>\b(forkjoin|{|})\b</string>
 				<key>name</key>
 				<string>keyword.other.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|var|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|typedef|enum|this|super)\b</string>
+				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|typedef|enum|this|super)\b</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -311,7 +305,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface)\b(\s*(:)\s*(\w+))?</string>
+				<string>\s*\b(end|endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface|join|join_any|join_none)\b(\s*(:)\s*(\w+))?</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -341,7 +335,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\.(atob|atohex|atoi|atooct|atoreal|bintoa|hextoa|itoa|octtoa|realtoa|len|getc|putc|toupper|tolower|compare|icompare|substr|num|exists|first|last|name|index|find|find_first|find_last|find_index|find_first_index|find_last_index|min|max|unique|unique_index|sort|rsort|shuffle|reverse|sum|product|xor|status|kill|self|await|suspend|resume|get|put|peek|try_get|try_peek|try_put|data|eq|neq|next|prev|new|size|delete|empty|pop_front|pop_back|front|back|insert|insert_range|erase|erase_range|set|swap|clear|purge|start|finish|randomize|rand_mode|pre_randomize|post_randomize|constraint_mode|random_mode)\b</string>
+				<string>\.(atob|atohex|atoi|atooct|atoreal|bintoa|hextoa|itoa|octtoa|realtoa|len|getc|putc|toupper|tolower|compare|icompare|substr|num|exists|first|last|name|index|find|find_first|find_last|find_index|find_first_index|find_last_index|min|max|unique|unique_index|sort|rsort|shuffle|reverse|sum|product|xor|status|kill|self|await|suspend|resume|get|put|peek|try_get|try_peek|try_put|eq|neq|next|prev|new|size|delete|empty|pop_front|pop_back|front|back|insert|insert_range|erase|erase_range|set|swap|clear|purge|start|finish|randomize|rand_mode|pre_randomize|post_randomize|constraint_mode|random_mode)\b</string>
 				<key>name</key>
 				<string>support.function.systemverilog</string>
 			</dict>
@@ -393,7 +387,12 @@
 						<key>name</key>
 						<string>keyword.other.block.systemverilog</string>
 					</dict>
-					<key>2</key>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.systemverilog</string>
+					</dict>
+					<key>4</key>
 					<dict>
 						<key>name</key>
 						<string>entity.name.section.systemverilog</string>
@@ -401,23 +400,9 @@
 				</dict>
 				<!-- This matches leading spaces to make the symbol list work -->
 				<key>match</key>
-				<string>\s*(begin)\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)?\b</string>
+				<string>\s*(begin|fork)\s*((:)\s*([a-zA-Z_][a-zA-Z0-9_]*))?\b</string>
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
-			</dict>
-			<dict>
-				<key>captures</key>
-				<dict>
-					<key>1</key>
-					<dict>
-						<key>name</key>
-						<string>keyword.other.block.systemverilog</string>
-					</dict>
-				</dict>
-				<key>match</key>
-				<string>\b(begin)\b</string>
-				<key>name</key>
-				<string>meta.definition.block.systemverilog</string>
 			</dict>
 			<dict>
 				<key>captures</key>
@@ -682,7 +667,7 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>(\b\d+)?'([bB]\s*[0-1_xXzZ?]+|[oO]\s*[0-7_xXzZ?]+|[dD]\s*[0-9_xXzZ?]+|[hH]\s*[0-9a-fA-F_xXzZ?]+)((e|E)(\+|-)?[0-9]+)?(?!'|\w)</string>
+						<string>(\b\d+)?'(s?[bB]\s*[0-1_xXzZ?]+|s?[oO]\s*[0-7_xXzZ?]+|s?[dD]\s*[0-9_xXzZ?]+|s?[hH]\s*[0-9a-fA-F_xXzZ?]+)((e|E)(\+|-)?[0-9]+)?(?!'|\w)</string>
 						<key>name</key>
 						<string>constant.numeric.systemverilog</string>
 					</dict>
@@ -866,7 +851,7 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>\b(wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
+						<string>\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
 						<key>name</key>
 						<string>storage.type.systemverilog</string>
 					</dict>

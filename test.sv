@@ -10,7 +10,7 @@ interface my_interface1;
         output two
     );
 
-endinterface
+endinterface // my_interface1
 
     interface my_interface2;
         logic   one;
@@ -23,9 +23,10 @@ endinterface
 
     endinterface
 
-
 module my_module
-  #(parameter int P1=0)
+  #(parameter int P1=0,
+    P2 = 0
+    )
   (
     my_interface1.sys   if1,
     my_interface2       if2,
@@ -42,7 +43,7 @@ timeprecision 1fs;
             b1;
 t_byte b2 = 8'hFF;
 
-logic [3:0]  sig_logic;
+logic [3:0]  sig_logic = 4'shC;
 
 my_interface1 if1();
 
@@ -57,9 +58,15 @@ my_module i_my_module
 parameter
     my_module.test_param = 23;
 
-    typedef my_module#(16)  t_my_module_16;
-
 function void my_func(ref logic d, input int din, output dout);
     $display("d=%0d",d);
 endfunction : my_func
 
+fork
+join_any
+
+fork : f_label
+    begin : b_label
+
+    end : b_label
+join : f_label

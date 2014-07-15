@@ -31,7 +31,9 @@ To map key to the different feature, simply add the following to your user .subl
 		[
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
-		],
+		]
+	},
+	{
 		"keys": ["ctrl+f10"], "command": "verilog_module_inst",
 		"context":
 		[
