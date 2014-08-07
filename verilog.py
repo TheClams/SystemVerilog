@@ -62,7 +62,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     params = re.findall(r"(\w+)\s*=",param_str)
                     if params is not None:
                         for i in range(len(params)):
-                            inst+= "\t." + params[i][0] + "()"
+                            inst+= "\t." + params[i] + "()"
                             if i<len(params)-1:
                                 inst+=","
                             inst+="\n"

@@ -1,0 +1,3 @@
+SystemVerilog 1.1.3 Changelog:
+ - Fix Module instantiation with parameter (only first letter of parameter was extracted ...)
+ - Add a box comment snippet: trigger is ///
