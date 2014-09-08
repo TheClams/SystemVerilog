@@ -25,7 +25,8 @@ endinterface // my_interface1
 
 module my_module
   #(parameter int P1=0,
-    P2 = 0
+    logic [15:0] P2 = 0,
+    real P3 = my_pkg::pp,
     )
   (
     my_interface1.sys   if1,

@@ -1,0 +1,3 @@
+SystemVerilog 1.1.5 Changelog:
+ - Fix highlight of virtual class/function
+ - Fix Highlight of SystemVerilog type in module port/param

@@ -232,6 +232,7 @@
 							</dict>
 						</dict>
 					</dict>
+
 				</array>
 				<key>name</key>
 				<string>meta.module.systemverilog</string>
@@ -323,7 +324,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|virtual|new|typedef|enum|this|super|begin|fork)\b</string>
+				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|begin|fork)\b</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -426,6 +427,30 @@
 			<dict>
 				<key>captures</key>
 				<dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.type.class.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.other.systemverilog</string>
+					</dict>
+					<key>4</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+				</dict>
+				<key>match</key>
+				<string>(([a-zA-Z_][a-zA-Z0-9_]*)\s*(:))?\s*(coverpoint|cross)\s+([a-zA-Z_][a-zA-Z0-9_]*)</string>
+				<key>name</key>
+				<string>meta.definition.systemverilog</string>
+			</dict>
+			<dict>
+				<key>captures</key>
+				<dict>
 					<key>1</key>
 					<dict>
 						<key>name</key>
@@ -434,11 +459,16 @@
 					<key>2</key>
 					<dict>
 						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
 						<string>entity.name.type.class.systemverilog</string>
 					</dict>
 				</dict>
 				<key>match</key>
-				<string>\b(class)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<string>\b(virtual\s+)?(class)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
 				<key>name</key>
 				<string>meta.definition.class.systemverilog</string>
 			</dict>
@@ -492,7 +522,7 @@
 			<!-- Signals with user-defined type -->
 			<dict>
 				<key>match</key>
-				<string>^\s*(const\s+|local\s+|protected\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s+(?=([a-zA-Z][a-zA-Z0-9_,=\s\[\]']*)?(;|,))</string>
+				<string>^\s*(const\s+|local\s+|protected\s+)?(virtual\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s+(?=([a-zA-Z][a-zA-Z0-9_,=\s\[\]']*)?(;|,))</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -503,13 +533,18 @@
 					<key>2</key>
 					<dict>
 						<key>name</key>
+						<string>keyword.other.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
 						<string>storage.type.interface.systemverilog</string>
 					</dict>
 				</dict>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(local|const|protected)\b</string>
+				<string>\s*\b(local|const|protected|virtual)\b</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -826,38 +861,19 @@
 					</dict>
 				</array>
 			</dict>
-			<!-- Interface with modport declaration -->
-			<key>ifmodport</key>
-			<dict>
-				<key>match</key>
-				<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
-				<key>captures</key>
-				<dict>
-					<key>1</key>
-					<dict>
-						<key>name</key>
-						<string>storage.type.interface.systemverilog</string>
-					</dict>
-					<key>2</key>
-					<dict>
-						<key>name</key>
-						<string>support.modport.systemverilog</string>
-					</dict>
-				</dict>
-			</dict>
 			<key>storage-type-systemverilog</key>
 			<dict>
 				<key>patterns</key>
 				<array>
 					<dict>
 						<key>match</key>
-						<string>\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
+						<string>\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
 						<key>name</key>
 						<string>storage.type.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\b(uvm_transaction|uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence_base|uvm_sequence|uvm_sequence_item|uvm_sequence_state|uvm_sequencer|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection|uvm_recorder|uvm_domain|uvm_reg_field|uvm_reg|uvm_reg_block|uvm_bitstream_t|uvm_radix_enum|uvm_printer|uvm_packer|uvm_comparer|uvm_scope_stack)\b</string>
+						<string>\s*\b(uvm_transaction|uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence_base|uvm_sequence|uvm_sequence_item|uvm_sequence_state|uvm_sequencer|uvm_sequencer_base|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection|uvm_recorder|uvm_domain|uvm_reg_field|uvm_reg|uvm_reg_block|uvm_bitstream_t|uvm_radix_enum|uvm_printer|uvm_packer|uvm_comparer|uvm_scope_stack)\b</string>
 						<key>name</key>
 						<string>storage.type.uvm.systemverilog</string>
 					</dict>
@@ -889,6 +905,25 @@
 				<string>\b(signed|unsigned|small|medium|large|supply[01]|strong[01]|pull[01]|weak[01]|highz[01])\b</string>
 				<key>name</key>
 				<string>storage.modifier.systemverilog</string>
+			</dict>
+			<!-- Interface with modport declaration -->
+			<key>ifmodport</key>
+			<dict>
+				<key>match</key>
+				<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>storage.type.interface.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>support.modport.systemverilog</string>
+					</dict>
+				</dict>
 			</dict>
 			<key>strings</key>
 			<dict>
