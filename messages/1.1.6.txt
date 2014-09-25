@@ -1,0 +1,10 @@
+SystemVerilog 1.1.6 Changelog:
+ - Add basic support for inline PSL assertion
+ - Fix highlight of of some case list due to improper user-defined type regexp
+ - WARNING : setting tabs/trim removed (sneakyPete contribution)
+
+To keep same setting as before you need to update the user\SystemVerilog.sublime-settings :
+	"translate_tabs_to_spaces": true,
+	"trim_trailing_white_space_on_save": true
+
+

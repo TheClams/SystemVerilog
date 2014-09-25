@@ -46,6 +46,8 @@ t_byte b2 = 8'hFF;
 
 logic [3:0]  sig_logic = 4'shC;
 
+// psl a_mypsl_assert: assert never {sig_logic!=4'hX};
+
 my_interface1 if1();
 
 my_module i_my_module
