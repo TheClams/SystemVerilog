@@ -5,18 +5,24 @@ Sublime Text SystemVerilog Package
 Description
 -----------
 
-Syntax Highlighting:
- - SystemVerilog
- - UCF (Xilinx Constraint file)
+####Syntax Highlighting:
 
-Various snippets: module, class, if/else, case, ...
+ * SystemVerilog
+ * UCF (Xilinx Constraint file)
 
-Features:
- - Show signal declaration in status bar
- - Module instantiation
-  * Use palette command "Verilog Instantiate Module" or use keybing to function 'verilog_module_inst'
-  * This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created
- - hopefully more to come :P
+####Various snippets: 
+ * module
+ * class
+ * always block 
+ * case
+ * ...
+
+####Features:
+* Show signal declaration in status bar
+* Module instantiation:
+> Use palette command "Verilog Instantiate Module" or use keybing to function 'verilog_module_inst'.
+> This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created.
+- hopefully more to come :P
 
 
 
@@ -41,4 +47,3 @@ To map key to the different feature, simply add the following to your user .subl
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
 	}
-
