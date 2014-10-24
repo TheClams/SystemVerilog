@@ -1,0 +1,4 @@
+SystemVerilog 1.1.7 Changelog:
+ - Add snippets for always block with reset active high
+ - Add snippet for task
+ - Fix auto indent on endtask (was missing)
