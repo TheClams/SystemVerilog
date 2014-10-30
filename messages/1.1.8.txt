@@ -1,0 +1,5 @@
+SystemVerilog 1.1.8 Changelog:
+ - Fix highlight around user-defined type (support localparam/param declaration, use in input/output, ... )
+ - Add highlight for PSL on multiple lines
+ - Add highlight for cast operation
+ - Fix module instantiation with parameter when # is seperated by spaces from (

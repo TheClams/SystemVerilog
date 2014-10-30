@@ -51,7 +51,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         with open(args['text'], "r") as f:
             flines = str(f.read())
             #TODO: use a function verilogutil extracting properly module name, parameter, IO
-            m = re.search("module\s+(\w+)\s*(#\([^;]+\))?\s*\(([^;]+)\)\s*;", flines)
+            m = re.search("module\s+(\w+)\s*(#\s*\([^;]+\))?\s*\(([^;]+)\)\s*;", flines)
             if m is not None:
                 # print("Found module ", m.groups()[0])
                 inst = m.groups()[0] + " "

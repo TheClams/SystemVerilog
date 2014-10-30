@@ -42,7 +42,7 @@ timeprecision 1fs;
     typedef logic[7:0]  t_byte;
     t_byte  b0, // Comments
             b1;
-t_byte b2 = 8'hFF;
+local t_byte b2 = 8'hFF;
 
 logic [3:0]  sig_logic = 4'shC;
 
@@ -61,7 +61,14 @@ my_module i_my_module
 parameter
     my_module.test_param = 23;
 
-function void my_func(ref logic d, input int din, output dout);
+localparam mytype myvar = mytype'(MY_INIT/4+8);
+localparam myvar1 = MY_INIT1;
+localparam logic [1:0] myvar2 = MY_INIT2;
+protected const mystruct c_var = '{a:0,b:1,c:4'hD};
+
+function void my_func(ref logic d, input int din,
+                      input bit[3:0] d,
+                      output dout);
     $display("d=%0d",d);
 endfunction : my_func
 
@@ -73,3 +80,21 @@ fork : f_label
 
     end : b_label
 join : f_label
+
+covergroup cg @(e);
+    option.per_instance = 1;
+    cp : coverpoint cp_name {
+        bins b01    = {[0:1]};
+        bins b23    = {[2:3]};
+        bins others = default;
+        option.comment = "comment";
+        option.at_least = 10; //
+    }
+endgroup
+
+always_ff @(posedge clk or negedge rst_n) begin : proc_
+    if (~rst_n)
+        a <= '0;
+    else if (en)
+        a <= a + b;
+end
