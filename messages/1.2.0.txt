@@ -1,0 +1,4 @@
+SystemVerilog 1.2.0 Changelog:
+ - Update the extract type function to work more reliably (should not find things in comment, ...)
+ - Add autocompletion for arrays (fixed, dynamic, queue, associative), string, mailbox and semaphore
+ - Change highlight scope of extends class to use entity.other.inherited-class

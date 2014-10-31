@@ -1,4 +1,5 @@
 {
 	"word_wrap": false,
-	"extensions": ["v", "vh", "sv", "svh"]
+	"extensions": ["v", "vh", "sv", "svh"],
+	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": "."} ]
 }

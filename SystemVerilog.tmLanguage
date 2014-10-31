@@ -632,7 +632,7 @@
 					<key>2</key>
 					<dict>
 						<key>name</key>
-						<string>support.type.systemverilog</string>
+						<string>entity.other.inherited-class.systemverilog</string>
 					</dict>
 				</dict>
 				<key>match</key>

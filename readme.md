@@ -6,23 +6,23 @@ Description
 -----------
 
 ####Syntax Highlighting:
-
  * SystemVerilog
  * UCF (Xilinx Constraint file)
 
-####Various snippets: 
+####Various snippets:
  * module
  * class
- * always block 
+ * always block
  * case
  * ...
 
 ####Features:
-* Show signal declaration in status bar
-* Module instantiation:
-> Use palette command "Verilog Instantiate Module" or use keybing to function 'verilog_module_inst'.
-> This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created.
-- hopefully more to come :P
+ * Show signal declaration in status bar
+ * Module instantiation:
+   > Use palette command "Verilog Instantiate Module" or use keybing to function 'verilog_module_inst'.
+   > This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created.
+ * Autocompletion of variable method for arrays, string, mailbox and semaphore (triggered by .)
+ * hopefully more to come :P
 
 
 
