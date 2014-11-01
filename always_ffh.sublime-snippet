@@ -1,6 +1,6 @@
 <snippet>
 	<name>Always FF SystemVerilog (reset high)</name>
-	<content><![CDATA[always_ff@(posedge clk or negedge rst) begin : proc_${0}
+	<content><![CDATA[always_ff@(posedge clk or posedge rst) begin : proc_${0}
 	if(rst) begin
 
 	end else if(clk_en) begin
