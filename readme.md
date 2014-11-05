@@ -14,6 +14,7 @@ Description
  * class
  * always block
  * case
+ * function/task
  * ...
 
 ####Features:
@@ -21,8 +22,9 @@ Description
  * Module instantiation:
    > Use palette command "Verilog Instantiate Module" or use keybing to function 'verilog_module_inst'.
    > This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created.
+   > Look at setting file (Preferences->Package settings->SystemVerilog) to configure options
  * Autocompletion of variable method for arrays, string, mailbox and semaphore (triggered by .)
- * hopefully more to come :P
+ * Macro to insert a begin end around a selection (cf Keymapping section to see how to use it)
 
 
 
@@ -46,4 +48,16 @@ To map key to the different feature, simply add the following to your user .subl
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
-	}
+	},
+	// Begin/End
+	{
+		"keys": ["ctrl+'"],
+		"command": "insert_snippet", "args": {"contents": "begin\n\t$0\nend"},
+		"context": [{ "key": "selection_empty", "operator": "equal", "operand": true, "match_all": true }]
+	},
+	{
+		"keys": ["ctrl+'"],
+		"command": "run_macro_file",
+		"args": {"file": "Packages/SystemVerilog/beginend.sublime-macro"},
+		"context": [{ "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }]
+	},

@@ -1,0 +1,8 @@
+SystemVerilog 1.3.0 Changelog:
+ - Update module instantiation:
+  * Add option for prefix/suffix of instance name
+  * Add option for auto-declaration of signals
+  * Add option to enter parameter value
+ - Add menu entry to open the setting file (check default file to know how to set the different options)
+ - Fix highlight of signal with same name as a base systemVerilog function
+ - Add macro to surround a block of code by begin end (see readme for keymapping)

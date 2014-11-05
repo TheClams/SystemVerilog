@@ -6,23 +6,26 @@ import re, string, os
 #   an optionnal array size,
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
-re_decl = r'(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:.]*\s+)(\[[\w:-]+\])?\s*([A-Za-z_][\w,]*)?\b'
+re_decl = r'(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w,\s]*,\s*)?\b'
 
 def clean_comment(txt):
-	#remove singleline comment
-	txt_nc = re.sub(r"//.*?$","",txt, flags=re.MULTILINE)
-	#remove multiline comment
-	# txt_nc = re.sub(r"/\*.*\*/","",txt_nc, flags=re.MULTILINE)
-	return txt_nc
+    txt_nc = txt
+    #remove multiline comment
+    txt_nc = re.sub(r"(?s)/\*.*?\*/","",txt_nc)
+    #remove singleline comment
+    txt_nc = re.sub(r"//.*?$","",txt_nc, flags=re.MULTILINE)
+    return txt_nc
 
 # Extract the declaration of var_name from txt
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
 def get_type_info(txt,var_name):
-    m = re.search(re_decl+var_name, txt)
-    # print("get_type_info: " + str(txt))
+    m = re.search(re_decl+var_name+r'.*$', txt, flags=re.MULTILINE)
+    # print("get_type_info for var " + str(var_name) + " in \n" + str(txt))
     #return a tuple of None if not found
     if m is None:
-    	return (None,None,None)
+        return {'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name}
+    line = clean_comment(m.group(0))
+    # print("get_type_info: line=" + line)
     ft = ''
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,5):
@@ -38,10 +41,11 @@ def get_type_info(txt,var_name):
             t = str.rstrip(m.groups()[1]) + ' ' + t
         elif m.groups()[0] is not None:
             t = str.rstrip(m.groups()[0]) + ' ' + t
-    # print("Type: " + t)
+    #extract bus width
+    bw = str.rstrip(str(m.groups()[4]))
     # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
     at = "None"
-    m = re.search(r'\b'+var_name+r'\s*\[([^\]]*)\]', txt)
+    m = re.search(r'\b'+var_name+r'\s*\[([^\]]*)\]', line, flags=re.MULTILINE)
     if m:
         if m.groups()[0] =="":
             at='dynamic'
@@ -56,4 +60,38 @@ def get_type_info(txt,var_name):
             else:
                 at='fixed'
     # print("Array: " + str(m) + "=>" + str(at))
-    return (ft,t,at)
+    return {'decl':ft,'type':t,'array':at,'bw':bw, 'name':var_name}
+
+#
+def parse_module(fname):
+    flines = ''
+    with open(fname, "r") as f:
+        flines = str(f.read())
+    flines = clean_comment(flines)
+    # print(flines)
+    m = re.search(r"(?s)module\s+(\w+)\s*(#\s*\([^;]+\))?\s*\((.+?)\)\s*;", flines)
+    if m is None:
+        print("No module found")
+        return None
+    mname = m.groups()[0]
+    # Extract parameter name
+    params = None
+    ## Parameter define in ANSI style
+    if m.groups()[1] is not None:
+        s = clean_comment(m.groups()[1])
+        r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[\w\-\+`]+)")
+        params = [m.groupdict() for m in r.finditer(s)]
+    ##TODO: look for parameter not define in the module declaration (optionnaly?)
+    # Extract port name
+    ports = None
+    if m.groups()[2] is not None:
+        s = clean_comment(m.groups()[2])
+        ports_name = re.findall(r"(\w+)\s*(?=,|$)",s)
+        # get type for each port
+        ports = []
+        # print("Ports found : " + str(ports_name))
+        for p in ports_name:
+            ti = get_type_info(flines,str(p))
+            # print (ti)
+            ports.append(ti)
+    return {'name': mname, 'param':params, 'port':ports}

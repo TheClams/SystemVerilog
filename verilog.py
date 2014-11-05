@@ -26,7 +26,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # Extract type
         ti = verilogutil.get_type_info(l,var_name)
         # print(ti)
-        return ti[0]
+        return ti['decl']
 
 # Create module instantiation skeleton
 class VerilogModuleInstCommand(sublime_plugin.TextCommand):
@@ -45,46 +45,107 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         return
 
     def on_done(self, index):
-        print (self.project_rtl[index])
-        self.view.run_command("verilog_do_module_inst", {"args":{'text':self.project_rtl[index]}})
+        # print ("Selected: " + str(index) + " " + self.project_rtl[index])
+        if index >= 0:
+            self.view.run_command("verilog_do_module_parse", {"args":{'text':self.project_rtl[index]}})
 
-class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
+class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, args):
-        if len(self.view.sel())==0:
+        # print ("Parsing " + args['text'])
+        self.fname = args['text']
+        self.pm = verilogutil.parse_module(self.fname)
+        if self.pm is not None:
+            self.param_value = []
+            if self.pm['param'] is not None and self.view.settings().get('sv.fillparam'):
+                self.cnt = 0
+                self.show_prompt()
+            else:
+                self.view.run_command("verilog_do_module_inst", {"args":{'pm':self.pm, 'pv':self.param_value, 'text':self.fname}})
+
+    def on_prompt_done(self, content):
+        if not content.startswith("Default"):
+            self.param_value.append({'name':self.pm['param'][self.cnt]['name'] , 'value': content});
+        self.cnt += 1
+        if self.pm['param'] is None:
             return
-        with open(args['text'], "r") as f:
-            flines = str(f.read())
-            #TODO: use a function verilogutil extracting properly module name, parameter, IO
-            m = re.search("module\s+(\w+)\s*(#\s*\([^;]+\))?\s*\(([^;]+)\)\s*;", flines)
-            if m is not None:
-                # print("Found module ", m.groups()[0])
-                inst = m.groups()[0] + " "
-                if m.groups()[1] is not None:
-                    param_str = verilogutil.clean_comment(m.groups()[1])
-                    inst += "#(\n"
-                    # print("      param = ", param_str)
-                    params = re.findall(r"(\w+)\s*=",param_str)
-                    if params is not None:
-                        for i in range(len(params)):
-                            inst+= "\t." + params[i] + "()"
-                            if i<len(params)-1:
-                                inst+=","
-                            inst+="\n"
-                        inst += ") "
-                #TODO: add config for prefix/suffix
-                inst += "i_" + m.groups()[0] + " (\n"
-                if m.groups()[2] is not None:
-                    port_str = verilogutil.clean_comment(m.groups()[2])
-                    ports = re.findall(r"(\w+)\s*(,|$)",port_str)
-                    if ports is not None:
-                        for i in range(len(ports)):
-                            inst+= "\t." + ports[i][0] + "()"
-                            if i<len(ports)-1:
-                                inst+=","
-                            inst+="\n"
-                inst += ");\n"
-                self.view.insert(edit, self.view.sel()[0].begin(), inst)
+        if self.cnt < len(self.pm['param']):
+            self.show_prompt()
+        else:
+            self.view.run_command("verilog_do_module_inst", {"args":{'pm':self.pm, 'pv':self.param_value, 'text':self.fname}})
+
+    def show_prompt(self):
+        p = self.pm['param'][self.cnt]
+        panel = sublime.active_window().show_input_panel(p['name'], "Default: " + p['value'], self.on_prompt_done, None, None)
+        #select the whole line (to ease value change)
+        r = panel.line(panel.sel()[0])
+        panel.sel().clear()
+        panel.sel().add(r)
+
+
+class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
+    #TODO: check base indentation
+    def run(self, edit, args):
+        isAutoConnect = self.view.settings().get('sv.autoconnect')
+        # pm = verilogutil.parse_module(args['text'])
+        pm = args['pm']
+        # Add signal port declaration
+        if isAutoConnect and pm['port'] is not None:
+            decl = ""
+            fname = self.view.file_name()
+            indent_level = self.view.settings().get('sv.decl_indent')
+            #default signal type to logic, except verilog file use wire (if type is implicit)
+            sig_type = 'logic'
+            if fname.endswith('.v'):
+                sig_type = 'wire'
+            # read file to be able to check existing
+            flines = self.view.substr(sublime.Region(0, self.view.size()))
+            # Add signal declaration
+            for p in pm['port']:
+                #check existing signal declaration and coherence
+                ti = verilogutil.get_type_info(flines,p['name'])
+                # print ("Port " + p['name'] + " => " + str(ti))
+                if ti['decl'] is None:
+                    # print ("Adding declaration for " + p['name'] + " => " + str(p['decl']))
+                    if p['decl'] is None:
+                        print("Unable to find proper declaration of port " + p['name'])
+                    else:
+                        d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
+                        if p['type'].startswith(('input','output','inout')) :
+                            d = sig_type + ' ' + d
+                        decl += indent_level*'\t' + d + ';\n'
+                #TODO: check signal coherence
+                # else :
+            #TODO: use self.view.settings().get('sv.decl_start') to know where to insert the declaration
+            self.view.insert(edit, self.view.sel()[0].begin(), decl)
+        # Instantiation
+        inst = pm['name'] + " "
+        # Parameters: bind only parameters for which a value different from default was set
+        if len(args['pv']) > 0:
+            max_len = max([len(x['name']) for x in args['pv']])
+            inst += "#(\n"
+            for i in range(len(args['pv'])):
+                inst+= "\t." + args['pv'][i]['name'].ljust(max_len) + "("+args['pv'][i]['value']+")"
+                if i<len(pm['param'])-1:
+                    inst+=","
+                inst+="\n"
+            inst += ") "
+        #Port binding
+        inst += self.view.settings().get('sv.instance_prefix') + pm['name'] + self.view.settings().get('sv.instance_suffix') + " (\n"
+        if pm['port'] is not None:
+            # Get max length of a port to align everything
+            max_len = max([len(x['name']) for x in pm['port']])
+            for i in range(len(pm['port'])):
+                inst+= "\t." + pm['port'][i]['name'].ljust(max_len) + "("
+                if isAutoConnect:
+                    inst+= pm['port'][i]['name'].ljust(max_len)
+                inst+= ")"
+                if i<len(pm['port'])-1:
+                    inst+=","
+                inst+="\n"
+        inst += ");\n"
+        self.view.insert(edit, self.view.sel()[0].begin(), inst)
+
 
 class VerilogAutoComplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
@@ -112,21 +173,21 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return ([], sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
         ti = verilogutil.get_type_info(view.substr(view.line(r)),v)
         # print ("Type info: " + str(ti))
-        if ti[0]==None:
+        if ti==None:
             return ([], sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
         completion = []
         #Provide completion for different type
-        if ti[2]!="None" :
-            completion = self.array_completion(ti[2])
-        elif ti[1]=="string":
+        if ti['array']!="None" :
+            completion = self.array_completion(ti['array'])
+        elif ti['type']=="string":
             completion = self.string_completion()
-        elif ti[1]=="mailbox":
+        elif ti['type']=="mailbox":
             completion = self.mailbox_completion()
-        elif ti[1]=="semaphore":
+        elif ti['type']=="semaphore":
             completion = self.semaphore_completion()
         #TODO: Provides more completion
         #Add randomize function for rand variable
-        if ti[0].startswith("rand"):
+        if ti['decl'].startswith("rand ") or " rand " in ti['decl']:
             completion.append(["randomize()","randomize()"])
         return (completion, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
 

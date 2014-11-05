@@ -1,0 +1,16 @@
+[
+	{
+		"args":
+		{
+			"contents": " begin ${0:$SELECTION} end "
+		},
+		"command": "insert_snippet"
+	},
+	{
+		"args":
+		{
+			"single_line": false
+		},
+		"command": "reindent"
+	}
+]

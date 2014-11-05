@@ -515,19 +515,19 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\.(atob|atohex|atoi|atooct|atoreal|bintoa|hextoa|itoa|octtoa|realtoa|len|getc|putc|toupper|tolower|compare|icompare|substr|num|exists|first|last|name|index|find|find_first|find_last|find_index|find_first_index|find_last_index|min|max|unique|unique_index|sort|rsort|shuffle|reverse|sum|product|xor|status|kill|self|await|suspend|resume|get|put|peek|try_get|try_peek|try_put|eq|neq|next|prev|new|size|delete|empty|pop_front|pop_back|front|back|insert|insert_range|erase|erase_range|set|swap|clear|purge|start|finish|randomize|rand_mode|pre_randomize|post_randomize|constraint_mode|random_mode)\b</string>
+				<string>\.(atob|atohex|atoi|atooct|atoreal|bintoa|hextoa|itoa|octtoa|realtoa|len|getc|putc|toupper|tolower|compare|icompare|substr|num|exists|first|last|name|index|find|find_first|find_last|find_index|find_first_index|find_last_index|min|max|unique|unique_index|sort|rsort|shuffle|reverse|sum|product|xor|status|kill|self|await|suspend|resume|get|put|peek|try_get|try_peek|try_put|eq|neq|next|prev|new|size|delete|empty|pop_front|pop_back|front|back|insert|insert_range|erase|erase_range|set|swap|clear|purge|start|finish|randomize|rand_mode|pre_randomize|post_randomize|constraint_mode|random_mode)\s*\(</string>
 				<key>name</key>
 				<string>support.function.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(get_randstate|set_randstate)\b</string>
+				<string>\b(get_randstate|set_randstate)\s*\(</string>
 				<key>name</key>
 				<string>support.function.systemverilog</string>
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\b(uvm_report_info|uvm_report_warning|uvm_report_error|uvm_report_fatal|set_config_object|get_config_object|set_config_int|get_config_int|run_test)\b</string>
+				<string>\b(uvm_report_info|uvm_report_warning|uvm_report_error|uvm_report_fatal|set_config_object|get_config_object|set_config_int|get_config_int|run_test)\s*\(</string>
 				<key>name</key>
 				<string>support.function.uvm.systemverilog</string>
 			</dict>
