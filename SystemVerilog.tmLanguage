@@ -170,8 +170,31 @@
 				<key>patterns</key>
 				<array>
 					<dict>
+						<key>match</key>
+						<string>\b([a-zA-Z_]\w*)\s*(#)\(</string>
+						<key>captures</key>
+						<dict>
+							<key>1</key>
+							<dict>
+								<key>name</key>
+								<string>storage.type.userdefined.systemverilog</string>
+							</dict>
+							<key>2</key>
+							<dict>
+								<key>name</key>
+								<string>keyword.operator.param.systemverilog</string>
+							</dict>
+						</dict>
+						<key>name</key>
+						<string>meta.typedef.class.systemverilog</string>
+					</dict>
+					<dict>
 						<key>include</key>
 						<string>#base-grammar</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#module-binding</string>
 					</dict>
 				</array>
 				<key>name</key>
@@ -965,7 +988,7 @@
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>(`define) \w+</string>
+						<string>(`ifdef|`ifndef|`default_nettype)\s+(\w+)</string>
 						<key>captures</key>
 						<dict>
 							<key>1</key>
@@ -973,11 +996,16 @@
 								<key>name</key>
 								<string>constant.other.preprocessor.systemverilog</string>
 							</dict>
+							<key>2</key>
+							<dict>
+								<key>name</key>
+								<string>support.variable.systemverilog</string>
+							</dict>
 						</dict>
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>`(celldefine|default_nettype|else|elsif|endcelldefine|endif|ifdef|ifndef|include|line|nounconnected_drive|resetall|timescale|unconn		ected_drive|undef|begin_\w+|end_\w+|remove_\w+|restore_\w+)\b</string>
+						<string>`(celldefine|else|elsif|endcelldefine|endif|include|line|nounconnected_drive|resetall|timescale|unconnected_drive|undef|begin_\w+|end_\w+|remove_\w+|restore_\w+)\b</string>
 						<key>name</key>
 						<string>constant.other.preprocessor.systemverilog</string>
 					</dict>
