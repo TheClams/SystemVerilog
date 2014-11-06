@@ -3,6 +3,13 @@ SystemVerilog 1.3.0 Changelog:
   * Add option for prefix/suffix of instance name
   * Add option for auto-declaration of signals
   * Add option to enter parameter value
- - Add menu entry to open the setting file (check default file to know how to set the different options)
- - Fix highlight of signal with same name as a base systemVerilog function
- - Add macro to surround a block of code by begin end (see readme for keymapping)
+ - Autocompletion:
+  * Add support for standard class process and data type event
+  * Add support for system task (triggered by $)
+  * Better identification of rand variable
+ - Highlighting:
+  * Fix highlight of signal with same name as a base systemVerilog function
+  * Fix highlight of user-defined type with rand qualifier
+ - Misc:
+  * Add menu entry to open the setting file (check default file to know how to set the different options)
+  * Add macro to surround a block of code by begin end (see readme for keymapping)

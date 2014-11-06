@@ -30,7 +30,10 @@ def get_type_info(txt,var_name):
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,5):
         if m.groups()[i] is not None:
-            ft += str.rstrip(m.groups()[i]) + ' '
+            tmp = str.rstrip(m.groups()[i])
+            # regex can catch more than wanted, so filter based on a list
+            if tmp not in ['end']:
+                ft += tmp + ' '
     ft += var_name
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
     t = str.rstrip(m.groups()[3])

@@ -2,7 +2,7 @@
 	"word_wrap": false,
 	"extensions": ["v", "vh", "sv", "svh"],
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
-	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": "."} ],
+	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$"} ],
 
 	// SystemVerilog plugin configuration
 	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter

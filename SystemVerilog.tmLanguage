@@ -726,7 +726,7 @@
 			<!-- Variable/Parameter/localparameter with user-defined type -->
 			<dict>
 				<key>match</key>
-				<string>^\s*(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=([a-zA-Z][a-zA-Z0-9_\s\[\]']*)(;|,|=|'{))</string>
+				<string>^\s*(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=([a-zA-Z][a-zA-Z0-9_\s\[\]']*)(;|,|=|'\{))</string>
 				<key>name</key>
 				<string>meta.userdefined.systemverilog</string>
 				<key>captures</key>
@@ -742,6 +742,11 @@
 						<string>keyword.other.systemverilog</string>
 					</dict>
 					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>storage.type.rand.systemverilog</string>
+					</dict>
+					<key>4</key>
 					<dict>
 						<key>name</key>
 						<string>storage.type.userdefined.systemverilog</string>
@@ -771,6 +776,12 @@
 						<string>keyword.other.systemverilog</string>
 					</dict>
 				</dict>
+			</dict>
+			<dict>
+				<key>match</key>
+				<string>\s*\b(|rand|randc)\b</string>
+				<key>name</key>
+				<string>storage.type.rand.systemverilog</string>
 			</dict>
 			<!-- Module instantiation with parameter -->
 			<dict>
@@ -1130,7 +1141,7 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|rand|randc|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
+						<string>\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|string|time|realtime|real|process|void)\b</string>
 						<key>name</key>
 						<string>storage.type.systemverilog</string>
 					</dict>

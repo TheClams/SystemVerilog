@@ -152,11 +152,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # don't change completion if we are not in a systemVerilog file or we are inside a word
         if not view.match_selector(locations[0], 'source.systemverilog') or prefix!="" :
             return []
-        # Get previous character anc check if it is a .
+        # Get previous character and check if it is a .
         r = view.sel()[0]
         r.a -=1
         t = view.substr(r)
         # print ("previous character: " + t)
+        if t=='$':
+            return self.systemtask_completion()
         if t!='.':
             return []
         # select word before the dot and quit with no completion if no word found
@@ -185,6 +187,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion = self.mailbox_completion()
         elif ti['type']=="semaphore":
             completion = self.semaphore_completion()
+        elif ti['type']=="process":
+            completion = self.process_completion()
+        elif ti['type']=="event":
+            completion = ["triggered","triggered"]
         #TODO: Provides more completion
         #Add randomize function for rand variable
         if ti['decl'].startswith("rand ") or " rand " in ti['decl']:
@@ -234,39 +240,98 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def string_completion(self):
         c = []
-        c.append(["len()"      , "len()"     ])
-        c.append(["substr()"   , "substr()"  ])
-        c.append(["putc()"     , "putc()"    ])
-        c.append(["getc()"     , "getc()"    ])
-        c.append(["toupper()"  , "toupper()" ])
-        c.append(["tolower()"  , "tolower()" ])
-        c.append(["compare()"  , "compare()" ])
-        c.append(["icompare()" , "icompare()"])
-        c.append(["atoi()"     , "atoi()"    ])
-        c.append(["atohex()"   , "atohex()"  ])
-        c.append(["atobin()"   , "atobin()"  ])
-        c.append(["atoreal()"  , "atoreal()" ])
-        c.append(["itoa()"     , "itoa()"    ])
-        c.append(["hextoa()"   , "hextoa()"  ])
-        c.append(["octoa()"    , "octoa()"   ])
-        c.append(["bintoa()"   , "bintoa()"  ])
-        c.append(["realtoa()"  , "realtoa()" ])
+        c.append(["len()"      , "len($0)"     ])
+        c.append(["substr()"   , "substr($0)"  ])
+        c.append(["putc()"     , "putc($0)"    ])
+        c.append(["getc()"     , "getc($0)"    ])
+        c.append(["toupper()"  , "toupper($0)" ])
+        c.append(["tolower()"  , "tolower($0)" ])
+        c.append(["compare()"  , "compare($0)" ])
+        c.append(["icompare()" , "icompare($0)"])
+        c.append(["atoi()"     , "atoi($0)"    ])
+        c.append(["atohex()"   , "atohex($0)"  ])
+        c.append(["atobin()"   , "atobin($0)"  ])
+        c.append(["atoreal()"  , "atoreal($0)" ])
+        c.append(["itoa()"     , "itoa($0)"    ])
+        c.append(["hextoa()"   , "hextoa($0)"  ])
+        c.append(["octoa()"    , "octoa($0)"   ])
+        c.append(["bintoa()"   , "bintoa($0)"  ])
+        c.append(["realtoa()"  , "realtoa($0)" ])
         return c
 
     def mailbox_completion(self):
         c = []
-        c.append(["num()"      , "num()"     ])
-        c.append(["get()"      , "get()"     ])
-        c.append(["try_get()"  , "try_get()" ])
-        c.append(["peek()"     , "peek()"    ])
-        c.append(["try_peek()" , "try_peek()"])
-        c.append(["put()"      , "put()"     ])
-        c.append(["try_put()"  , "try_put()" ])
+        c.append(["num()"      , "num($0)"     ])
+        c.append(["get()"      , "get($0)"     ])
+        c.append(["try_get()"  , "try_get($0)" ])
+        c.append(["peek()"     , "peek($0)"    ])
+        c.append(["try_peek()" , "try_peek($0)"])
+        c.append(["put()"      , "put($0)"     ])
+        c.append(["try_put()"  , "try_put($0)" ])
         return c
 
     def semaphore_completion(self):
         c = []
-        c.append(["get()"      , "get()"     ])
-        c.append(["try_get()"  , "try_get()" ])
-        c.append(["put()"      , "put()"     ])
+        c.append(["get()"      , "get($0)"     ])
+        c.append(["try_get()"  , "try_get($0)" ])
+        c.append(["put()"      , "put($0)"     ])
+        return c
+
+    def process_completion(self):
+        c = []
+        c.append(["status()" , "status($0)" ])
+        c.append(["kill()"   , "kill($0)"   ])
+        c.append(["resume()" , "resume($0)" ])
+        c.append(["await()"  , "await($0)"  ])
+        c.append(["suspend()", "suspend($0)"])
+        return c
+
+    def systemtask_completion(self):
+        c = []
+        c.append(["display()"       , "display(\"$0\",);"       ])
+        c.append(["sformatf()"      , "sformatf(\"$0\",);"      ])
+        c.append(["test$plusargs()" , "test\$plusargs(\"$0\")"  ])
+        c.append(["value$plusargs()", "value\$plusargs(\"$0\",)"])
+        c.append(["finish"          , "finish;"                 ])
+        #variable
+        c.append(["time"            , "time"                    ])
+        c.append(["realtime"        , "realtime"                ])
+        c.append(["random"          , "random"                  ])
+        c.append(["urandom_range()" , "urandom_range(\$0,)"     ])
+        #cast
+        c.append(["cast()"          , "cast($0)"                ])
+        c.append(["unsigned()"      , "unsigned($0)"            ])
+        c.append(["signed()"        , "signed($0)"              ])
+        c.append(["itor()"          , "itor($0)"                ])
+        c.append(["rtoi()"          , "rtoi($0)"                ])
+        c.append(["bitstoreal()"    , "bitstoreal($0)"          ])
+        c.append(["realtobits()"    , "realtobits($0)"          ])
+        #assertion
+        c.append(["assertoff()"     , "assertoff($0,)"          ])
+        c.append(["info()"          , "info(\"$0\");"           ])
+        c.append(["error()"         , "error(\"$0\");"          ])
+        c.append(["warning()"       , "warning(\"$0\");"        ])
+        c.append(["stable()"        , "stable($0)"              ])
+        c.append(["fell()"          , "fell($0)"                ])
+        c.append(["rose()"          , "rose($0)"                ])
+        c.append(["past()"          , "past($0)"                ])
+        c.append(["isunknown()"     , "isunknown($0)"           ])
+        c.append(["onehot()"        , "onehot($0)"              ])
+        c.append(["onehot0()"       , "onehot0($0)"             ])
+        #utility
+        c.append(["size()"          , "size($0)"                ])
+        c.append(["clog2()"         , "clog2(\"$0\",)"          ])
+        c.append(["countones()"     , "countones(\"$0\",)"      ])
+        c.append(["high()"          , "high($0)"                ])
+        c.append(["low()"           , "low($0)"                 ])
+        #file
+        c.append(["fopen()"         , "fopen($0,\"r\")"         ])
+        c.append(["fclose()"        , "fclose($0);"             ])
+        c.append(["fflush"          , "fflush;"                 ])
+        c.append(["fgetc()"         , "fgetc($0,)"              ])
+        c.append(["fgets()"         , "fgets($0,)"              ])
+        c.append(["fwrite()"        , "fwrite($0,\"r\")"        ])
+        c.append(["readmemb()"      , "readmemb(\"$0\",)"       ])
+        c.append(["readmemh()"      , "readmemh(\"$0\",)"       ])
+        c.append(["sscanf()"        , "sscanf($0,\"\",)"        ])
         return c
