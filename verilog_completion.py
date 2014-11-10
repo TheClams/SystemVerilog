@@ -11,7 +11,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if not view.match_selector(locations[0], 'source.systemverilog'):
             return []
         # Provide completion for most used uvm function: in this case do not override normal sublime completion
-        print(prefix)
         if(prefix.startswith('u')):
             completion = self.uvm_completion()
             return completion
