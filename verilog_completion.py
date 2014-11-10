@@ -7,10 +7,18 @@ import verilogutil
 class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
-        # don't change completion if we are not in a systemVerilog file or we are inside a word
-        if not view.match_selector(locations[0], 'source.systemverilog') or prefix!="" :
+        # don't change completion if we are not in a systemVerilog file
+        if not view.match_selector(locations[0], 'source.systemverilog'):
             return []
-        # Get previous character and check if it is a .
+        # Provide completion for most used uvm function: in this case do not override normal sublime completion
+        print(prefix)
+        if(prefix.startswith('u')):
+            completion = self.uvm_completion()
+            return completion
+        # No additionnal completion if we are inside a word
+        if(prefix!=''):
+            return []
+        # No prefix ? Get previous character and check if it is a '.' , '`' or '$'
         r = view.sel()[0]
         r.a -=1
         t = view.substr(r)
@@ -24,23 +32,32 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion =  self.dot_completion(view,r)
         return (completion, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
 
+    def uvm_completion(self):
+        c = []
+        c.append(["uvm_config_db get()" , "uvm_config_db#()::get(this, \"$1\", \"$0\", $0)" ])
+        c.append(["uvm_config_db set()" , "uvm_config_db#()::set(this, \"$1\", \"$0\", $0)" ])
+        c.append(["uvm_report_info()"   , "uvm_report_info(\"$1\", \"$0\", UVM_NONE)" ])
+        c.append(["uvm_report_warning()", "uvm_report_warning(\"$1\", \"$0\")" ])
+        c.append(["uvm_report_error()"  , "uvm_report_error(\"$1\", \"$0\")" ])
+        return c
+
     def dot_completion(self,view,r):
         # select word before the dot and quit with no completion if no word found
         r.a -=1
         r.b = r.a
         r = view.word(r);
-        v = str.rstrip(view.substr(r))
+        w = str.rstrip(view.substr(r))
         completion = []
-        # print ("previous word: " + v)
-        if v=="": #No word before dot => no completion
+        # print ("previous word: " + w)
+        if w=="": #No word before dot => no completion
             return completion
         # get type information on the variable
-        r = view.find(verilogutil.re_decl+v+r'\b',0)
+        r = view.find(verilogutil.re_decl+w+r'\b',0)
         if r==None : #unable to get type => no completion
             return completion
-        ti = verilogutil.get_type_info(view.substr(view.line(r)),v)
+        ti = verilogutil.get_type_info(view.substr(view.line(r)),w)
         # print ("Type info: " + str(ti))
-        if ti==None:
+        if ti['type'] is None:
             return completion
         #Provide completion for different type
         if ti['array']!="None" :
@@ -55,7 +72,26 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion = self.process_completion()
         elif ti['type']=="event":
             completion = ["triggered","triggered"]
-        #TODO: Provides more completion (enum, struct, interface, ...)
+        # Non standard type => try to find the type in the lookup list and get the type
+        else:
+            print (ti['type'])
+            filelist = view.window().lookup_symbol_in_index(ti['type'])
+            if filelist:
+                fname = filelist[0][0]
+                #filename seems to be in a unix specific format => convert to windows if needed
+                if sublime.platform() == "windows":
+                    fname= re.sub(r"/([A-Za-z])/(.+)", r"\1:/\2", fname)
+                    fname= re.sub(r"/", r"\\", fname)
+                print(w + " of type " + ti['type'] + " defined in " + str(fname))
+                with open(fname, "r") as f:
+                    flines = str(f.read())
+                tti = verilogutil.get_type_info(flines,ti['type'])
+                if tti is None:
+                    return [];
+                print(tti)
+                if tti['type']=="interface":
+                    return self.interface_completion(flines)
+                #TODO: Provides more completion (enum, struct, interface, ...)
         #Add randomize function for rand variable
         if ti['decl'].startswith("rand ") or " rand " in ti['decl']:
             completion.append(["randomize()","randomize()"])
@@ -215,4 +251,23 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(["resetall"            , "resetall"])
         c.append(["timescale"           , "timescale $0"])
         c.append(["undef"               , "undef $0"])
+        return c
+
+    # Interface completion: all signal declaration can be used as completion
+    def interface_completion(self,flines):
+        int_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*(?:;|\))'
+        flines = verilogutil.clean_comment(flines)
+        mlist = re.findall(int_decl, flines, flags=re.MULTILINE)
+        c = []
+        # print("Declarations founds: ",mlist)
+        if mlist is not None:
+            # for each matched declaration extract only the signal name.
+            # Each declaration can be a list => split it
+            # it can included default initialization => remove it
+            for m in mlist:
+                slist = re.findall(r'([A-Za-z_][\w]*)\s*(\=\s*\w+)?(,|$)',m[5])
+                # print("Parsing ",str(m[5])," => ",str(slist))
+                if slist is not None:
+                    for s in slist:
+                        c.append([s[0],s[0]])
         return c

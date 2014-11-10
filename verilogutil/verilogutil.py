@@ -6,7 +6,7 @@ import re, string, os
 #   an optionnal array size,
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
-re_decl = r'(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w,\s]*,\s*)?\b'
+re_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 
 def clean_comment(txt):
     txt_nc = txt
@@ -24,7 +24,7 @@ def get_type_info(txt,var_name):
     #return a tuple of None if not found
     if m is None:
         return {'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name}
-    line = clean_comment(m.group(0))
+    line = clean_comment(m.group(0).lstrip())
     # print("get_type_info: line=" + line)
     ft = ''
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
