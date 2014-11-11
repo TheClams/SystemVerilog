@@ -1,0 +1,5 @@
+SystemVerilog 1.3.2 Changelog:
+ - Improved autocompletion:
+  * Add support for enum, struct and union
+  * type identification now works well with typedef enum/struct
+ - Prevent auto-pairing for ' in verilog files

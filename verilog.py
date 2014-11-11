@@ -13,18 +13,16 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region)
-        s = self.get_type(v)
+        s = self.get_type(v,region.b)
         if s is None:
             s = "No definition found for " + v
         sublime.status_message(s)
 
-    def get_type(self,var_name):
-        #Find first line containing the variable declaration
-        r = self.view.find(verilogutil.re_decl+var_name+r'\b',0)
-        if r==None : return ;
-        l = self.view.substr(self.view.line(r))
+    def get_type(self,var_name,pos):
+        # select whole file
+        txt = self.view.substr(sublime.Region(0, pos))
         # Extract type
-        ti = verilogutil.get_type_info(l,var_name)
+        ti = verilogutil.get_type_info(txt,var_name)
         # print(ti)
         return ti['decl']
 
@@ -98,7 +96,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             sig_type = 'logic'
             if fname.endswith('.v'):
                 sig_type = 'wire'
-            # read file to be able to check existing
+            # read file to be able to check existing declaration
             flines = self.view.substr(sublime.Region(0, self.view.size()))
             # Add signal declaration
             for p in pm['port']:
