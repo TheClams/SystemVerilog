@@ -320,6 +320,47 @@
 				<key>name</key>
 				<string>meta.definition.systemverilog</string>
 			</dict>
+			<!-- SVA property -->
+			<dict>
+				<key>match</key>
+					<string>\b(property)\s+(\w+)</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.sva.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.sva.systemverilog</string>
+					</dict>
+				</dict>
+			</dict>
+			<!-- SVA assert -->
+			<dict>
+				<key>match</key>
+					<string>\b(\w+)\s*(:)\s*(assert)\b</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.sva.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.sva.systemverilog</string>
+					</dict>
+				</dict>
+			</dict>
 			<!-- PSL one-liner-->
 			<dict>
 				<key>begin</key>
@@ -809,7 +850,8 @@
 			<!-- Module instantiation with parameter -->
 			<dict>
 				<key>begin</key>
-				<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(#)(?=[^#])</string>
+				<!-- not sure why ^ cannot be used with \s-->
+				<string>\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(#)(?=[^#])</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>

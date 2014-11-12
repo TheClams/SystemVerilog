@@ -5,7 +5,7 @@
 	<key>name</key>
 	<string>Symbol List</string>
 	<key>scope</key>
-	<string>source.systemverilog meta.section.begin.systemverilog, source.systemverilog entity.name.type, source.systemverilog entity.psl.name</string>
+	<string>source.systemverilog meta.section.begin.systemverilog, source.systemverilog entity.name.type, source.systemverilog entity.name.sva, source.systemverilog entity.psl.name</string>
 	<key>settings</key>
 	<dict>
 		<key>showInSymbolList</key>

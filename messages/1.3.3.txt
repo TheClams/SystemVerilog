@@ -1,0 +1,4 @@
+SystemVerilog 1.3.3 Changelog:
+ - Merge fix from Zachary Bian on trialing comma error in SystemVerilog.sublime-settings
+ - Fix highlighting of instantiation of parameterized module not starting at beginning of the line
+ - Add highlight and symbol for SVA named property and assertion
