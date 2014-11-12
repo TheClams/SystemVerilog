@@ -10,5 +10,5 @@
 	"sv.instance_prefix": "i_", // Prefix to the module instantiation name
 	"sv.instance_suffix": "",   // Suffix to the module instantiation name
 	"sv.decl_start": "Signals declaration", // Pattern to find for signals auto-declaration (first empty line after pattern). Empty string to get declaration just above instantiation.
-	"sv.decl_indent": 1, // Number of indentation level for signal declaration
+	"sv.decl_indent": 1 // Number of indentation level for signal declaration
 }
