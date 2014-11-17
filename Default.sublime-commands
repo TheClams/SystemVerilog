@@ -1,0 +1,10 @@
+[
+    {
+        "caption": "Verilog: Show signal/variable type",
+        "command": "verilog_type"
+    },
+    {
+        "caption": "Verilog: Instantiate Module",
+        "command": "verilog_module_inst"
+    }
+]

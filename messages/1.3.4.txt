@@ -1,0 +1,4 @@
+SystemVerilog 1.3.4 Changelog:
+ - Fix completion of word starting by u (was not taking the default auto-completion...)
+ - Add small snippet for constraint
+ - Add Command file to get Verilog command in the panel

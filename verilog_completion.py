@@ -12,8 +12,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         # Provide completion for most used uvm function: in this case do not override normal sublime completion
         if(prefix.startswith('u')):
-            completion = self.uvm_completion()
-            return completion
+            return self.uvm_completion()
         # No additionnal completion if we are inside a word
         if(prefix!=''):
             return []
@@ -33,11 +32,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def uvm_completion(self):
         c = []
-        c.append(['uvm_config_db get()' , 'uvm_config_db#()::get(this, "$1", "$0", $0)' ])
-        c.append(['uvm_config_db set()' , 'uvm_config_db#()::set(this, "$1", "$0", $0)' ])
-        c.append(['uvm_report_info()'   , 'uvm_report_info("$1", "$0", UVM_NONE)' ])
-        c.append(['uvm_report_warning()', 'uvm_report_warning("$1", "$0")' ])
-        c.append(['uvm_report_error()'  , 'uvm_report_error("$1", "$0")' ])
+        c.append(['uvm_config_db_get' , 'uvm_config_db#()::get(this, "$1", "$0", $0)' ])
+        c.append(['uvm_config_db_set' , 'uvm_config_db#()::set(this, "$1", "$0", $0)' ])
+        c.append(['uvm_report_info'   , 'uvm_report_info("$1", "$0", UVM_NONE)' ])
+        c.append(['uvm_report_warning', 'uvm_report_warning("$1", "$0")' ])
+        c.append(['uvm_report_error'  , 'uvm_report_error("$1", "$0")' ])
         return c
 
     def dot_completion(self,view,r):
