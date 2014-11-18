@@ -6,5 +6,9 @@
     {
         "caption": "Verilog: Instantiate Module",
         "command": "verilog_module_inst"
+    },
+    {
+        "caption": "Verilog: Alignment",
+        "command": "verilog_align"
     }
 ]

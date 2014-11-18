@@ -1,0 +1,4 @@
+SystemVerilog 1.4.0 Changelog:
+ - Add alignment feature for module port declaration and module instantiation:
+  * Simply put your cursod in a port declaration section or a module instantiation and call the command "Verilog: Alignement" from the palette
+  * Check readme.md for example of keymapping (keybinding to function verilog_align )
