@@ -88,14 +88,14 @@ def get_type_info(txt,var_name):
     # print("Array: " + str(m) + "=>" + str(at))
     return {'decl':ft,'type':t,'array':at,'bw':bw, 'name':var_name}
 
-#
-def parse_module(fname):
+# TODO:
+def parse_module(fname,mname=r'\w+'):
     flines = ''
     with open(fname, "r") as f:
         flines = str(f.read())
     flines = clean_comment(flines)
     # print(flines)
-    m = re.search(r"(?s)module\s+(\w+)\s*(#\s*\([^;]+\))?\s*\((.+?)\)\s*;", flines)
+    m = re.search(r"(?s)module\s+("+mname+")\s*(#\s*\([^;]+\))?\s*\((.+?)\)\s*;", flines)
     if m is None:
         print("No module found")
         return None

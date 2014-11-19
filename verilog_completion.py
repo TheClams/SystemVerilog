@@ -3,8 +3,12 @@ import re, string, os, sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
 import verilogutil
+import sublimeutil
 
 class VerilogAutoComplete(sublime_plugin.EventListener):
+
+    # Cache latest information
+    cache_module = {'name' : '', 'date' : 0, 'info' : None}
 
     def on_query_completions(self, view, prefix, locations):
         # don't change completion if we are not in a systemVerilog file
@@ -41,58 +45,69 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def dot_completion(self,view,r):
         # select word before the dot and quit with no completion if no word found
+        start_pos = r.a # save original position of the .
+        start_word = view.substr(view.word(r))
         r.a -=1
         r.b = r.a
         r = view.word(r);
         w = str.rstrip(view.substr(r))
         completion = []
         # print ('previous word: ' + w)
-        if w=='': #No word before dot => no completion
-            return completion
-        # get type information on the variable
-        ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
-        # print ('Type info: ' + str(ti))
-        if ti['type'] is None:
-            return completion
-        #Provide completion for different type
-        if ti['array']!='None' :
-            completion = self.array_completion(ti['array'])
-        elif ti['type']=='string':
-            completion = self.string_completion()
-        elif ti['type']=='enum':
-            completion = self.enum_completion()
-        elif ti['type']=='mailbox':
-            completion = self.mailbox_completion()
-        elif ti['type']=='semaphore':
-            completion = self.semaphore_completion()
-        elif ti['type']=='process':
-            completion = self.process_completion()
-        elif ti['type']=='event':
-            completion = ['triggered','triggered']
-        # Non standard type => try to find the type in the lookup list and get the type
-        else:
-            # print (ti['type'])
-            filelist = view.window().lookup_symbol_in_index(ti['type'])
-            if filelist:
-                fname = filelist[0][0]
-                #filename seems to be in a unix specific format => convert to windows if needed
-                if sublime.platform() == 'windows':
-                    fname= re.sub(r'/([A-Za-z])/(.+)', r'\1:/\2', fname)
-                    fname= re.sub(r'/', r'\\', fname)
-                # print(w + ' of type ' + ti['type'] + ' defined in ' + str(fname))
-                with open(fname, 'r') as f:
-                    flines = str(f.read())
-                tti = verilogutil.get_type_info(flines,ti['type'])
-                if tti['type']=='interface':
-                    return self.interface_completion(flines)
-                elif tti['type']=='enum':
-                    completion = self.enum_completion()
-                elif tti['type'] in ['struct','union']:
-                    completion = self.struct_completion(tti['decl'])
-                #TODO: Provides more completion (enum, struct, interface, ...)
-        #Add randomize function for rand variable
-        if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
-            completion.append(['randomize()','randomize()'])
+        if w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
+            #No word before dot => check the scope
+            scope = view.scope_name(r.a)
+            if 'meta.module.inst' in scope:
+                r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
+                txt = view.substr(r)
+                mname = re.findall(r'\w+',txt)[0]
+                filelist = view.window().lookup_symbol_in_index(mname)
+                # TODO: get type to identify if is a module, an interface or a function and use the relevant completion function
+                if filelist:
+                    completion = self.module_binding_completion(txt, sublimeutil.normalize_fname(filelist[0][0]),mname,start_pos-r.a)
+            else :
+                return completion
+        else :
+            # get type information on the variable
+            ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
+            # print ('Type info: ' + str(ti))
+            if ti['type'] is None:
+                return completion
+            #Provide completion for different type
+            if ti['array']!='None' :
+                completion = self.array_completion(ti['array'])
+            elif ti['type']=='string':
+                completion = self.string_completion()
+            elif ti['type']=='enum':
+                completion = self.enum_completion()
+            elif ti['type']=='mailbox':
+                completion = self.mailbox_completion()
+            elif ti['type']=='semaphore':
+                completion = self.semaphore_completion()
+            elif ti['type']=='process':
+                completion = self.process_completion()
+            elif ti['type']=='event':
+                completion = ['triggered','triggered']
+            # Non standard type => try to find the type in the lookup list and get the type
+            else:
+                # print (ti['type'])
+                filelist = view.window().lookup_symbol_in_index(ti['type'])
+                if filelist:
+                    fname = sublimeutil.normalize_fname(filelist[0][0])
+                    # print(w + ' of type ' + ti['type'] + ' defined in ' + str(fname))
+                    # TODO: use a cache system to give better response time
+                    with open(fname, 'r') as f:
+                        flines = str(f.read())
+                    tti = verilogutil.get_type_info(flines,ti['type'])
+                    if tti['type']=='interface':
+                        return self.interface_completion(flines)
+                    elif tti['type']=='enum':
+                        completion = self.enum_completion()
+                    elif tti['type'] in ['struct','union']:
+                        completion = self.struct_completion(tti['decl'])
+                    #TODO: Provides more completion (enum, struct, interface, ...)
+            #Add randomize function for rand variable
+            if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
+                completion.append(['randomize()','randomize()'])
         return completion
 
     def array_completion(self,array_type):
@@ -274,8 +289,15 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     # Interface completion: all signal declaration can be used as completion
     def interface_completion(self,flines):
-        int_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*(?:;|\))'
         flines = verilogutil.clean_comment(flines)
+        # Look all modports
+        modports = re.findall(r'^\s*modport\s+(\w+)\b', flines, flags=re.MULTILINE)
+        # remove modports before looking for I/O and field to avoid duplication of signals
+        flines = re.sub(r'modport\s+\w+\s+\(.*?\);','',flines, flags=re.MULTILINE|re.DOTALL)
+        # remove cloking block input
+        flines = re.sub(r'clocking\b.*?endclocking(\s*:\s*\w+)?','',flines, flags=re.MULTILINE|re.DOTALL)
+        #Look for signal declaration
+        int_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*(?:;|\))'
         mlist = re.findall(int_decl, flines, flags=re.MULTILINE)
         c = []
         # print('Declarations founds: ',mlist)
@@ -285,8 +307,52 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # it can included default initialization => remove it
             for m in mlist:
                 slist = re.findall(r'([A-Za-z_][\w]*)\s*(\=\s*\w+)?(,|$)',m[5])
-                # print('Parsing ',str(m[5]),' => ',str(slist))
+                # print('Parsing ',str(m[5]),' with type ' + m[0] +' => ',str(slist))
+                # Provide information on the type of signal : I/O, parameter or field
+                if m[0].strip() in ['input', 'output', 'inout']:
+                    t = 'I/O'
+                elif m[0].strip() == 'parameter':
+                    t = 'Param'
+                else :
+                    t = 'Field'
                 if slist is not None:
                     for s in slist:
-                        c.append([s[0],s[0]])
+                        c.append([s[0]+'\t'+t,s[0]])
+        # Completion for modports:
+        if modports:
+            for mp in modports:
+                c.append([mp+'\tModport',mp])
+        return c
+
+    # Provide completion for module binding:
+    # Extract all parameter and ports from module definition
+    # and filter based on position (parameter or ports) and existing binding
+    def module_binding_completion(self,txt,fname,mname,pos):
+        c = []
+        # Extract all parameter and ports from module definition using cached information if available
+        fdate = os.path.getmtime(fname)
+        if self.cache_module['name'] == fname and self.cache_module['date']==fdate:
+            minfo = self.cache_module['info']
+        else:
+            minfo = verilogutil.parse_module(fname,mname)
+            self.cache_module['info']  = minfo
+            self.cache_module['name'] = fname
+            self.cache_module['date'] = fdate
+        # print('[module_binding_completion] Module ' + mname + ' : ' + str(minfo))
+        if not minfo:
+            return c
+        # Extract all exising binding
+        b = re.findall(r'\.(\w+)\s*\(',txt,flags=re.MULTILINE)
+        # Find position of limit between parameter and port
+        l = minfo['port']
+        if minfo['param']:
+            m = re.search(r'\)\s*\(',txt,flags=re.MULTILINE)
+            if m:
+                if m.start()>pos:
+                    l = minfo['param']
+        len_port = max([len(x['name']) for x in minfo['port']])
+        # TODO: find a way to know if the comma need to be inserted or not
+        for x in l:
+            if x['name'] not in b:
+                c.append([x['name']+'\t'+str(x['type']),x['name'].ljust(len_port)+'(' + x['name'] + '$0),'])
         return c

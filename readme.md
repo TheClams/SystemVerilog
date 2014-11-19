@@ -6,7 +6,7 @@ Description
 -----------
 
 ####Syntax Highlighting:
- * SystemVerilog
+ * SystemVerilog / Verilog
  * UCF (Xilinx Constraint file)
 
 ####Various snippets:

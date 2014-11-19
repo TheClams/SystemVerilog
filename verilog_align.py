@@ -3,6 +3,7 @@ import re, string, os, sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
 import verilogutil
+import sublimeutil
 
 class VerilogAlign(sublime_plugin.TextCommand):
 
@@ -41,16 +42,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
 
     # Alignement for module instance
     def inst_align(self,region):
-        cnt = 0 # counter for timeout of expand selection (to avoid infinite loop, was needed in debug at least)
-        scope = 'meta.module.inst'
-        # Expand selection until we get the whole module instantiation
-        while 'meta.module.inst' in scope and cnt<8:
-            r = region
-            # print(self.view.substr(r))
-            region=self.view.extract_scope(r.b)
-            cnt=cnt+1
-            scope = self.view.scope_name(region.a)
-            # print('ITERATION ' + str(cnt) + ': next scope = ' + scope)
+        r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
         # Make sure to get complete line to be able to get initial indentation
         r = self.view.expand_by_class(r,sublime.CLASS_LINE_START | sublime.CLASS_LINE_END)
         txt = self.view.substr(r).rstrip()
@@ -96,14 +88,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
 
     # Alignement for port declaration (for ansi-style)
     def port_align(self,region):
-        cnt = 0 # counter for timeout of expand selection (to avoid infinite loop, was needed in debug at least)
-        scope = 'meta.module.systemverilog'
-        # Expand selection until we get the whole module instantiation
-        while 'meta.module.systemverilog' in scope and cnt<8:
-            r = region
-            region=self.view.extract_scope(r.b)
-            cnt=cnt+1
-            scope = self.view.scope_name(region.a)
+        r = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
         r = self.view.expand_by_class(r,sublime.CLASS_LINE_START | sublime.CLASS_LINE_END)
         txt = self.view.substr(r)
         #TODO: handle interface

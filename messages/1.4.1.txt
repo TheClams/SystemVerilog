@@ -1,0 +1,3 @@
+SystemVerilog 1.4.1 Changelog:
+ - Completion for interface now include modport as well as description to distinguish I/O, fields, parameters and modports.
+ - Add completion for module binding
