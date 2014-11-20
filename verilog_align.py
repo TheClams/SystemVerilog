@@ -61,29 +61,49 @@ class VerilogAlign(sublime_plugin.TextCommand):
             l = line.lstrip().rstrip() + '\n'
             #Special case of first line: potentially insert an end of line between instance name and port name
             if i==0:
-                txt_new += self.char_space*nb_indent+l
-            else :
-                if i == len(lines)-1:
+                txt_new += self.char_space*nb_indent
+                m = re.search(r'(.*?)(\..*)',l)
+                if m:
+                    # Let the .* at the beginning
+                    if m.groups()[1].startswith('.*') :
+                        txt_new += l
+                        l = ''
+                    else :
+                        txt_new += m.groups()[0] + '\n'
+                        l = m.groups()[1]+'\n'
+                else :
+                    txt_new += l
+                    l = ''
+            # Look for a binding (not supporting binding on multiple line : alignement ignored in this case)
+            m = re.search(r'^'+re_str+r'(,|\))?\s*(.*)',l)
+            if m:
+                # print('Line ' + str(i) + ' : ' + str(m.groups()))
+                if i == len(lines)-1 and m.groups()[2]!=')':
                     txt_new += self.char_space*(nb_indent)
                 else:
                     txt_new += self.char_space*(nb_indent+1)
-                m = re.search(r'^'+re_str+r'(,|\))?\s*(.*)',l)
-                if m:
-                    # print('Line ' + str(i) + ' : ' + str(m.groups()))
-                    txt_new += '.' + m.groups()[0].ljust(len_port)
-                    txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals) + ')'
-                    if m.groups()[2]:
-                        if m.groups()[2]==')' :
-                            txt_new += l[-1] + self.char_space*nb_indent + ')'
-                        else:
-                            txt_new += m.groups()[2] + ' '
-                    else:
-                        txt_new += '  '
-                    if m.groups()[3]:
-                        txt_new += m.groups()[3]
-                    txt_new += l[-1]
-                else : # No port binding ? recopy line with just the basic indentation level
-                    txt_new += l
+                txt_new += '.' + m.groups()[0].ljust(len_port)
+                txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals) + ')'
+                if m.groups()[2]==')' :
+                    txt_new += '\n' + self.char_space*nb_indent + ')'
+                elif m.groups()[2]:
+                    txt_new += m.groups()[2] + ' '
+                else:
+                    txt_new += '  '
+                if m.groups()[3]:
+                    txt_new += m.groups()[3]
+                txt_new += '\n'
+            else : # No port binding ? recopy line with just the basic indentation level
+                if i == len(lines)-1:
+                    # handle case where alignement is not supported but there is test with ); on same line: insert return line
+                    m = re.search(r'\s*(.+)\s*\)\s*;(.*)',l)
+                    if m:
+                        txt_new += self.char_space*(nb_indent+1)+m.groups()[0]+'\n'
+                        txt_new += self.char_space*(nb_indent)+');' + m.groups()[1] + '\n'
+                    else :
+                        txt_new += self.char_space*(nb_indent)+l
+                elif l!='':
+                    txt_new += self.char_space*(nb_indent+1)+l
         return (txt_new,r)
 
     # Alignement for port declaration (for ansi-style)

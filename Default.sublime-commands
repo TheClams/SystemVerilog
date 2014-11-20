@@ -10,5 +10,9 @@
     {
         "caption": "Verilog: Alignment",
         "command": "verilog_align"
+    },
+    {
+        "caption": "Verilog: Toggle .*",
+        "command": "verilog_toggle_dot_star"
     }
 ]

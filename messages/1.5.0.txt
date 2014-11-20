@@ -1,0 +1,7 @@
+SystemVerilog 1.5.0 Changelog:
+ - Add command to expand the .* in a module binding, or to replace explicit binding by .* when port and signal have same name
+  * This new command (verilog_toggle_dot_star) is available in the palette under "Verilog: Toggle .*"
+  * Check readme.md for keybinding example
+ - Alignement update:
+  * fix case where last binding was not properly align
+  * If there is existing binding on same line as module instantiation, insert return line (except for .*)

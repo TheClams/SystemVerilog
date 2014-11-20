@@ -25,6 +25,7 @@ Description
    > Look at setting file (Preferences->Package settings->SystemVerilog) to configure options
  * Smart Autocompletion: method for standard type or field of struct/interface (triggered by .), system task (triggered by $), ...
  * Alignment of block of code: support module port declaration and module instantiation (Palette command "Verilog: Alignment")
+ * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
  * Macro to insert a begin end around a selection (cf Keymapping section to see how to use it)
 
 
@@ -48,6 +49,14 @@ To map key to the different feature, simply add the following to your user .subl
 		[
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["ctrl+shift+f10"], "command": "verilog_toggle_dot_star",
+		"context":
+		[
+			{ "key": "num_selections", "operator": "equal", "operand": 1 },
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog meta.module.inst"}
 		]
 	},
 	{

@@ -350,7 +350,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if m:
                 if m.start()>pos:
                     l = minfo['param']
-        len_port = max([len(x['name']) for x in minfo['port']])
+        len_port = max([len(p['name']) for p in minfo['port']])
         # TODO: find a way to know if the comma need to be inserted or not
         for x in l:
             if x['name'] not in b:
