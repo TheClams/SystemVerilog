@@ -9,6 +9,7 @@ import re, string, os
 re_decl  = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\']+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]]+\})\s*([A-Za-z_][\w=,;\s]*,\s*)?\b'
+re_if_p  = r'^\s*(\w+)\s*(#\s*\([^;]+\))\s*'
 
 def clean_comment(txt):
     txt_nc = txt
@@ -22,24 +23,30 @@ def clean_comment(txt):
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
 def get_type_info(txt,var_name):
     txt = clean_comment(txt)
-    m = re.search(re_decl+var_name+r'.*$', txt, flags=re.MULTILINE)
+    m = re.search(re_decl+var_name+r'\b[^\.].*$', txt, flags=re.MULTILINE)
     idx_type = 3
     idx_bw = 4
+    idx_max = 5
     # print("get_type_info for var " + str(var_name) + " in \n" + str(txt))
     #if regex on signal/variable declaration failed, try looking for an enum, struct or a typedef enum/struct
     if m is None:
-        m = re.search(re_enum+var_name+r'.*$', txt, flags=re.MULTILINE)
-        if m is None:
-            m = re.search(re_union+var_name+r'.*$', txt, flags=re.MULTILINE)
-        idx_type = 1
-        idx_bw = 3
+        m = re.search(re_if_p+var_name+r'\b.*$', txt, flags=re.MULTILINE)
+        if m :
+            idx_type = 0
+            idx_max = 2
+        else:
+            m = re.search(re_enum+var_name+r'\b.*$', txt, flags=re.MULTILINE)
+            if m is None:
+                m = re.search(re_union+var_name+r'\b.*$', txt, flags=re.MULTILINE)
+            idx_type = 1
+            idx_bw = 3
     #return a tuple of None if not found
     if m is None:
         return {'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name}
     line = m.group(0).lstrip()
     # print("get_type_info: line=" + line)
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
-    t = str.rstrip(m.groups()[idx_type])
+    t = str.rstrip(m.groups()[idx_type]).split('.')[0]
     if t=="unsigned" or t=="signed": # TODO check if other cases might happen
         if m.groups()[2] is not None:
             t = str.rstrip(m.groups()[2]) + ' ' + t
@@ -56,7 +63,7 @@ def get_type_info(txt,var_name):
     # print("get_type_info: type => " + str(t))
     ft = ''
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
-    for i in range(0,5):
+    for i in range(0,idx_max):
         if m.groups()[i] is not None:
             tmp = str.rstrip(m.groups()[i])
             # Cleanup space in enum/struct declaration
@@ -68,7 +75,9 @@ def get_type_info(txt,var_name):
     ft += var_name
     # print("get_type_info: decl => " + ft)
     #extract bus width
-    bw = str.rstrip(str(m.groups()[idx_bw]))
+    bw = 'None'
+    if idx_bw>-1 and idx_bw<=idx_max:
+        bw = str.rstrip(str(m.groups()[idx_bw]))
     # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
     at = "None"
     m = re.search(r'\b'+var_name+r'\s*\[([^\]]*)\]', line, flags=re.MULTILINE)

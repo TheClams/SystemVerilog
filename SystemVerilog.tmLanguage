@@ -414,6 +414,10 @@
 					</dict>
 					<dict>
 						<key>include</key>
+						<string>#functions</string>
+					</dict>
+					<dict>
+						<key>include</key>
 						<string>#constants</string>
 					</dict>
 				</array>
@@ -507,6 +511,10 @@
 					<dict>
 						<key>include</key>
 						<string>#operators</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#functions</string>
 					</dict>
 					<dict>
 						<key>include</key>
@@ -1023,17 +1031,22 @@
 			</dict>
 			<dict>
 				<key>include</key>
+				<string>#functions</string>
+			</dict>
+			<dict>
+				<key>include</key>
 				<string>#constants</string>
 			</dict>
+		</array>
+		<key>repository</key>
+		<dict>
+			<key>functions</key>
 			<dict>
 				<key>match</key>
 				<string>\b(\w+)(?=\s*\()</string>
 				<key>name</key>
 				<string>support.function.generic.systemverilog</string>
 			</dict>
-		</array>
-		<key>repository</key>
-		<dict>
 			<key>all-types</key>
 			<dict>
 				<key>patterns</key>

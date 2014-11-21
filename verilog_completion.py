@@ -55,7 +55,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         rst_name    = self.settings.get('sv.rst_name','rst')
         rst_n_name  = self.settings.get('sv.rst_n_name','rst_n')
         clk_en_name = self.settings.get('sv.clk_en_name','clk_en')
-        print('clk_name = ' + str(clk_name) + ' rst_n_name = ' + str(rst_n_name))
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
         if self.settings.get('sv.always_name_auto') :
             pl = [] # posedge list
@@ -80,7 +79,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             r = self.view.find(verilogutil.re_decl+clk_en_name,0)
             if not r :
                 clk_en_name = ''
-        print('clk_name = ' + str(clk_name) + ' rst_n_name = ' + str(rst_n_name))
         # define basic always block with asynchronous reset
         a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$0\n'
         a_l += '\tif(~'+rst_n_name + ') begin\n\n\tend else '
@@ -121,11 +119,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.b = r.a
         r = view.word(r);
         w = str.rstrip(view.substr(r))
+        scope = view.scope_name(r.a)
         completion = []
         # print ('previous word: ' + w)
         if w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
             #No word before dot => check the scope
-            scope = view.scope_name(r.a)
             if 'meta.module.inst' in scope:
                 r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
                 txt = view.substr(r)
@@ -137,10 +135,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             else :
                 return completion
         else :
+            modport_only = False
             # get type information on the variable
             ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
             # print ('Type info: ' + str(ti))
-            if ti['type'] is None:
+            if ti['type'] is None and 'meta.module.systemverilog' not in scope:
                 return completion
             #Provide completion for different type
             if ti['array']!='None' :
@@ -159,25 +158,31 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 completion = ['triggered','triggered']
             # Non standard type => try to find the type in the lookup list and get the type
             else:
-                # print (ti['type'])
-                filelist = view.window().lookup_symbol_in_index(ti['type'])
+                # Force the type to the word itself if we are in a module declaration : typical of modport
+                if ti['type'] is None and 'meta.module.systemverilog' in scope:
+                    t = w
+                    modport_only = True
+                else:
+                    t = ti['type']
+                filelist = view.window().lookup_symbol_in_index(t)
                 if filelist:
                     fname = sublimeutil.normalize_fname(filelist[0][0])
-                    # print(w + ' of type ' + ti['type'] + ' defined in ' + str(fname))
+                    # print(w + ' of type ' + t + ' defined in ' + str(fname))
                     # TODO: use a cache system to give better response time
                     with open(fname, 'r') as f:
                         flines = str(f.read())
-                    tti = verilogutil.get_type_info(flines,ti['type'])
+                    tti = verilogutil.get_type_info(flines,t)
                     if tti['type']=='interface':
-                        return self.interface_completion(flines)
+                        return self.interface_completion(flines,modport_only)
                     elif tti['type']=='enum':
                         completion = self.enum_completion()
                     elif tti['type'] in ['struct','union']:
                         completion = self.struct_completion(tti['decl'])
                     #TODO: Provides more completion (enum, struct, interface, ...)
             #Add randomize function for rand variable
-            if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
-                completion.append(['randomize()','randomize()'])
+            if ti['decl']:
+                if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
+                    completion.append(['randomize()','randomize()'])
         return completion
 
     def array_completion(self,array_type):
@@ -358,7 +363,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         return c
 
     # Interface completion: all signal declaration can be used as completion
-    def interface_completion(self,flines):
+    def interface_completion(self,flines, modport_only=False):
         flines = verilogutil.clean_comment(flines)
         # Look all modports
         modports = re.findall(r'^\s*modport\s+(\w+)\b', flines, flags=re.MULTILINE)
@@ -370,8 +375,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         int_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*(?:;|\))'
         mlist = re.findall(int_decl, flines, flags=re.MULTILINE)
         c = []
+        c_param = []
         # print('Declarations founds: ',mlist)
-        if mlist is not None:
+        if mlist is not None and not modport_only:
             # for each matched declaration extract only the signal name.
             # Each declaration can be a list => split it
             # it can included default initialization => remove it
@@ -379,19 +385,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 slist = re.findall(r'([A-Za-z_][\w]*)\s*(\=\s*\w+)?(,|$)',m[5])
                 # print('Parsing ',str(m[5]),' with type ' + m[0] +' => ',str(slist))
                 # Provide information on the type of signal : I/O, parameter or field
-                if m[0].strip() in ['input', 'output', 'inout']:
-                    t = 'I/O'
-                elif m[0].strip() == 'parameter':
-                    t = 'Param'
-                else :
-                    t = 'Field'
                 if slist is not None:
-                    for s in slist:
-                        c.append([s[0]+'\t'+t,s[0]])
+                    if m[0].strip() in ['input', 'output', 'inout']:
+                        for s in slist: c.append([s[0]+'\tI/O',s[0]])
+                    elif m[0].strip() == 'parameter':
+                        for s in slist: c_param.append([s[0]+'\tParam',s[0]])
+                    else :
+                        for s in slist: c.append([s[0]+'\tField',s[0]])
         # Completion for modports:
         if modports:
             for mp in modports:
                 c.append([mp+'\tModport',mp])
+        for x in c_param:
+            c.append(x)
         return c
 
     # Provide completion for module binding:

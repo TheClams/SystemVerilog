@@ -103,7 +103,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             for p in pm['port']:
                 #check existing signal declaration and coherence
                 ti = verilogutil.get_type_info(flines,p['name'])
-                # print ("Port " + p['name'] + " => " + str(ti))
+                print ("Port " + p['name'] + " => " + str(ti))
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + p['name'] + " => " + str(p['decl']))
                     if p['decl'] is None:

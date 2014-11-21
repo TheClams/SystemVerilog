@@ -44,11 +44,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def inst_align(self,region):
         r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
         # Make sure to get complete line to be able to get initial indentation
-        r = self.view.expand_by_class(r,sublime.CLASS_LINE_START | sublime.CLASS_LINE_END)
+        r = self.view.line(r)
         txt = self.view.substr(r).rstrip()
-        # print (txt)
         # Realign text
-        # bind = re.findall(r'\.\s*(?P<port>\w+)\s*\(\s*(?P<signal>[\w\[\]\:~\{\}\s]+)\s*\)[\s]*(?P<sep>,|\))?\s*?(?P<comment>/.*?)?$',txt,re.MULTILINE)
         re_str = r'\.\s*(\w+)\s*\(\s*([\w\[\]\:~`\+-\{\}\s\'&|]*)\s*\)[\s]*'
         bind = re.findall(re_str,txt,re.MULTILINE)
         len_port    = max([len(x[0]) for x in bind])
@@ -58,7 +56,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         nb_indent = self.get_indent_level(lines[0])
         for i,line in enumerate(lines):
             # Remove leading and trailing space. add end of line
-            l = line.lstrip().rstrip() + '\n'
+            l = line.lstrip().rstrip()
+            line_handled = False
             #Special case of first line: potentially insert an end of line between instance name and port name
             if i==0:
                 txt_new += self.char_space*nb_indent
@@ -66,44 +65,47 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 if m:
                     # Let the .* at the beginning
                     if m.groups()[1].startswith('.*') :
-                        txt_new += l
-                        l = ''
+                        txt_new += l + '\n'
+                        line_handled = True
                     else :
                         txt_new += m.groups()[0] + '\n'
                         l = m.groups()[1]+'\n'
                 else :
-                    txt_new += l
-                    l = ''
-            # Look for a binding (not supporting binding on multiple line : alignement ignored in this case)
-            m = re.search(r'^'+re_str+r'(,|\))?\s*(.*)',l)
-            if m:
-                # print('Line ' + str(i) + ' : ' + str(m.groups()))
-                if i == len(lines)-1 and m.groups()[2]!=')':
-                    txt_new += self.char_space*(nb_indent)
-                else:
-                    txt_new += self.char_space*(nb_indent+1)
-                txt_new += '.' + m.groups()[0].ljust(len_port)
-                txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals) + ')'
-                if m.groups()[2]==')' :
-                    txt_new += '\n' + self.char_space*nb_indent + ')'
-                elif m.groups()[2]:
-                    txt_new += m.groups()[2] + ' '
-                else:
-                    txt_new += '  '
-                if m.groups()[3]:
-                    txt_new += m.groups()[3]
-                txt_new += '\n'
-            else : # No port binding ? recopy line with just the basic indentation level
-                if i == len(lines)-1:
-                    # handle case where alignement is not supported but there is test with ); on same line: insert return line
-                    m = re.search(r'\s*(.+)\s*\)\s*;(.*)',l)
-                    if m:
-                        txt_new += self.char_space*(nb_indent+1)+m.groups()[0]+'\n'
-                        txt_new += self.char_space*(nb_indent)+');' + m.groups()[1] + '\n'
-                    else :
-                        txt_new += self.char_space*(nb_indent)+l
-                elif l!='':
-                    txt_new += self.char_space*(nb_indent+1)+l
+                    txt_new += l + '\n'
+                    line_handled = True
+            if not line_handled :
+                # Look for a binding (not supporting binding on multiple line : alignement ignored in this case)
+                m = re.search(r'^'+re_str+r'(,|\))?\s*(.*)',l)
+                if m:
+                    # print('Line ' + str(i) + ' : ' + str(m.groups()))
+                    if i == len(lines)-1 and m.groups()[2]!=')':
+                        txt_new += self.char_space*(nb_indent)
+                    else:
+                        txt_new += self.char_space*(nb_indent+1)
+                    txt_new += '.' + m.groups()[0].ljust(len_port)
+                    txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals) + ')'
+                    if m.groups()[2]==')' :
+                        txt_new += '\n' + self.char_space*nb_indent + ')'
+                    elif m.groups()[2]:
+                        txt_new += m.groups()[2] + ' '
+                    else:
+                        txt_new += '  '
+                    if m.groups()[3]:
+                        txt_new += m.groups()[3]
+                    if i != len(lines)-1:
+                        txt_new += '\n'
+                else : # No port binding ? recopy line with just the basic indentation level
+                    if i == len(lines)-1:
+                        # handle case where alignement is not supported but there is test with ); on same line: insert return line
+                        m = re.search(r'\s*(.+)\s*\)\s*;(.*)',l)
+                        if m:
+                            print('m= ' + str(m.groups()))
+                            txt_new += self.char_space*(nb_indent+1)+m.groups()[0]+'\n'
+                            txt_new += self.char_space*(nb_indent)+');' + m.groups()[1]
+                        else :
+                            txt_new += self.char_space*(nb_indent)+l
+                    else:
+                        txt_new += self.char_space*(nb_indent+1)+l + '\n'
         return (txt_new,r)
 
     # Alignement for port declaration (for ansi-style)
@@ -113,7 +115,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         txt = self.view.substr(r)
         #TODO: handle interface
         # Port declaration: direction type? signess? buswidth? portlist ,? comment?
-        re_str = r'^[ \t]*(\w+)[ \t]+(\w+\b)?[ \t]*(\w+\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*(\w+[\w, \t]*)'
+        re_str = r'^[ \t]*([\w\.]+)[ \t]+(\w+\b)?[ \t]*(\w+\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*(\w+[\w, \t]*)'
         decl = re.findall(re_str,txt,re.MULTILINE)
         # if decl:
         #     print(decl)
@@ -173,15 +175,16 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     # Add bus width if it exists at least for one port
                     if len_bw>1:
                         if m.groups()[4]:
-                            txt_new += ' [' + m.groups()[4].strip().rjust(len_bw) + '] '
+                            txt_new += ' [' + m.groups()[4].strip().rjust(len_bw) + ']'
                         else:
-                            txt_new += ''.rjust(len_bw+4)
+                            txt_new += ''.rjust(len_bw+3)
                     # Add port list: space every port in the list by just on space
                     s = re.sub(r',',', ',re.sub(r'\s*','',m.groups()[5]))
+                    txt_new += ' '
                     if s.endswith(', '):
                         txt_new += s[:-2].ljust(len_port) + ','
                     else:
-                        txt_new += s.ljust(len_port)
+                        txt_new += s.ljust(len_port) + ' '
 
                     # Add colon or space
 

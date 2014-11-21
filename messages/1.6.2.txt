@@ -1,0 +1,9 @@
+SystemVerilog 1.6.2 Changelog:
+ - Fix extraction of type for interface with a modport (this was impacting completion, alignement, module instantiation)
+ - Alignement update:
+  * Comment on the last port is correctly aligned with the others
+  * fix issue around first and last line (could mees first line indentation and add an empty line at the end)
+ - Completion update for interface:
+  * Provide completion only of modport inside a module declaration
+  * Put completion of parameters at the end of the list (less likely to be used, not even sure it is usefull ...)
+ - Highlight function in psl assertions
