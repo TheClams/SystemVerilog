@@ -4,11 +4,20 @@
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
 	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$`"} ],
 
-	// SystemVerilog plugin configuration
+	// SystemVerilog always block completion configuration
+	"sv.clk_name": "clk",     // Default clock name
+	"sv.rst_name": "rst",     // Default reset active high
+	"sv.rst_n_name": "rst_n", // Default reset active low
+	"sv.always_name_auto": true, // Look for existing always block in the file to retrieve name of clk/reset
+	"sv.always_sv_only" : true, // In .sv file only display completion for always_comb, always_ff or always_latch (no simple always)
+	"sv.clk_en_name": "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
+	"sv.always_ce_auto" : true, // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
+	// SystemVerilog Module instantiation configuration
 	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
 	"sv.instance_prefix": "i_", // Prefix to the module instantiation name
 	"sv.instance_suffix": "",   // Suffix to the module instantiation name
-	"sv.decl_start": "Signals declaration", // Pattern to find for signals auto-declaration (first empty line after pattern). Empty string to get declaration just above instantiation.
+	"sv.decl_start": "Signals declaration", // Pattern to find for start of signals auto-declaration . Empty string to get declaration just above instantiation.
+	"sv.decl_end": "----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
 	"sv.decl_indent": 1 // Number of indentation level for signal declaration
 }

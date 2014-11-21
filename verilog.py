@@ -31,7 +31,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
 ########################################
 # Create module instantiation skeleton #
 class VerilogModuleInstCommand(sublime_plugin.TextCommand):
-    #TODO: search ^module\s+\w+ in *.sv, *.v file, and maybe cache the information for quick access
+    #TODO: Run the search in background and keep a cache to improve performance
     def run(self,edit):
         window = sublime.active_window()
         self.project_rtl = []
@@ -40,21 +40,19 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
                 for fn in files:
                     if os.path.splitext(fn)[1] in ['.v','.sv']:
                         self.project_rtl.append(os.path.join(root,fn))
-                        # self.project_rtl.append([fn,os.path.join(root,fn)])
-        # print (window.project_data()['folders'][0]['path'])
         window.show_quick_panel(self.project_rtl, self.on_done )
         return
 
     def on_done(self, index):
         # print ("Selected: " + str(index) + " " + self.project_rtl[index])
         if index >= 0:
-            self.view.run_command("verilog_do_module_parse", {"args":{'text':self.project_rtl[index]}})
+            self.view.run_command("verilog_do_module_parse", {"args":{'fname':self.project_rtl[index]}})
 
 class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, args):
-        # print ("Parsing " + args['text'])
-        self.fname = args['text']
+        self.fname = args['fname']
+        #TODO: check for multiple module in the file
         self.pm = verilogutil.parse_module(self.fname)
         if self.pm is not None:
             self.param_value = []

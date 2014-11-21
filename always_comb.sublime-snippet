@@ -1,8 +1,0 @@
-<snippet>
-   <name>Always Comb SystemVerilog</name>
-   <content><![CDATA[always_comb begin : proc_${0}
-
-end]]></content>
-    <tabTrigger>always_c</tabTrigger>
-    <scope>source.systemverilog</scope>
-</snippet>

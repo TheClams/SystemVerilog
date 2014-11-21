@@ -20,13 +20,75 @@ Description
 ####Features:
  * Show signal declaration in status bar
  * Module instantiation:
-   > Use palette command "Verilog: Instantiate Module" or use keybinding to function 'verilog_module_inst'.
-   > This open the palette with all verilog file (*.v, *.sv): select one and the instantiation with empty connection will be created.
-   > Look at setting file (Preferences->Package settings->SystemVerilog) to configure options
- * Smart Autocompletion: method for standard type or field of struct/interface (triggered by .), system task (triggered by $), ...
+ * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
  * Alignment of block of code: support module port declaration and module instantiation (Palette command "Verilog: Alignment")
  * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
- * Macro to insert a begin end around a selection (cf Keymapping section to see how to use it)
+ * 'begin end' macro to surround a text by begin/end (cf Keymapping section to see how to use it)
+
+####Configuration
+To see all existing configuration option, go to Preferences->Package Settings->SystemVerilog->Settings (Default).
+
+To edit settings open the Settings (User), and add parameter with the value you want.
+
+
+
+Smart always snippets
+---------------------
+####Description
+The snippets for the always block are context dependant and configurable:
+
+ - always ff, always comb, always latch are specific to file with extension .sv
+ - Signal name for clk, clk_en and reset (low and high) can be configured (see below).
+ - The clock enable part of the snippets will be present only if the a signal with the correct name has been declared
+
+
+The name for clk and reset can be extracted from the current buffer:
+
+ - if the default clock name is not found in any posedge signal_name list, the highest occurence of a signal with a c in its name will be used
+ - if the default reset low name is not found in any negedge signal_name list, the highest occurence of will be used
+ - if the default reset high name is not found in any posedge signal_name list, the highest occurence of a signal without a c in its name will be used
+
+The automatic extraction of the name will not be perfect in all cases, but it will always be better than the basic behavior
+
+
+####Configuration
+"sv.clk_name" : Clock name, default to "clk".
+
+"sv.rst_n_name" : Reset active low,  default to "rst_n"
+
+"sv.rst_name": Reset active high, default to "rst".
+
+"sv.always_name_auto": Boolean to enable clk/rst name auto extraction, default to true
+
+"sv.always_sv_only": Boolean to filter simple always in .sv files, default to true.
+
+"sv.clk_en_name": Clock enable name, default to "clk_en"
+
+"sv.always_ce_auto" : Boolean to insert the clock enable part only if the clk enable has been declared
+
+
+
+Module Instantiation
+---------------------
+####Description
+Use palette command "Verilog: Instantiate Module" or use keybinding to function 'verilog_module_inst'.
+
+This open the palette with all verilog file (*.v, *.sv): select one and the instantiation will be inserted in the buffer.
+
+If the module has some parameter you can enter the value of each parameter one by one: if the default value is good you can directly press enter
+
+If autoconnection is enabled, signal with same name as port will be used as connection. If they have not been declared, the signal declaration will also be added.
+
+####Configuration
+"sv.fillparam": On module instantiation with parameter user is asked a value for each parameter. Default to true.
+
+"sv.autoconnect": Control if signals are created and connected in module instantiation. Default to true.
+
+"sv.instance_prefix": Prefix to the module instantiation name, default to "i_".
+
+"sv.instance_suffix": Suffix to the module instantiation name, default to "" (no suffix).
+
+"sv.decl_indent": Number of indentation level for signal declaration, default to 1.
 
 
 

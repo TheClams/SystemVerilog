@@ -959,6 +959,68 @@
 				<key>name</key>
 				<string>meta.module.inst.systemverilog</string>
 			</dict>
+			<!-- Struct assignement (could also match array assignment) -->
+			<dict>
+				<key>name</key>
+				<string>meta.struct.assign.systemverilog</string>
+				<key>begin</key>
+				<string>\b\s+(=)\s*(\'{)</string>
+				<key>beginCaptures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.other.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.other.systemverilog</string>
+					</dict>
+				</dict>
+				<key>end</key>
+				<string>;</string>
+				<key>patterns</key>
+				<array>
+					<dict>
+						<key>match</key>
+						<string>\b(\w+)\s*(:)(?!:)</string>
+						<key>captures</key>
+						<dict>
+							<key>1</key>
+							<dict>
+								<key>name</key>
+								<string>support.function.field.systemverilog</string>
+							</dict>
+							<key>2</key>
+							<dict>
+								<key>name</key>
+								<string>keyword.operator.other.systemverilog</string>
+							</dict>
+						</dict>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#comments</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#strings</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#operators</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#constants</string>
+					</dict>
+					<dict>
+						<key>include</key>
+						<string>#storage-scope-systemverilog</string>
+					</dict>
+				</array>
+			</dict>
 			<dict>
 				<key>include</key>
 				<string>#constants</string>

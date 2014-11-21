@@ -1,5 +1,6 @@
 import sublime, sublime_plugin
 import re, string, os, sys
+import collections
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
 import verilogutil
@@ -14,9 +15,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # don't change completion if we are not in a systemVerilog file
         if not view.match_selector(locations[0], 'source.systemverilog'):
             return []
+        self.view = view
+        self.settings = view.settings()
         # Provide completion for most used uvm function: in this case do not override normal sublime completion
         if(prefix.startswith('u')):
             return self.uvm_completion()
+        # Provide completion for most always block: in this case do not override normal sublime completion
+        if(prefix.startswith('a')):
+            return self.always_completion()
         # No additionnal completion if we are inside a word
         if(prefix!=''):
             return []
@@ -42,6 +48,64 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['uvm_report_warning', 'uvm_report_warning("$1", "$0");' ])
         c.append(['uvm_report_error'  , 'uvm_report_error("$1", "$0");' ])
         return c
+
+    def always_completion(self):
+        c = []
+        clk_name    = self.settings.get('sv.clk_name')
+        rst_name    = self.settings.get('sv.rst_name')
+        rst_n_name  = self.settings.get('sv.rst_n_name')
+        clk_en_name = self.settings.get('sv.clk_en_name')
+        # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
+        if self.settings.get('sv.always_name_auto') :
+            pl = [] # posedge list
+            r = self.view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
+            if pl:
+                if clk_name not in set(pl):
+                    # Make hypothesis that all clock signals have a c in their name
+                    pl_c = [x for x in pl if 'c' in x]
+                    if pl_c :
+                        clk_name = collections.Counter(pl_c).most_common(1)[0][0]
+                if rst_name not in set(pl):
+                    # Make hypothesis that the reset high signal does not have a 'c' in the name (and that's why active low reset is better :P)
+                    pl_r = [x for x in pl if x not in pl_c]
+                    if pl_r:
+                        clk_name = collections.Counter(pl_r).most_common(1)[0][0]
+            nl = [] # negedge list
+            r = self.view.find_all(r'negedge\s+(\w+)', 0, '$1', nl)
+            if nl:
+                if rst_n_name not in set(pl):
+                    rst_n_name = collections.Counter(nl).most_common(1)[0][0]
+        if self.settings.get('sv.always_ce_auto') and clk_en_name != '':
+            r = self.view.find(verilogutil.re_decl+clk_en_name,0)
+            if not r :
+                clk_en_name = ''
+        # define basic always block with asynchronous reset
+        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$0\n'
+        a_l += '\tif(~'+rst_n_name + ') begin\n\n\tend else '
+        if clk_en_name != '':
+            a_l += 'if(' + clk_en_name + ') '
+        a_l+= 'begin\n\n\tend\nend'
+        a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
+        a_nr = '@(posedge '+clk_name +') begin : proc_$0\n\t'
+        if clk_en_name != '':
+            a_nr += 'if(' + clk_en_name + ')'
+        a_nr+= 'begin\n\n\tend\nend'
+        #Provide completion specific to the file type
+        is_sv = os.path.splitext(self.view.file_name())[1].startswith('.sv')
+        if is_sv :
+            c.append(['always_ff\talways_ff Async','always_ff '+a_l])
+            c.append(['always_ffh\talways_ff Async high','always_ff '+a_h])
+            c.append(['always_c\talways_comb','always_comb begin : proc_$0\n\nend'])
+            c.append(['always_l\talways_latch','always_latch begin : proc_$0\n\nend'])
+            c.append(['always_ff_nr\talways_ff Sync','always_ff '+a_nr])
+        if not is_sv or not self.settings.get('sv.always_sv_only') :
+            c.append(['always\talways Async','always '+a_l])
+            c.append(['alwaysh\talways Async high','always '+a_h])
+            c.append(['alwaysc\talways *','always @(*) begin : proc_$0\n\nend'])
+            c.append(['always_nr\talways Sync','always_ff '+a_nr])
+        return c
+
+
 
     def dot_completion(self,view,r):
         # select word before the dot and quit with no completion if no word found

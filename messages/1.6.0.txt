@@ -1,0 +1,7 @@
+SystemVerilog 1.6.0 Changelog:
+ - Add smart snippets for always block
+  * Signal name (clk/clk_en/reset) are configurable and can be extracted from current buffer (clock and reset only)
+  * Clock enable part in the always snippet can be discarded if the signal is not declared
+  * Filter type of always block depending of the file type (v or sv).
+ - Highlight field name in a struct assign : f1 and f2 will be highlighted in '{f1:val1,f2:val2}
+ - Update readme.md to explain in more detail the configuration options
