@@ -51,10 +51,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def always_completion(self):
         c = []
-        clk_name    = self.settings.get('sv.clk_name')
-        rst_name    = self.settings.get('sv.rst_name')
-        rst_n_name  = self.settings.get('sv.rst_n_name')
-        clk_en_name = self.settings.get('sv.clk_en_name')
+        clk_name    = self.settings.get('sv.clk_name','clk')
+        rst_name    = self.settings.get('sv.rst_name','rst')
+        rst_n_name  = self.settings.get('sv.rst_n_name','rst_n')
+        clk_en_name = self.settings.get('sv.clk_en_name','clk_en')
+        print('clk_name = ' + str(clk_name) + ' rst_n_name = ' + str(rst_n_name))
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
         if self.settings.get('sv.always_name_auto') :
             pl = [] # posedge list
@@ -69,7 +70,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     # Make hypothesis that the reset high signal does not have a 'c' in the name (and that's why active low reset is better :P)
                     pl_r = [x for x in pl if x not in pl_c]
                     if pl_r:
-                        clk_name = collections.Counter(pl_r).most_common(1)[0][0]
+                        rst_name = collections.Counter(pl_r).most_common(1)[0][0]
             nl = [] # negedge list
             r = self.view.find_all(r'negedge\s+(\w+)', 0, '$1', nl)
             if nl:
@@ -79,6 +80,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             r = self.view.find(verilogutil.re_decl+clk_en_name,0)
             if not r :
                 clk_en_name = ''
+        print('clk_name = ' + str(clk_name) + ' rst_n_name = ' + str(rst_n_name))
         # define basic always block with asynchronous reset
         a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$0\n'
         a_l += '\tif(~'+rst_n_name + ') begin\n\n\tend else '
@@ -91,7 +93,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             a_nr += 'if(' + clk_en_name + ')'
         a_nr+= 'begin\n\n\tend\nend'
         #Provide completion specific to the file type
-        is_sv = os.path.splitext(self.view.file_name())[1].startswith('.sv')
+        fname = self.view.file_name()
+        if fname:
+            is_sv = os.path.splitext(fname)[1].startswith('.sv')
+        else:
+            is_sv = False
         if is_sv :
             c.append(['always_ff\talways_ff Async','always_ff '+a_l])
             c.append(['always_ffh\talways_ff Async high','always_ff '+a_h])

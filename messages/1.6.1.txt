@@ -1,0 +1,4 @@
+SystemVerilog 1.6.1 Changelog:
+ - Fix issue with smart always:
+  * No autocompletion when view is a new buffer and not saved as a file yet
+  * reset active high was not properly affected
