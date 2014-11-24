@@ -1,0 +1,7 @@
+SystemVerilog 1.6.3 Changelog:
+ - Improve module autoconnection:
+  * Signal declaration can be inserted at position configurable by sv.decl_start and sv.decl_end (See readme for details)
+  * Proper instantiation of interface (only if it has a modport)
+  * Option to search for signal with prefix and/or suffix instead of just perfect match port/signal (configurable by sv.autoconnect_allow_prefix and sv.autoconnect_allow_suffix)
+ - Fix indentation rule for case like 'if(a) b<=c;'
+ - Fix for loop snippet to have proper indentation style (begin on same line as for)

@@ -97,13 +97,44 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             sig_type = 'logic'
             if fname.endswith('.v'):
                 sig_type = 'wire'
+            ac = {}
             # read file to be able to check existing declaration
             flines = self.view.substr(sublime.Region(0, self.view.size()))
             # Add signal declaration
             for p in pm['port']:
                 #check existing signal declaration and coherence
                 ti = verilogutil.get_type_info(flines,p['name'])
-                print ("Port " + p['name'] + " => " + str(ti))
+                # print ("Port " + p['name'] + " => " + str(ti))
+                # Check for extended match : prefix
+                if ti['decl'] is None:
+                    if self.view.settings().get('sv.autoconnect_allow_prefix',False):
+                        sl = re.findall(r'\b(\w+)_'+p['name']+r'\b', flines, flags=re.MULTILINE)
+                        if sl :
+                            # print('Found signals for port ' + p['name'] + ' with matching prefix: ' + str(set(sl)))
+                            sn = sl[0] + '_' + p['name'] # select first by default
+                            for s in set(sl):
+                                if s in pm['name']:
+                                    sn = s+'_' +p['name']
+                                    break;
+                            ti = verilogutil.get_type_info(flines,sn)
+                            # print('Selecting ' + sn + ' with type ' + str(ti))
+                            if ti['decl'] is not None:
+                                ac[p['name']] = sn
+                # Check for extended match : suffix
+                if ti['decl'] is None:
+                    if self.view.settings().get('sv.autoconnect_allow_suffix',False):
+                        sl = re.findall(r'\b'+p['name']+r'_(\w+)', flines, flags=re.MULTILINE)
+                        if sl :
+                            # print('Found signals for port ' + p['name'] + ' with matching suffix: ' + str(set(sl)))
+                            sn = p['name']+'_' + sl[0] # select first by default
+                            for s in set(sl):
+                                if s in pm['name']:
+                                    sn = p['name']+'_' + s
+                                    break;
+                            ti = verilogutil.get_type_info(flines,sn)
+                            # print('Selecting ' + sn + ' with type ' + str(ti))
+                            if ti['decl'] is not None:
+                                ac[p['name']] = sn
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + p['name'] + " => " + str(p['decl']))
                     if p['decl'] is None:
@@ -112,11 +143,31 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                         d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
                         if p['type'].startswith(('input','output','inout')) :
                             d = sig_type + ' ' + d
+                        elif '.' in d: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
+                            d = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',d)
                         decl += indent_level*'\t' + d + ';\n'
                 #TODO: check signal coherence
                 # else :
-            #TODO: use self.view.settings().get('sv.decl_start') to know where to insert the declaration
-            self.view.insert(edit, self.view.sel()[0].begin(), decl)
+            #Find location where to insert signal declaration: default to just before module instantiation
+            if decl != "":
+                r = self.view.sel()[0].begin()
+                s = self.view.settings().get('sv.decl_start','')
+                if s!='' :
+                    r_start = self.view.find(s,0,sublime.LITERAL)
+                    if r_start :
+                        s = self.view.settings().get('sv.decl_end','')
+                        r_stop = None
+                        if s!='':
+                            r_stop = self.view.find(s,r_start.a,sublime.LITERAL)
+                        # Find first empty Find line
+                        if r_stop:
+                            r_tmp = self.view.find_by_class(r_stop.a,False,sublime.CLASS_EMPTY_LINE)
+                        else :
+                            r_tmp = self.view.find_by_class(r_start.a,True,sublime.CLASS_EMPTY_LINE)
+                        if r_tmp:
+                            r = r_tmp
+                self.view.insert(edit, r, decl)
+                sublime.status_message('Adding ' + str(len(decl.splitlines())) + ' signals declaration' )
         # Instantiation
         inst = pm['name'] + " "
         # Parameters: bind only parameters for which a value different from default was set
@@ -133,17 +184,27 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         inst += self.view.settings().get('sv.instance_prefix') + pm['name'] + self.view.settings().get('sv.instance_suffix') + " (\n"
         if pm['port'] is not None:
             # Get max length of a port to align everything
-            max_len = max([len(x['name']) for x in pm['port']])
+            max_len_p = max([len(x['name']) for x in pm['port']])
+            max_len_s = max_len_p
+            # print('Autoconnect dict = ' + str([ac[x] for x in ac]))
+            if len(ac)>0 :
+                max_len_s = max([len(ac[x]) for x in ac])
+                if max_len_p>max_len_s:
+                    max_len_s = max_len_p
             for i in range(len(pm['port'])):
-                inst+= "\t." + pm['port'][i]['name'].ljust(max_len) + "("
+                portname = pm['port'][i]['name']
+                inst+= "\t." + portname.ljust(max_len_p) + "("
                 if isAutoConnect:
-                    inst+= pm['port'][i]['name'].ljust(max_len)
+                    if portname in ac.keys():
+                        inst+= ac[portname].ljust(max_len_s)
+                    else :
+                        inst+= portname.ljust(max_len_s)
                 inst+= ")"
                 if i<len(pm['port'])-1:
                     inst+=","
                 inst+="\n"
         inst += ");\n"
-        self.view.insert(edit, self.view.sel()[0].begin(), inst)
+        self.view.insert(edit, self.view.sel()[0].a, inst)
 
 ##########################################
 # Toggle between .* and explicit binding #

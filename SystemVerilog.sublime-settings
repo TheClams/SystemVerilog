@@ -15,9 +15,11 @@
 	// SystemVerilog Module instantiation configuration
 	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
+	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
+	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
 	"sv.instance_prefix": "i_", // Prefix to the module instantiation name
 	"sv.instance_suffix": "",   // Suffix to the module instantiation name
 	"sv.decl_start": "Signals declaration", // Pattern to find for start of signals auto-declaration . Empty string to get declaration just above instantiation.
-	"sv.decl_end": "----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
+	"sv.decl_end": "/*----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
 	"sv.decl_indent": 1 // Number of indentation level for signal declaration
 }
