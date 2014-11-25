@@ -48,22 +48,17 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                 # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
                 self.move_cursor(r)
                 return
-        # look for an explicit or implicit connection
-        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)']
-        for s in sl:
+        # look for a connection explicit, implicit or by position
+        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\))']
+        for k,s in enumerate(sl):
             pl = []
             rl = self.view.find_all(s,0,r'$1',pl)
-            for r,p in zip(rl,pl):
+            for i,r in enumerate(rl):
                 if 'meta.module.inst' in self.view.scope_name(r.a) :
                     rm = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
                     txt = verilogutil.clean_comment(self.view.substr(rm))
                     # Parse module definition
                     mname = re.findall(r'\w+',txt)[0]
-                    # Output port string to search
-                    if s=='.*':
-                        op = r'^(output\s+.*|\w+\.\w+\s+)'+p+r'\b'
-                    else:
-                        op = r'^(output\s+.*|\w+\.\w+\s+)'+v+r'\b'
                     filelist = self.view.window().lookup_symbol_in_index(mname)
                     if not filelist:
                         return
@@ -73,16 +68,33 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                         if mi:
                             break
                     if mi:
-                        for x in mi['port']:
-                            m = re.search(op,x['decl'])
-                            if m:
-                                self.move_cursor(r)
-                                return
+                        op = r'^(output\s+.*|\w+\.\w+\s+)'
+                        # Output port string to search
+                        portname = ''
+                        if k==1:
+                            portname = v
+                        elif k==0:
+                            portname = pl[i]
+                        elif k==2 :
+                            for j,l in enumerate(txt.split(',')) :
+                                if v in l:
+                                    dl = [x['decl'] for x in mi['port']]
+                                    if re.search(op,dl[j]) :
+                                        self.move_cursor(r)
+                                        return
+                        if portname != '' :
+                            op += portname+r'\b'
+                            for x in mi['port']:
+                                m = re.search(op,x['decl'])
+                                if m:
+                                    self.move_cursor(r)
+                                    return
 
         # Everything failed
         sublime.status_message("Could not find driver of " + v)
 
     def move_cursor(self,r):
+        r.a = r.a + 1
         r.b = r.a
         self.view.sel().clear()
         self.view.sel().add(r)
