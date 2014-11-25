@@ -131,7 +131,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 filelist = view.window().lookup_symbol_in_index(mname)
                 # TODO: get type to identify if is a module, an interface or a function and use the relevant completion function
                 if filelist:
-                    completion = self.module_binding_completion(txt, sublimeutil.normalize_fname(filelist[0][0]),mname,start_pos-r.a)
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        mi = verilogutil.parse_module(fname,mname)
+                        if mi:
+                            break
+                    completion = self.module_binding_completion(txt, mi,start_pos-r.a)
             else :
                 return completion
         else :
@@ -403,17 +408,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Provide completion for module binding:
     # Extract all parameter and ports from module definition
     # and filter based on position (parameter or ports) and existing binding
-    def module_binding_completion(self,txt,fname,mname,pos):
+    def module_binding_completion(self,txt,minfo,pos):
         c = []
-        # Extract all parameter and ports from module definition using cached information if available
-        fdate = os.path.getmtime(fname)
-        if self.cache_module['name'] == fname and self.cache_module['date']==fdate:
-            minfo = self.cache_module['info']
-        else:
-            minfo = verilogutil.parse_module(fname,mname)
-            self.cache_module['info']  = minfo
-            self.cache_module['name'] = fname
-            self.cache_module['date'] = fdate
         # print('[module_binding_completion] Module ' + mname + ' : ' + str(minfo))
         if not minfo:
             return c

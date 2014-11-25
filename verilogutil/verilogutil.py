@@ -11,6 +11,9 @@ re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]]+\})\s*([A-Za-z_][\w=,;\s]*,\s*)?\b'
 re_if_p  = r'^\s*(\w+)\s*(#\s*\([^;]+\))\s*'
 
+# TODO: create a class to handle the cache for N module
+cache_module = {'mname' : '', 'fname' : '', 'date' : 0, 'info' : None}
+
 def clean_comment(txt):
     txt_nc = txt
     #remove multiline comment
@@ -97,8 +100,17 @@ def get_type_info(txt,var_name):
     # print("Array: " + str(m) + "=>" + str(at))
     return {'decl':ft,'type':t,'array':at,'bw':bw, 'name':var_name}
 
-# TODO:
+#
 def parse_module(fname,mname=r'\w+'):
+    # Check Cache module
+    if cache_module['mname'] == mname:
+        fdate = os.path.getmtime(cache_module['fname'])
+        if cache_module['date']==fdate:
+            print('Using cache !')
+            return cache_module['info']
+    else:
+        fdate = os.path.getmtime(fname)
+    #
     flines = ''
     with open(fname, "r") as f:
         flines = str(f.read())
@@ -106,7 +118,7 @@ def parse_module(fname,mname=r'\w+'):
     # print(flines)
     m = re.search(r"(?s)module\s+("+mname+")\s*(#\s*\([^;]+\))?\s*\((.+?)\)\s*;", flines)
     if m is None:
-        print("No module found")
+        print('No module ' + mname + ' found in ' + fname)
         return None
     mname = m.groups()[0]
     # Extract parameter name
@@ -129,4 +141,10 @@ def parse_module(fname,mname=r'\w+'):
             ti = get_type_info(flines,str(p))
             # print (ti)
             ports.append(ti)
-    return {'name': mname, 'param':params, 'port':ports}
+    minfo = {'name': mname, 'param':params, 'port':ports}
+    # Put information in cache:
+    cache_module['info']  = minfo
+    cache_module['mname'] = mname
+    cache_module['fname'] = fname
+    cache_module['date']  = fdate
+    return minfo

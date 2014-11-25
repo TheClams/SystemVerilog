@@ -19,7 +19,8 @@ Description
 
 ####Features:
  * Show signal declaration in status bar
- * Module instantiation:
+ * Goto driver : seelct a signal a go tothe driver (port, assignement, connection)
+ * Module instantiation: Select a module from a list and create instantiation and connection
  * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
  * Alignment of block of code: support module port declaration and module instantiation (Palette command "Verilog: Alignment")
  * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
@@ -109,6 +110,13 @@ otherwise the first one will be used.
 
 
 
+Goto Driver
+-----------
+To locate the logic driving the signal under your cursor (or selected text)
+just call te command verilog_goto_driver (available in the palette as "Verilog: Goto Driver").
+This will move the cursor to etiher an input port of the module, an assignement or a module connection, even if the connection is done by .*
+
+
 Keymapping example
 ------------------
 
@@ -140,6 +148,14 @@ To map key to the different feature, simply add the following to your user .subl
 	},
 	{
 		"keys": ["ctrl+shift+a"], "command": "verilog_align",
+		"context":
+		[
+			{ "key": "num_selections", "operator": "equal", "operand": 1 },
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["ctrl+f12"], "command": "verilog_goto_driver",
 		"context":
 		[
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },

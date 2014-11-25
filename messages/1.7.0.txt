@@ -1,0 +1,5 @@
+SystemVerilog 1.7.0 Changelog:
+ - New Feature: Goto driver
+  * Allow to position cursor to the driver of the currently selected signal (or signal currently under the cursor)
+  * Support case of output of a module instantiated with .*
+ - Fix parsing of module if symbol exists in multiple file (was affecting .* expand and module connection binding)

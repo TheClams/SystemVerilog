@@ -28,6 +28,67 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # print(ti)
         return ti['decl']
 
+############################################################################
+# Move cursor to the driver of the signal currently selected #
+class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        if len(self.view.sel())==0 : return;
+        region = self.view.sel()[0]
+        # If nothing is selected expand selection to word
+        if region.empty() : region = self.view.word(region);
+        v = self.view.substr(region).strip()
+        # look for an input or an interface of the current module, and for an assignement
+        sl = [r'\s*input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + v + r'\b']
+        sl.append(r'^\s*\w+\.\w+\s+' + v + r'\b')
+        sl.append(r'\b' + v + r'\b\s*<?\=[^\=]')
+        for s in sl:
+            r = self.view.find(s,0)
+            if r:
+                # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
+                self.move_cursor(r)
+                return
+        # look for an explicit or implicit connection
+        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)']
+        for s in sl:
+            pl = []
+            rl = self.view.find_all(s,0,r'$1',pl)
+            for r,p in zip(rl,pl):
+                if 'meta.module.inst' in self.view.scope_name(r.a) :
+                    rm = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
+                    txt = verilogutil.clean_comment(self.view.substr(rm))
+                    # Parse module definition
+                    mname = re.findall(r'\w+',txt)[0]
+                    # Output port string to search
+                    if s=='.*':
+                        op = r'^(output\s+.*|\w+\.\w+\s+)'+p+r'\b'
+                    else:
+                        op = r'^(output\s+.*|\w+\.\w+\s+)'+v+r'\b'
+                    filelist = self.view.window().lookup_symbol_in_index(mname)
+                    if not filelist:
+                        return
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        mi = verilogutil.parse_module(fname,mname)
+                        if mi:
+                            break
+                    if mi:
+                        for x in mi['port']:
+                            m = re.search(op,x['decl'])
+                            if m:
+                                self.move_cursor(r)
+                                return
+
+        # Everything failed
+        sublime.status_message("Could not find driver of " + v)
+
+    def move_cursor(self,r):
+        r.b = r.a
+        self.view.sel().clear()
+        self.view.sel().add(r)
+        self.view.show(r.a)
+
+
 ########################################
 # Create module instantiation skeleton #
 class VerilogModuleInstCommand(sublime_plugin.TextCommand):
@@ -228,8 +289,13 @@ class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
             filelist = self.view.window().lookup_symbol_in_index(mname)
             if not filelist:
                 return
-            fname = sublimeutil.normalize_fname(filelist[0][0])
-            mi = verilogutil.parse_module(fname,mname)
+            for f in filelist:
+                fname = sublimeutil.normalize_fname(f[0])
+                mi = verilogutil.parse_module(fname,mname)
+                if mi:
+                    break
+            if not mi:
+                return
             dot_star = ''
             b0 = [x[0] for x in bl]
             for p in mi['port']:
