@@ -106,7 +106,7 @@ def parse_module(fname,mname=r'\w+'):
     if cache_module['mname'] == mname:
         fdate = os.path.getmtime(cache_module['fname'])
         if cache_module['date']==fdate:
-            print('Using cache !')
+            # print('Using cache !')
             return cache_module['info']
     else:
         fdate = os.path.getmtime(fname)

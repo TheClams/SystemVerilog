@@ -22,7 +22,7 @@ Description
  * Goto driver : seelct a signal a go tothe driver (port, assignement, connection)
  * Module instantiation: Select a module from a list and create instantiation and connection
  * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
- * Alignment of block of code: support module port declaration and module instantiation (Palette command "Verilog: Alignment")
+ * Alignment of block of code: support module port/signal declaration and module instantiation (Palette command "Verilog: Alignment")
  * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
  * 'begin end' macro to surround a text by begin/end (cf Keymapping section to see how to use it)
 
@@ -115,6 +115,16 @@ Goto Driver
 To locate the logic driving the signal under your cursor (or selected text)
 just call te command verilog_goto_driver (available in the palette as "Verilog: Goto Driver").
 This will move the cursor to etiher an input port of the module, an assignement or a module connection, even if the connection is done by .*
+
+
+Alignement configuration
+---------------------
+"sv.one_bind_per_line" : For module instantiation, force only one binding per line. Default to true.
+
+"sv.one_decl_per_line" : For signal declaration, force only one signal per declaration. Default to false.
+
+"sv.max_line_length" : Split one line into multiple if too long. Default to 120. Unused for the moment ...
+
 
 
 Keymapping example

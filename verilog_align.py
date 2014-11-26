@@ -11,10 +11,10 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if len(self.view.sel())!=1 : return; # No multi-selection allowed (yet?)
         # Expand the selection to a complete scope supported by the one of the align function
         # Get sublime setting
-        settings = self.view.settings()
-        self.tab_size = int(settings.get('tab_size', 4))
+        self.settings = self.view.settings()
+        self.tab_size = int(self.settings.get('tab_size', 4))
         self.char_space = ' ' * self.tab_size
-        self.use_space = settings.get('translate_tabs_to_spaces')
+        self.use_space = self.settings.get('translate_tabs_to_spaces')
         if not self.use_space:
             self.char_space = '\t'
         region = self.view.extract_scope(self.view.sel()[0].a)
@@ -24,6 +24,12 @@ class VerilogAlign(sublime_plugin.TextCommand):
             (txt,region) = self.inst_align(region)
         elif 'meta.module.systemverilog' in scope:
             (txt,region) = self.port_align(region)
+        else :
+            region = self.view.line(self.view.sel()[0])
+            if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
+                region.b -= 1;
+            txt = self.view.substr(region)
+            (txt,region) = self.decl_align(txt, region)
         if txt != '':
             self.view.replace(edit,region,txt)
         else :
@@ -46,11 +52,18 @@ class VerilogAlign(sublime_plugin.TextCommand):
         # Make sure to get complete line to be able to get initial indentation
         r = self.view.line(r)
         txt = self.view.substr(r).rstrip()
+        # insert line if needed o get one binding per line
+        if self.settings.get('sv.one_bind_per_line',True):
+            txt = re.sub(r'\)[ \t]*,[ \t]*\.', '), \n.', txt,re.MULTILINE)
         # Realign text
         re_str = r'\.\s*(\w+)\s*\(\s*([\w\[\]\:~`\+-\{\}\s\'&|]*)\s*\)[\s]*'
         bind = re.findall(re_str,txt,re.MULTILINE)
-        len_port    = max([len(x[0]) for x in bind])
-        len_signals = max([len(x[1].rstrip()) for x in bind])
+        if len(bind) > 0:
+            len_port    = max([len(x[0]) for x in bind])
+            len_signals = max([len(x[1].rstrip()) for x in bind])
+        else:
+            len_port = 0
+            len_signals = 0
         txt_new = ''
         lines = txt.splitlines()
         nb_indent = self.get_indent_level(lines[0])
@@ -99,7 +112,6 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         # handle case where alignement is not supported but there is test with ); on same line: insert return line
                         m = re.search(r'\s*(.+)\s*\)\s*;(.*)',l)
                         if m:
-                            print('m= ' + str(m.groups()))
                             txt_new += self.char_space*(nb_indent+1)+m.groups()[0]+'\n'
                             txt_new += self.char_space*(nb_indent)+');' + m.groups()[1]
                         else :
@@ -136,7 +148,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         nb_indent = self.get_indent_level(lines[0])
         for i,line in enumerate(lines):
             # Remove leading and trailing space. add end of line
-            l = line.lstrip().rstrip()
+            l = line.strip()
             #Special case of first line: potentially insert an end of line between instance name and port name
             if i==0 or (i==1 and lines[0]==''):
                 txt_new += self.char_space*nb_indent+l + '\n'
@@ -201,3 +213,65 @@ class VerilogAlign(sublime_plugin.TextCommand):
 
         return (txt_new,r)
 
+
+    # Alignement for signal declaration : [scope::]type [signed|unsigned] [bitwidth] signal list
+    def decl_align(self,txt, region):
+        lines = txt.splitlines()
+        #TODO handle array
+        re_str = r'^[ \t]*(\w+\:\:)?(\w+)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*(\w+)\b[ \t]*(,[\w, \t]*)?;[ \t]*(.*)'
+        lines_match = []
+        len_max = [0,0,0,0,0,0,0,0]
+        nb_indent = -1
+        one_decl_per_line = self.settings.get('sv.one_decl_per_line',False)
+        # Process each line to identify a signal declaration, save the match information in an array, and process the max length for each field
+        for l in lines:
+            m = re.search(re_str,l)
+            lines_match.append(m)
+            if m:
+                if nb_indent < 0:
+                    nb_indent = self.get_indent_level(l)
+                for i,g in enumerate(m.groups()):
+                    if g:
+                        if len(g.strip()) > len_max[i]:
+                            len_max[i] = len(g.strip())
+                        if i==6 and one_decl_per_line:
+                            for s in g.split(','):
+                                if len(s.strip()) > len_max[5]:
+                                    len_max[5] = len(s.strip())
+        # Update alignement of each line
+        txt_new = ''
+        for line,m in zip(lines,lines_match):
+            if m:
+                l = self.char_space*nb_indent
+                if m.groups()[0]:
+                    l += m.groups()[0]
+                l += m.groups()[1].ljust(len_max[0]+len_max[1]+1)
+                #Align with signess only if it exist in at least one of the line
+                if len_max[2]>0:
+                    if m.groups()[2]:
+                        l += m.groups()[2].ljust(len_max[2]+1)
+                    else:
+                        l += ''.ljust(len_max[2]+1)
+                #Align with signess only if it exist in at least one of the line
+                if len_max[4]>1:
+                    if m.groups()[4]:
+                        l += '[' + m.groups()[4].strip().rjust(len_max[4]) + '] '
+                    else:
+                        l += ''.rjust(len_max[4]+3)
+                d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
+                l += m.groups()[5].ljust(len_max[5])
+                # list of signals ? align with other list only
+                if m.groups()[6]:
+                    if one_decl_per_line:
+                        for s in m.groups()[6].split(','):
+                            if s != '':
+                                l += ';\n' + d + s.strip().ljust(len_max[5])
+                    else :
+                        l += m.groups()[6].ljust(len_max[6])
+                l += ';'
+                if m.groups()[7]:
+                    l += ' ' + m.groups()[7].strip()
+            else : # Not a declaration ? don't touch
+                l = line
+            txt_new += l + '\n'
+        return (txt_new[:-1],region)

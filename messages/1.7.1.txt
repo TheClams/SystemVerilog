@@ -1,0 +1,4 @@
+SystemVerilog 1.7.1 Changelog:
+ - Alignment update
+  * Add option to force only one binding per line when aligning module instantiation (sv.one_bind_per_line, default to true)
+  * Support alignement of signal declaration

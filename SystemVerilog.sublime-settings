@@ -4,6 +4,10 @@
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
 	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$`"} ],
 
+	// SystemVerilog Alignment configuration
+	"sv.one_bind_per_line" : true, // When aligning module instantiation force only one binding per line
+	"sv.one_decl_per_line" : false, // When aligning signal declaration force only one signal per line
+	"sv.max_line_length" : 120, // Use by alignment plugin to split one line into multiple if too long
 	// SystemVerilog always block completion configuration
 	"sv.clk_name": "clk",     // Default clock name
 	"sv.rst_name": "rst",     // Default reset active high
