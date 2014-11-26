@@ -267,7 +267,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                             if s != '':
                                 l += ';\n' + d + s.strip().ljust(len_max[5])
                     else :
-                        l += m.groups()[6].ljust(len_max[6])
+                        l += m.groups()[6].strip().ljust(len_max[6])
                 l += ';'
                 if m.groups()[7]:
                     l += ' ' + m.groups()[7].strip()

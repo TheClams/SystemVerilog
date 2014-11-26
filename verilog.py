@@ -293,7 +293,7 @@ class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
         r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
         txt = verilogutil.clean_comment(self.view.substr(r))
         #Extract existing binding
-        bl = re.findall(r'\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
+        bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
         #
         if '.*' in txt:
             # Parse module definition

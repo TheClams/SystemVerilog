@@ -1,0 +1,2 @@
+SystemVerilog 1.7.2 Changelog:
+ - Fix bug #12 where expand .* can duplicate a binding
