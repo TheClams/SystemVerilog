@@ -100,7 +100,7 @@ def get_type_info(txt,var_name):
     # print("Array: " + str(m) + "=>" + str(at))
     return {'decl':ft,'type':t,'array':at,'bw':bw, 'name':var_name}
 
-#
+# Parse a module for port information
 def parse_module(fname,mname=r'\w+'):
     # Check Cache module
     if cache_module['mname'] == mname:
@@ -148,3 +148,34 @@ def parse_module(fname,mname=r'\w+'):
     cache_module['fname'] = fname
     cache_module['date']  = fdate
     return minfo
+
+# Fill all entry of a case for enum or vector (limited to 8b)
+# ti is the type infor return by get_type_info
+def fill_case(ti):
+    if not ti['type']:
+        return None
+    t = ti['type'].split()[0]
+    s = '\n'
+    if t == 'enum':
+        # extract enum from the declaration
+        m = re.search(r'\{(.*)\}', ti['decl'])
+        if m :
+            el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
+            maxlen = max([len(x[0]) for x in el])
+            if maxlen < 7:
+                maxlen = 7
+            for x in el:
+                s += '\t' + x[0].ljust(maxlen) + ' : ;\n'
+            s += '\tdefault'.ljust(maxlen+1) + ' : ;\nendcase'
+            return (s,[x[0] for x in el])
+    elif t in ['logic','bit','reg','wire']:
+        m = re.search(r'\[\s*(\d+)\s*\:\s*(\d+)',ti['bw'])
+        if m :
+            bw = int(m.groups()[0]) + 1 - int(m.groups()[1])
+            if bw <=8 :
+                for i in range(0,(1<<bw)):
+                    s += '\t' + str(i).ljust(7) + ' : ;\n'
+                s += '\tdefault : ;\nendcase'
+                return (s,range(0,(1<<bw)))
+    return None
+

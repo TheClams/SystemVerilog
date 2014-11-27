@@ -38,6 +38,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion =  self.tick_completion()
         elif t=='.':
             completion =  self.dot_completion(view,r)
+        elif t==')':
+            l = view.substr(view.line(r))
+            m = re.search(r'^\s*case\s*\((\w+)\)',l)
+            completion = self.case_completion(m.groups()[0])
         return (completion, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
 
     def uvm_completion(self):
@@ -51,45 +55,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def always_completion(self):
         c = []
-        clk_name    = self.settings.get('sv.clk_name','clk')
-        rst_name    = self.settings.get('sv.rst_name','rst')
-        rst_n_name  = self.settings.get('sv.rst_n_name','rst_n')
-        clk_en_name = self.settings.get('sv.clk_en_name','clk_en')
-        # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
-        if self.settings.get('sv.always_name_auto') :
-            pl = [] # posedge list
-            r = self.view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
-            if pl:
-                if clk_name not in set(pl):
-                    # Make hypothesis that all clock signals have a c in their name
-                    pl_c = [x for x in pl if 'c' in x]
-                    if pl_c :
-                        clk_name = collections.Counter(pl_c).most_common(1)[0][0]
-                if rst_name not in set(pl):
-                    # Make hypothesis that the reset high signal does not have a 'c' in the name (and that's why active low reset is better :P)
-                    pl_r = [x for x in pl if x not in pl_c]
-                    if pl_r:
-                        rst_name = collections.Counter(pl_r).most_common(1)[0][0]
-            nl = [] # negedge list
-            r = self.view.find_all(r'negedge\s+(\w+)', 0, '$1', nl)
-            if nl:
-                if rst_n_name not in set(pl):
-                    rst_n_name = collections.Counter(nl).most_common(1)[0][0]
-        if self.settings.get('sv.always_ce_auto') and clk_en_name != '':
-            r = self.view.find(verilogutil.re_decl+clk_en_name,0)
-            if not r :
-                clk_en_name = ''
-        # define basic always block with asynchronous reset
-        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$0\n'
-        a_l += '\tif(~'+rst_n_name + ') begin\n\n\tend else '
-        if clk_en_name != '':
-            a_l += 'if(' + clk_en_name + ') '
-        a_l+= 'begin\n\n\tend\nend'
-        a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
-        a_nr = '@(posedge '+clk_name +') begin : proc_$0\n\t'
-        if clk_en_name != '':
-            a_nr += 'if(' + clk_en_name + ')'
-        a_nr+= 'begin\n\n\tend\nend'
+        (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
         #Provide completion specific to the file type
         fname = self.view.file_name()
         if fname:
@@ -170,6 +136,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 else:
                     t = ti['type']
                 filelist = view.window().lookup_symbol_in_index(t)
+                # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
                     fname = sublimeutil.normalize_fname(filelist[0][0])
                     # print(w + ' of type ' + t + ' defined in ' + str(fname))
@@ -428,3 +395,138 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if x['name'] not in b:
                 c.append([x['name']+'\t'+str(x['type']),x['name'].ljust(len_port)+'(' + x['name'] + '$0),'])
         return c
+
+    # Complete case for an enum with all possible value
+    def case_completion(self,sig):
+        c = []
+        (s,el) = VerilogHelper.get_case_template(self.view, sig)
+        if s:
+            c.append(['caseTemplate',s])
+        return c
+
+##############################################
+#
+class VerilogHelper():
+
+    def get_always_template(view):
+        settings = view.settings()
+        clk_name         = settings.get('sv.clk_name','clk')
+        rst_name         = settings.get('sv.rst_name','rst')
+        rst_n_name       = settings.get('sv.rst_n_name','rst_n')
+        clk_en_name      = settings.get('sv.clk_en_name','clk_en')
+        always_name_auto = settings.get('sv.always_name_auto',True)
+        always_ce_auto   = settings.get('sv.always_ce_auto',True)
+        # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
+        if always_name_auto :
+            pl = [] # posedge list
+            r = view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
+            if pl:
+                if clk_name not in set(pl):
+                    # Make hypothesis that all clock signals have a c in their name
+                    pl_c = [x for x in pl if 'c' in x]
+                    if pl_c :
+                        clk_name = collections.Counter(pl_c).most_common(1)[0][0]
+                if rst_name not in set(pl):
+                    # Make hypothesis that the reset high signal does not have a 'c' in the name (and that's why active low reset is better :P)
+                    pl_r = [x for x in pl if x not in pl_c]
+                    if pl_r:
+                        rst_name = collections.Counter(pl_r).most_common(1)[0][0]
+            nl = [] # negedge list
+            r = view.find_all(r'negedge\s+(\w+)', 0, '$1', nl)
+            if nl:
+                if rst_n_name not in set(pl):
+                    rst_n_name = collections.Counter(nl).most_common(1)[0][0]
+        if always_ce_auto and clk_en_name != '':
+            r = view.find(verilogutil.re_decl+clk_en_name,0)
+            if not r :
+                clk_en_name = ''
+        # define basic always block with asynchronous reset
+        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$1\n'
+        a_l += '\tif(~'+rst_n_name + ') begin\n'
+        a_l += '\t\t$1 <= 0;'
+        a_l += '\n\tend else '
+        if clk_en_name != '':
+            a_l += 'if(' + clk_en_name + ') '
+        a_l+= 'begin\n'
+        a_l += '\t\t$1 <= $2;'
+        a_l+= '\n\tend\nend'
+        a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
+        a_nr = '@(posedge '+clk_name +') begin : proc_$1\n\t'
+        if clk_en_name != '':
+            a_nr += 'if(' + clk_en_name + ')'
+        a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'
+        return (a_l,a_h,a_nr)
+
+    def get_case_template(view, sig_name):
+        ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),sig_name)
+        if not ti['type']:
+            return
+        t = ti['type'].split()[0]
+        if t not in ['enum','logic','bit','reg','wire']:
+            #check first in current file
+            tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'])
+            if not tti:
+                filelist = view.window().lookup_symbol_in_index(ti['type'])
+                if filelist:
+                    fname = sublimeutil.normalize_fname(filelist[0][0])
+                    with open(fname, 'r') as f:
+                        flines = str(f.read())
+                    tti = verilogutil.get_type_info(flines,t)
+            ti = tti
+        return verilogutil.fill_case(ti)
+
+##############################################
+#
+class VerilogInsertFsmTemplate(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        #List all signals available and let user choose one
+        int_decl = r'^\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*;'
+        self.dl=[]
+        dl_raw = []
+        d = self.view.find_all(int_decl, 0, '$6', dl_raw)
+        for x in dl_raw:
+            self.dl += re.findall(r"(\w+).*?(?:,|$)",x)
+        self.dl = sorted(self.dl)
+        sublime.active_window().show_quick_panel(self.dl, self.on_done )
+        return
+
+    def on_done(self, index):
+        if index >= 0:
+            self.view.run_command("verilog_do_insert_fsm_template", {"args":{'sig_name':self.dl[index]}})
+
+
+class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
+
+    def run(self,edit, args):
+        # Retrieve complete type information of signal
+        (s,el) = VerilogHelper.get_case_template(self.view, args['sig_name'])
+        if not s:
+            return
+        state_next = args['sig_name'] + '_next'
+        s = s.replace('\n','\n\t') # insert an indentation level
+        s = 'case (' + args['sig_name']+')'+s
+        s = 'always_comb begin : proc_' + state_next + '\n\t' + state_next + ' = ' + args['sig_name'] +';\n\t' + s + '\nend'
+        (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
+        fname = self.view.file_name()
+        if fname:
+            is_sv = os.path.splitext(fname)[1].startswith('.sv')
+        else:
+            is_sv = False
+        if is_sv:
+            a_l = 'always_ff ' + a_l
+        else :
+            a_l = 'always' + a_l
+        a_l = a_l.replace('$1',args['sig_name'])
+        a_l = a_l.replace('<= 0','<= ' + str(el[0]))
+        a_l = a_l.replace('$2',state_next)
+        s = a_l + '\n\n' + s
+        proc_indent = self.view.settings().get('sv.proc_indent',1)
+        if proc_indent>0:
+            s = proc_indent*'\t' + s.replace('\n','\n'+proc_indent*'\t')
+        self.view.insert(edit,self.view.sel()[0].a,s)
+        # Check is state_next exist: if not, add it to the declaration next to state
+        ti = verilogutil.get_type_info(self.view.substr(sublime.Region(0, self.view.size())),state_next)
+        if not ti['type']:
+            r = self.view.find(verilogutil.re_decl+args['sig_name'],0)
+            self.view.replace(edit,r,re.sub(r'\b'+args['sig_name']+r'\b',args['sig_name']+', '+state_next,self.view.substr(r)))

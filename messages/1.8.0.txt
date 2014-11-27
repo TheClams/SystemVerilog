@@ -1,0 +1,4 @@
+SystemVerilog 1.8.0 Changelog:
+ - Completion for case(signal): call manually autocompletion after typing a case(sig) and the full skeleton for all cases value will be inserted
+ - New feature: FSM template:
+  * use the command verilog_insert_fsm to insert a complete template for an FSM : two process, one sequential with state <= state_next and one combinatorial with a case on state and the default value for state_next = state

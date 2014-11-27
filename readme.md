@@ -22,6 +22,7 @@ Description
  * Goto driver : seelct a signal a go tothe driver (port, assignement, connection)
  * Module instantiation: Select a module from a list and create instantiation and connection
  * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
+ * Insert template for FSM
  * Alignment of block of code: support module port/signal declaration and module instantiation (Palette command "Verilog: Alignment")
  * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
  * 'begin end' macro to surround a text by begin/end (cf Keymapping section to see how to use it)
