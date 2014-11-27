@@ -60,13 +60,14 @@ class VerilogAlign(sublime_plugin.TextCommand):
         bind = re.findall(re_str,txt,re.MULTILINE)
         if len(bind) > 0:
             len_port    = max([len(x[0]) for x in bind])
-            len_signals = max([len(x[1].rstrip()) for x in bind])
+            len_signals = max([len(x[1].rstrip()) for x in bind if '\n' not in x[1]])
         else:
             len_port = 0
             len_signals = 0
         txt_new = ''
         lines = txt.splitlines()
         nb_indent = self.get_indent_level(lines[0])
+        was_split = False
         for i,line in enumerate(lines):
             # Remove leading and trailing space. add end of line
             l = line.lstrip().rstrip()
@@ -87,8 +88,12 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     txt_new += l + '\n'
                     line_handled = True
             if not line_handled :
-                # Look for a binding (not supporting binding on multiple line : alignement ignored in this case)
+                # Look for a binding
                 m = re.search(r'^'+re_str+r'(,|\))?\s*(.*)',l)
+                is_split = False
+                if not m:
+                    m = re.search(r'\.\s*(\w+)\s*\(\s*([\w\[\]\:~`\+-\{\}\s\'&|]*)\s*()()',l)
+                    is_split = True
                 if m:
                     # print('Line ' + str(i) + ' : ' + str(m.groups()))
                     if i == len(lines)-1 and m.groups()[2]!=')':
@@ -96,7 +101,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     else:
                         txt_new += self.char_space*(nb_indent+1)
                     txt_new += '.' + m.groups()[0].ljust(len_port)
-                    txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals) + ')'
+                    txt_new += '(' + m.groups()[1].rstrip().ljust(len_signals)
+                    if not is_split:
+                        txt_new += ')'
                     if m.groups()[2]==')' :
                         txt_new += '\n' + self.char_space*nb_indent + ')'
                     elif m.groups()[2]:
@@ -113,11 +120,27 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         m = re.search(r'\s*(.+)\s*\)\s*;(.*)',l)
                         if m:
                             txt_new += self.char_space*(nb_indent+1)+m.groups()[0]+'\n'
-                            txt_new += self.char_space*(nb_indent)+');' + m.groups()[1]
+                            txt_new += self.char_space*(nb_indent)+');'
+                            if m.groups()[1] :
+                                txt_new += m.groups()[1]
                         else :
                             txt_new += self.char_space*(nb_indent)+l
                     else:
-                        txt_new += self.char_space*(nb_indent+1)+l + '\n'
+                        txt_new += self.char_space*(nb_indent+1)
+                        # Handle case of binding split on multiple line : try to align the end of the binding
+                        if was_split:
+                            txt_new += ''.ljust(len_port+1)
+                            m = re.search(r'\s*(.+)\s*\)\s*,(.*)',l)
+                            if m:
+                                txt_new += m.groups()[0].ljust(len_signals+1) + '), '
+                                if m.groups()[1] :
+                                    txt_new += m.groups()[1]
+                                txt_new += '\n'
+                            else :
+                                txt_new += l + '\n'
+                        else :
+                            txt_new += l + '\n'
+                was_split = is_split
         return (txt_new,r)
 
     # Alignement for port declaration (for ansi-style)
@@ -218,7 +241,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def decl_align(self,txt, region):
         lines = txt.splitlines()
         #TODO handle array
-        re_str = r'^[ \t]*(\w+\:\:)?(\w+)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*(\w+)\b[ \t]*(,[\w, \t]*)?;[ \t]*(.*)'
+        re_str = r'^[ \t]*(\w+\:\:)?(\w+)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*([\w\[\]]+)[ \t]*(,[\w, \t]*)?;[ \t]*(.*)'
         lines_match = []
         len_max = [0,0,0,0,0,0,0,0]
         nb_indent = -1
@@ -259,15 +282,17 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     else:
                         l += ''.rjust(len_max[4]+3)
                 d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
-                l += m.groups()[5].ljust(len_max[5])
-                # list of signals ? align with other list only
+                # list of signals : do not align with the end of lign
                 if m.groups()[6]:
+                    l += m.groups()[5]
                     if one_decl_per_line:
                         for s in m.groups()[6].split(','):
                             if s != '':
                                 l += ';\n' + d + s.strip().ljust(len_max[5])
                     else :
-                        l += m.groups()[6].strip().ljust(len_max[6])
+                        l += m.groups()[6].strip()
+                else :
+                    l += m.groups()[5].ljust(len_max[5])
                 l += ';'
                 if m.groups()[7]:
                     l += ' ' + m.groups()[7].strip()

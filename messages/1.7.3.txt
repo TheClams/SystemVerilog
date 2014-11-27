@@ -1,0 +1,4 @@
+SystemVerilog 1.7.3 Changelog:
+ - Update alignment:
+  - Support binding split on multiples line
+  - Support array in signal declaration
