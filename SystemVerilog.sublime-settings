@@ -21,6 +21,8 @@
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
 	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
 	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
+	"sv.autoconnect_port_prefix": [], // List of prefix to remove from the port before looking for a signal connection
+	"sv.autoconnect_port_suffix": [], // List of suffix to remove from the port before looking for a signal connection
 	"sv.instance_prefix": "i_", // Prefix to the module instantiation name
 	"sv.instance_suffix": "",   // Suffix to the module instantiation name
 	"sv.decl_start": "Signals declaration", // Pattern to find for start of signals auto-declaration . Empty string to get declaration just above instantiation.

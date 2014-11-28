@@ -65,22 +65,23 @@ def get_type_info(txt,var_name):
         idx_bw = 3
     # print("get_type_info: type => " + str(t))
     ft = ''
+    bw = 'None'
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):
         if m.groups()[i] is not None:
-            tmp = str.rstrip(m.groups()[i])
+            tmp = m.groups()[i].strip()
             # Cleanup space in enum/struct declaration
             if i==4 and t in ['enum','struct']:
                 tmp = re.sub(r'\s+',' ',tmp,flags=re.MULTILINE)
+            #Cleanup spaces in bitwidth
+            if i==idx_bw:
+                tmp = re.sub(r'\s+','',tmp,flags=re.MULTILINE)
+                bw = tmp
             # regex can catch more than wanted, so filter based on a list
             if tmp not in ['end']:
                 ft += tmp + ' '
     ft += var_name
     # print("get_type_info: decl => " + ft)
-    #extract bus width
-    bw = 'None'
-    if idx_bw>-1 and idx_bw<=idx_max:
-        bw = str.rstrip(str(m.groups()[idx_bw]))
     # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
     at = "None"
     m = re.search(r'\b'+var_name+r'\s*\[([^\]]*)\]', line, flags=re.MULTILINE)
@@ -101,7 +102,7 @@ def get_type_info(txt,var_name):
     return {'decl':ft,'type':t,'array':at,'bw':bw, 'name':var_name}
 
 # Parse a module for port information
-def parse_module(fname,mname=r'\w+'):
+def parse_module_file(fname,mname=r'\w+'):
     # Check Cache module
     if cache_module['mname'] == mname:
         fdate = os.path.getmtime(cache_module['fname'])
@@ -115,10 +116,18 @@ def parse_module(fname,mname=r'\w+'):
     with open(fname, "r") as f:
         flines = str(f.read())
     flines = clean_comment(flines)
+    minfo = parse_module(flines,mname)
+    # Put information in cache:
+    cache_module['info']  = minfo
+    cache_module['mname'] = mname
+    cache_module['fname'] = fname
+    cache_module['date']  = fdate
+    return minfo
+
+def parse_module(flines,mname):
     # print(flines)
     m = re.search(r"(?s)module\s+("+mname+")\s*(#\s*\([^;]+\))?\s*\((.+?)\)\s*;", flines)
     if m is None:
-        print('No module ' + mname + ' found in ' + fname)
         return None
     mname = m.groups()[0]
     # Extract parameter name
@@ -142,11 +151,6 @@ def parse_module(fname,mname=r'\w+'):
             # print (ti)
             ports.append(ti)
     minfo = {'name': mname, 'param':params, 'port':ports}
-    # Put information in cache:
-    cache_module['info']  = minfo
-    cache_module['mname'] = mname
-    cache_module['fname'] = fname
-    cache_module['date']  = fdate
     return minfo
 
 # Fill all entry of a case for enum or vector (limited to 8b)

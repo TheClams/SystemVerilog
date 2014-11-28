@@ -28,6 +28,23 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # print(ti)
         return ti['decl']
 
+###################################################################
+# Move cursor to the declaration of the signal currently selected #
+class VerilogGotoDeclarationCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        if len(self.view.sel())==0 : return;
+        region = self.view.sel()[0]
+        # If nothing is selected expand selection to word
+        if region.empty() : region = self.view.word(region);
+        v = self.view.substr(region).strip()
+        sl = [verilogutil.re_decl + v + r'\b', verilogutil.re_enum + v + r'\b', verilogutil.re_union + v + r'\b', verilogutil.re_if_p + v + '\b']
+        for s in sl:
+            r = self.view.find(s,0)
+            if r:
+                sublimeutil.move_cursor(self.view,r)
+                return
+
 ############################################################################
 # Move cursor to the driver of the signal currently selected #
 class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
@@ -46,7 +63,7 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
             r = self.view.find(s,0)
             if r:
                 # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
-                self.move_cursor(r)
+                sublimeutil.move_cursor(self.view,r)
                 return
         # look for a connection explicit, implicit or by position
         sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\))']
@@ -64,7 +81,7 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                         return
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_module(fname,mname)
+                        mi = verilogutil.parse_module_file(fname,mname)
                         if mi:
                             break
                     if mi:
@@ -80,25 +97,18 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                                 if v in l:
                                     dl = [x['decl'] for x in mi['port']]
                                     if re.search(op,dl[j]) :
-                                        self.move_cursor(r)
+                                        sublimeutil.move_cursor(self.view,r)
                                         return
                         if portname != '' :
                             op += portname+r'\b'
                             for x in mi['port']:
                                 m = re.search(op,x['decl'])
                                 if m:
-                                    self.move_cursor(r)
+                                    sublimeutil.move_cursor(self.view,r)
                                     return
 
         # Everything failed
         sublime.status_message("Could not find driver of " + v)
-
-    def move_cursor(self,r):
-        r.a = r.a + 1
-        r.b = r.a
-        self.view.sel().clear()
-        self.view.sel().add(r)
-        self.view.show(r.a)
 
 
 ########################################
@@ -126,7 +136,7 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
     def run(self, edit, args):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
-        self.pm = verilogutil.parse_module(self.fname)
+        self.pm = verilogutil.parse_module_file(self.fname)
         if self.pm is not None:
             self.param_value = []
             if self.pm['param'] is not None and self.view.settings().get('sv.fillparam'):
@@ -158,36 +168,52 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
 class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
     #TODO: check base indentation
     def run(self, edit, args):
-        isAutoConnect = self.view.settings().get('sv.autoconnect')
-        # pm = verilogutil.parse_module(args['text'])
+        settings = self.view.settings()
+        isAutoConnect = settings.get('sv.autoconnect')
+        port_prefix = settings.get('sv.autoconnect_port_prefix')
+        port_suffix = settings.get('sv.autoconnect_port_suffix')
+        # pm = verilogutil.parse_module_file(args['text'])
         pm = args['pm']
         # Add signal port declaration
         if isAutoConnect and pm['port'] is not None:
             decl = ""
             fname = self.view.file_name()
-            indent_level = self.view.settings().get('sv.decl_indent')
+            indent_level = settings.get('sv.decl_indent')
             #default signal type to logic, except verilog file use wire (if type is implicit)
             sig_type = 'logic'
             if fname.endswith('.v'):
                 sig_type = 'wire'
-            ac = {}
+            ac = {} # autoconnection (entry is port name)
+            wc = {} # warning connection (entry is port name)
             # read file to be able to check existing declaration
             flines = self.view.substr(sublime.Region(0, self.view.size()))
             # Add signal declaration
             for p in pm['port']:
+                pname = p['name']
+                #Remove suffix/prefix of port name
+                for prefix in port_prefix:
+                    if pname.startswith(prefix):
+                        pname = pname[len(prefix):]
+                        break
+                for suffix in port_suffix:
+                    if pname.endswith(suffix):
+                        pname = pname[:-len(suffix)]
+                        break
+                if pname!=p['name']:
+                    ac[p['name']] = pname
                 #check existing signal declaration and coherence
-                ti = verilogutil.get_type_info(flines,p['name'])
-                # print ("Port " + p['name'] + " => " + str(ti))
+                ti = verilogutil.get_type_info(flines,pname)
+                # print ("Port " + p['name'] + " => " + pname + " => " + str(ti))
                 # Check for extended match : prefix
                 if ti['decl'] is None:
                     if self.view.settings().get('sv.autoconnect_allow_prefix',False):
-                        sl = re.findall(r'\b(\w+)_'+p['name']+r'\b', flines, flags=re.MULTILINE)
+                        sl = re.findall(r'\b(\w+)_'+pname+r'\b', flines, flags=re.MULTILINE)
                         if sl :
-                            # print('Found signals for port ' + p['name'] + ' with matching prefix: ' + str(set(sl)))
-                            sn = sl[0] + '_' + p['name'] # select first by default
+                            # print('Found signals for port ' + pname + ' with matching prefix: ' + str(set(sl)))
+                            sn = sl[0] + '_' + pname # select first by default
                             for s in set(sl):
                                 if s in pm['name']:
-                                    sn = s+'_' +p['name']
+                                    sn = s+'_' +pname
                                     break;
                             ti = verilogutil.get_type_info(flines,sn)
                             # print('Selecting ' + sn + ' with type ' + str(ti))
@@ -196,31 +222,55 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 # Check for extended match : suffix
                 if ti['decl'] is None:
                     if self.view.settings().get('sv.autoconnect_allow_suffix',False):
-                        sl = re.findall(r'\b'+p['name']+r'_(\w+)', flines, flags=re.MULTILINE)
+                        sl = re.findall(r'\b'+pname+r'_(\w+)', flines, flags=re.MULTILINE)
                         if sl :
-                            # print('Found signals for port ' + p['name'] + ' with matching suffix: ' + str(set(sl)))
-                            sn = p['name']+'_' + sl[0] # select first by default
+                            # print('Found signals for port ' + pname + ' with matching suffix: ' + str(set(sl)))
+                            sn = pname+'_' + sl[0] # select first by default
                             for s in set(sl):
                                 if s in pm['name']:
-                                    sn = p['name']+'_' + s
+                                    sn = pname+'_' + s
                                     break;
                             ti = verilogutil.get_type_info(flines,sn)
                             # print('Selecting ' + sn + ' with type ' + str(ti))
                             if ti['decl'] is not None:
                                 ac[p['name']] = sn
-                if ti['decl'] is None:
-                    # print ("Adding declaration for " + p['name'] + " => " + str(p['decl']))
-                    if p['decl'] is None:
-                        print("Unable to find proper declaration of port " + p['name'])
-                    else:
-                        d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
-                        if p['type'].startswith(('input','output','inout')) :
-                            d = sig_type + ' ' + d
-                        elif '.' in d: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
-                            d = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',d)
+                # Get declaration of signal for connecteion
+                if p['decl'] :
+                    d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
+                    d = re.sub(r'var ','',d) # remove var indication
+                    if p['type'].startswith(('input','output','inout')) :
+                        d = sig_type + ' ' + d
+                    elif '.' in d: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
+                        d = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',d)
+                    # If no signal is found, add declaration
+                    if ti['decl'] is None:
+                        # print ("Adding declaration for " + pname + " => " + str(p['decl'] + ' => ' + d))
                         decl += indent_level*'\t' + d + ';\n'
-                #TODO: check signal coherence
-                # else :
+                    # Else check signal coherence
+                    else :
+                        # Check port direction
+                        if ti['decl'].startswith('input') and not p['decl'].startswith('input'):
+                            wc[p['name']] = 'Incompatible port direction'
+                        elif ti['decl'].startswith('output') and not p['decl'].startswith('output'):
+                            wc[p['name']] = 'Incompatible port direction'
+                        elif ti['decl'].startswith('inout') and not p['decl'].startswith('inout'):
+                            wc[p['name']] = 'Incompatible port direction'
+                        # check type
+                        ds = re.sub(r'input |output |inout ','',ti['decl']) # remove I/O indication
+                        ds = re.sub(r'var ','',ds) # remove var indication
+                        if ti['type'].startswith(('input','output','inout')) :
+                            ds = sig_type + ' ' + ds
+                        elif '.' in ds: # For interface remove modport
+                            ds = re.sub(r'(\w+)\b(.*)',r'\1',ds)
+                            d = re.sub(r'(\w+)\b(.*)',r'\1',d)
+                        # In case of smart autoconnect replace the signal name by the port name
+                        if pname in ac.keys():
+                            ds = ds.replace(ac[p['name']], pname)
+                        if pname != p['name']:
+                            ds = ds.replace(pname, p['name'])
+                        if ds!=d :
+                            wc[p['name']] = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
+
             #Find location where to insert signal declaration: default to just before module instantiation
             if decl != "":
                 r = self.view.sel()[0].begin()
@@ -239,7 +289,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                             r_tmp = self.view.find_by_class(r_start.a,True,sublime.CLASS_EMPTY_LINE)
                         if r_tmp:
                             r = r_tmp
-                self.view.insert(edit, r, decl)
+                self.view.insert(edit, r, '\n'+decl)
                 sublime.status_message('Adding ' + str(len(decl.splitlines())) + ' signals declaration' )
         # Instantiation
         inst = pm['name'] + " "
@@ -275,9 +325,23 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 inst+= ")"
                 if i<len(pm['port'])-1:
                     inst+=","
+                if portname in wc.keys():
+                    inst+=" // TODO: Check connection ! " + wc[portname]
                 inst+="\n"
         inst += ");\n"
         self.view.insert(edit, self.view.sel()[0].a, inst)
+        # Status report
+        nb_decl = len(decl.splitlines())
+        s = ''
+        if nb_decl:
+            s+= 'Adding ' + str(nb_decl) + ' signal(s) declaration(s)'
+        if len(ac)>0 :
+            s+= '\nNon-perfect name match for ' + str(len(ac)) + ' port(s) : ' + str(ac)
+        if len(wc)>0 :
+            s+= '\nFound ' + str(len(wc)) + ' mismatch(es) for port(s): ' + str([x for x in wc.keys()])
+        if s!='':
+            sublimeutil.print_to_panel(s,'sv')
+
 
 ##########################################
 # Toggle between .* and explicit binding #
@@ -303,7 +367,7 @@ class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
                 return
             for f in filelist:
                 fname = sublimeutil.normalize_fname(f[0])
-                mi = verilogutil.parse_module(fname,mname)
+                mi = verilogutil.parse_module_file(fname,mname)
                 if mi:
                     break
             if not mi:

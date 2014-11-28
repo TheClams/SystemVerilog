@@ -99,7 +99,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 if filelist:
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_module(fname,mname)
+                        mi = verilogutil.parse_module_file(fname,mname)
                         if mi:
                             break
                     completion = self.module_binding_completion(txt, mi,start_pos-r.a)

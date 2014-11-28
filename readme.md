@@ -19,7 +19,8 @@ Description
 
 ####Features:
  * Show signal declaration in status bar
- * Goto driver : seelct a signal a go tothe driver (port, assignement, connection)
+ * Goto declaration : move cursor to the declaration of the selected signal
+ * Goto driver : select a signal a go to the driver (port, assignement, connection)
  * Module instantiation: Select a module from a list and create instantiation and connection
  * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
  * Insert template for FSM
@@ -90,6 +91,8 @@ Options allows to extend search to a signal matching port name with a prefix (en
 In case of multiple match, if one prefix/suffix is contained in the instance name it will be selected,
 otherwise the first one will be used.
 
+If you use some prefix/suffix in your ports name, they can be ignored when searching for a matching signal: this is defined by a list of prefix and suffix (see below).
+
 ####Configuration
 "sv.fillparam": On module instantiation with parameter user is asked a value for each parameter. Default to true.
 
@@ -98,6 +101,10 @@ otherwise the first one will be used.
 "sv.autoconnect_allow_prefix": True to expand search for signal to \w+_port. Default to true.
 
 "sv.autoconnect_allow_suffix": True to expand search for signal to port_\w+. Default to true.
+
+"sv.autoconnect_port_prefix": List of string of prefix to be removed before looking for matching signal. Default to empty list.
+
+"sv.autoconnect_port_suffix": List of string of suffix to be removed before looking for matching signal. Default to empty list.
 
 "sv.instance_prefix": Prefix to the module instantiation name, default to "i_".
 
@@ -114,8 +121,15 @@ otherwise the first one will be used.
 Goto Driver
 -----------
 To locate the logic driving the signal under your cursor (or selected text)
-just call te command verilog_goto_driver (available in the palette as "Verilog: Goto Driver").
-This will move the cursor to etiher an input port of the module, an assignement or a module connection, even if the connection is done by .*
+just call the command verilog_goto_driver (available in the palette as "Verilog: Goto Driver").
+This will move the cursor to either an input port of the module, an assignement or a module connection, even if the connection is done by .*
+
+
+Goto Declaration
+-----------
+To locate the declaration of the signal under your cursor (or selected text)
+just call the command verilog_goto_declaration (available in the palette as "Verilog: Goto Declaration").
+This will move the cursor to signal declaration if found.
 
 
 Alignement configuration
@@ -167,6 +181,14 @@ To map key to the different feature, simply add the following to your user .subl
 	},
 	{
 		"keys": ["ctrl+f12"], "command": "verilog_goto_driver",
+		"context":
+		[
+			{ "key": "num_selections", "operator": "equal", "operand": 1 },
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["shift+f12"], "command": "verilog_goto_declaration",
 		"context":
 		[
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },

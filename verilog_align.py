@@ -220,9 +220,6 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         txt_new += s[:-2].ljust(len_port) + ','
                     else:
                         txt_new += s.ljust(len_port) + ' '
-
-                    # Add colon or space
-
                     # If declaration finish with ); insert an eol
                     if m.groups()[6] :
                         txt_new += '\n' + self.char_space*nb_indent + ');'

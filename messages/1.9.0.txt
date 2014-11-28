@@ -1,0 +1,7 @@
+SystemVerilog 1.9.0 Changelog:
+ - Improved module auto-connection
+  * Add support for prefix/suffix in name port (like pi_/po_ or _i/_o): they are removed before doing autoconnection.
+  * List of prefix/suffix is configurable and default to None. Use settings sv.autoconnect_port_prefix and sv.autoconnect_port_suffix to set your preferences.
+  * When a match is found, check that type of signal is matching type of port. Any mismatch is reported in a comment next to the port connection
+  * Display a panel with information about number of signals declaration added, smart connection done and number of mismatch found (if any)
+ - Add Goto declaration feature
