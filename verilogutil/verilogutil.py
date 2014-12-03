@@ -85,7 +85,6 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     if m is None:
         return [{'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name, 'tag':tag}]
     line = m.group(0).strip()
-    # print("get_type_info: line=" + line + ' var = ' + m.groups()[idx_max+1])
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
     t = str.rstrip(m.groups()[idx_type]).split('.')[0]
     if t=="unsigned" or t=="signed": # TODO check if other cases might happen

@@ -421,6 +421,7 @@ class VerilogHelper():
             pl = [] # posedge list
             r = view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
             if pl:
+                pl_c = []
                 if clk_name not in set(pl):
                     # Make hypothesis that all clock signals have a c in their name
                     pl_c = [x for x in pl if 'c' in x]
@@ -479,12 +480,20 @@ class VerilogHelper():
 #
 class VerilogInsertFsmTemplate(sublime_plugin.TextCommand):
 
+    #TODO: use parse module function instead of doing search again. We are missing case of input
+    # Might want to add some type info in the show quick panel
     def run(self,edit):
         #List all signals available and let user choose one
         int_decl = r'^\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*;'
+        enum_decl  = r'^\s*(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\']+\})\s*([A-Za-z_][\w=,\s]*)?\b\s*;'
         self.dl=[]
         dl_raw = []
+        # Find internal signal
         d = self.view.find_all(int_decl, 0, '$6', dl_raw)
+        for x in dl_raw:
+            self.dl += re.findall(r"(\w+).*?(?:,|$)",x)
+        # Find enum
+        d = self.view.find_all(enum_decl, 0, '$5', dl_raw)
         for x in dl_raw:
             self.dl += re.findall(r"(\w+).*?(?:,|$)",x)
         self.dl = sorted(self.dl)

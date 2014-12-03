@@ -18,7 +18,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         current_pos = self.view.viewport_position()
         if not self.use_space:
             self.char_space = '\t'
-        region = self.view.extract_scope(self.view.line(self.view.sel()[0]).a)
+        # region = self.view.extract_scope(self.view.line(self.view.sel()[0]).a)
+        region = self.view.sel()[0]
         scope = self.view.scope_name(region.a)
         txt = ''
         if 'meta.module.inst' in scope:
@@ -165,12 +166,13 @@ class VerilogAlign(sublime_plugin.TextCommand):
     # Alignement for port declaration (for ansi-style)
     def port_align(self,region):
         r = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
-        r = self.view.expand_by_class(r,sublime.CLASS_LINE_START | sublime.CLASS_LINE_END)
+        r = self.view.line(r)
         txt = self.view.substr(r)
         # print('Port alignement on :' + txt)
         #TODO: handle interface
+        #TODO: Also cleanup around module name (); to be sure we get the correct format (similar to the ay it is done in instance alignement)
         # Port declaration: direction type? signess? buswidth? portlist ,? comment?
-        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<portlist>\w+[\w, \t]*)(?P<ending>\)\s+;)?[ \t]*(?P<comment>.*)'
+        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<portlist>\w+[\w, \t]*)(?P<ending>\)\s*;)?[ \t]*(?P<comment>.*)'
         decl = re.findall(re_str,txt,re.MULTILINE)
         # if decl:
         #     print(decl)
@@ -196,7 +198,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     len_sign = len(x[3])
         len_type_full = len_type
         if len_var > 0 or len_bw > 0 or len_sign > 0 :
-            len_type_full +=1
+            if len_type > 0:
+                len_type_full +=1
             if len_var > 0:
                 len_type_full += 4
             if len_bw > 0:
@@ -217,11 +220,15 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if i==0 or (i==1 and lines[0]==''):
                 txt_new += self.char_space*nb_indent+l + '\n'
             else :
-                if i == len(lines)-1:
-                    txt_new += self.char_space*(nb_indent)
-                else:
-                    txt_new += self.char_space*(nb_indent+1)
                 m = re.search(re_str,l)
+                indent = nb_indent+1
+                if i == len(lines)-1:
+                    if m:
+                        if not m.group('ending') :
+                            indent = indent -1;
+                    else :
+                        indent = indent -1;
+                txt_new += self.char_space*indent
                 if m:
                     # print('Line ' + str(i) + ' : ' + str(m.groups()))
                     # Add direction
@@ -282,8 +289,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 else : # No port declaration ? recopy line with just the basic indentation level
                     txt_new += l
                 # Remove trailing spaces/tabs and add the end of line
-                txt_new = txt_new.rstrip(' \t') + '\n'
-
+                txt_new = txt_new.rstrip(' \t')
+                if i != len(lines)-1:
+                    txt_new += '\n'
         return (txt_new,r)
 
 
