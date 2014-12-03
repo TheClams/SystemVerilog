@@ -355,9 +355,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def assign_align(self,txt, region):
         #TODO handle array
         re_str_l = []
-        re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\]\s*)?(?P<op>\:)\s*(?P<statement>.*)$')
-        re_str_l.append(r'^[ \t]*(?P<scope>assign)\s+(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\]\s*)?(?P<op>=)\s*(?P<statement>.*)$')
-        re_str_l.append(r'^[ \t]*(?P<scope>)(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\]\s*)?(?P<op>(<)?=)\s*(?P<statement>.*)$')
+        re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:)\s*(?P<statement>.*)$')
+        re_str_l.append(r'^[ \t]*(?P<scope>assign)\s+(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>=)\s*(?P<statement>.*)$')
+        re_str_l.append(r'^[ \t]*(?P<scope>)(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>(<)?=)\s*(?P<statement>.*)$')
         txt_new = txt
         for re_str in re_str_l:
             lines = txt_new.splitlines()
@@ -374,6 +374,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     len_c = len(m.group('name'))
                     if m.group('scope'):
                         len_c += len(m.group('scope'))
+                        if m.group('scope') == 'assign':
+                            len_c+=1
                     if m.group('bitslice'):
                         len_c += len(re.sub(r'\s','',m.group('bitslice')))+2
                     if len_c > max_len:
@@ -387,6 +389,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         l = ''
                         if m.group('scope'):
                             l += m.group('scope')
+                            if m.group('scope') == 'assign':
+                                l+=' '
                         l += m.group('name')
                         if m.group('bitslice'):
                             l += '[' + re.sub(r'\s','',m.group('bitslice')) + ']'
