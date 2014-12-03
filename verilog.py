@@ -15,6 +15,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region)
+        region = self.view.line(region)
         s = self.get_type(v,region.b)
         if s is None:
             s = "No definition found for " + v
@@ -38,7 +39,7 @@ class VerilogGotoDeclarationCommand(sublime_plugin.TextCommand):
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region).strip()
-        sl = [verilogutil.re_decl + v + r'\b', verilogutil.re_enum + v + r'\b', verilogutil.re_union + v + r'\b', verilogutil.re_if_p + v + '\b']
+        sl = [verilogutil.re_decl + v + r'\b', verilogutil.re_enum + v + r'\b', verilogutil.re_union + v + r'\b', verilogutil.re_inst + v + '\b']
         for s in sl:
             r = self.view.find(s,0)
             if r:
@@ -61,16 +62,20 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         sl.append(r'\b' + v + r'\b\s*<?\=[^\=]')
         for s in sl:
             r = self.view.find(s,0)
+            # print('searching ' + s + ' => ' + str(r))
             if r:
                 # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
                 sublimeutil.move_cursor(self.view,r)
                 return
         # look for a connection explicit, implicit or by position
-        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\))']
+        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\)\s*;)']
         for k,s in enumerate(sl):
             pl = []
             rl = self.view.find_all(s,0,r'$1',pl)
+            # print('searching ' + s + ' => ' + str(rl))
             for i,r in enumerate(rl):
+                # print('Found in line ' + self.view.substr(self.view.line(r)))
+                # print('Scope for ' + str(r) + ' = ' + self.view.scope_name(r.a))
                 if 'meta.module.inst' in self.view.scope_name(r.a) :
                     rm = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
                     txt = verilogutil.clean_comment(self.view.substr(rm))
@@ -110,6 +115,57 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         # Everything failed
         sublime.status_message("Could not find driver of " + v)
 
+
+######################################################################################
+# Create a new buffer showing the hierarchy (sub-module instances) of current module #
+class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        txt = self.view.substr(sublime.Region(0, self.view.size()))
+        txt = verilogutil.clean_comment(txt)
+        mi = verilogutil.parse_module(txt,r'\b\w+\b')
+        if not mi:
+            print('[VerilogShowHierarchyCommand] Not inside a module !')
+            return
+        # Create Dictionnary where each type is associated with a list of tuple (instance type, instance name)
+        self.d = {}
+        top_level = mi['name']
+        self.d[mi['name']] = [(x['type'],x['name']) for x in mi['inst']]
+        li = [x['type'] for x in mi['inst']]
+        while li:
+            # print('Looping on list ' + str(li))
+            li_next = []
+            for i in li:
+                if i not in self.d.keys():
+                    # print('Parsing module ' + i)
+                    filelist = self.view.window().lookup_symbol_in_index(i)
+                    if not filelist:
+                        break
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        mi = verilogutil.parse_module_file(fname,i)
+                        if mi:
+                            break
+                    if mi:
+                        li_next += [x['type'] for x in mi['inst']]
+                        self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
+            li = li_next
+        txt = top_level + '\n'
+        txt += self.print_submodule(top_level,1)
+
+        v = sublime.active_window().new_file()
+        # print(str(self.d))
+        v.run_command('insert_snippet',{'contents':str(txt)})
+
+    def print_submodule(self,name,lvl):
+        txt = ''
+        if name in self.d:
+            # print('print_submodule ' + str(self.d[name]))
+            for x in self.d[name]:
+                txt += '    '*lvl+'+ '+x[1].ljust(64)+'('+x[0]+')\n'
+                # txt += '    '*lvl+'+ '+x[0]+' '+x[1]+'\n'
+                txt += self.print_submodule(x[0],lvl+1)
+        return txt
 
 ########################################
 # Create module instantiation skeleton #
@@ -233,7 +289,10 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                             ti = verilogutil.get_type_info(flines,sn)
                             # print('Selecting ' + sn + ' with type ' + str(ti))
                             if ti['decl'] is not None:
-                                ac[p['name']] = sn
+                                if sn != p['name']:
+                                    ac[p['name']] = sn
+                                elif p['name'] in ac.keys():
+                                    ac.pop(p['name'],None)
                 # Get declaration of signal for connecteion
                 if p['decl'] :
                     d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
@@ -250,14 +309,15 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     else :
                         # Check port direction
                         if ti['decl'].startswith('input') and not p['decl'].startswith('input'):
-                            wc[p['name']] = 'Incompatible port direction'
-                        elif ti['decl'].startswith('output') and not p['decl'].startswith('output'):
-                            wc[p['name']] = 'Incompatible port direction'
+                            wc[p['name']] = 'Incompatible port direction (not an input)'
+                        # elif ti['decl'].startswith('output') and not p['decl'].startswith('output'):
+                        #     wc[p['name']] = 'Incompatible port direction (not an output)'
                         elif ti['decl'].startswith('inout') and not p['decl'].startswith('inout'):
-                            wc[p['name']] = 'Incompatible port direction'
+                            wc[p['name']] = 'Incompatible port direction not an inout'
                         # check type
                         ds = re.sub(r'input |output |inout ','',ti['decl']) # remove I/O indication
-                        ds = re.sub(r'var ','',ds) # remove var indication
+                        ds = re.sub(r'var |signed |unsigned ','',ds) # remove qualifier like var, signedm unsigned indication
+                        d  = re.sub(r'signed |unsigned ','',d) # remove qualifier like var, signedm unsigned indication
                         if ti['type'].startswith(('input','output','inout')) :
                             ds = sig_type + ' ' + ds
                         elif '.' in ds: # For interface remove modport
@@ -265,9 +325,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                             d = re.sub(r'(\w+)\b(.*)',r'\1',d)
                         # In case of smart autoconnect replace the signal name by the port name
                         if pname in ac.keys():
-                            ds = ds.replace(ac[p['name']], pname)
+                            ds = re.sub(r'\b' + ac[p['name']] + r'\b', pname,ds)
                         if pname != p['name']:
-                            ds = ds.replace(pname, p['name'])
+                            ds = re.sub(r'\b' + pname + r'\b', p['name'],ds)
                         if ds!=d :
                             wc[p['name']] = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
 

@@ -10,34 +10,33 @@ def normalize_fname(fname):
         fname= re.sub(r'/', r'\\', fname)
     return fname
 
-#Expand a selection to a given scope
+#Expand a region to a given scope
 def expand_to_scope(view, scope_name, region):
-    r = region
     scope = view.scope_name(region.a)
-    cnt = 0 # keep timeout in case the test on region not growing is not enough (should be removed once tested enough)
-    while scope_name in scope and cnt <8:
-        r = region
-        region=view.extract_scope(r.b)
-        scope = view.scope_name(region.a)
-        # Failed to expand from b? try from a
-        if scope_name not in scope:
-            region=view.extract_scope(r.a)
-            scope = view.scope_name(region.a)
-        cnt=cnt+1
-        # if selection did not grow on the expand, just get out of the loop
-        if (region.b-region.a)<=(r.b-r.a):
+    r_tmp = region
+    #Expand forward word by word until scope does not match or end of file is reached
+    while scope in scope_name:
+        region.b = r_tmp.b
+        r_tmp = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
+        if r_tmp.b <= region.b:
             break
-    if cnt == 8:
-        print("[expand_to_scope] Unexpected TIMEOUT !!!")
-    return r
+    #Expand backward word by word until scope does not match or end of file is reached
+    while scope in scope_name:
+        region.a = r_tmp.a
+        r_tmp = self.view.find_by_class(region.a,False,sublime.CLASS_WORD_START)
+        if r_tmp.a >= region.a:
+            break
+    return region
 
+
+# Create a panel and display a text
 def print_to_panel(txt,name):
     window = sublime.active_window()
     v = window.create_output_panel(name)
     v.run_command('append', {'characters': txt})
     window.run_command("show_panel", {"panel": "output."+name})
 
-
+# Move cursor to the beginning of a region
 def move_cursor(view,r):
     r.a = r.a + 1
     r.b = r.a

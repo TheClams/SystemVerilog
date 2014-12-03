@@ -26,5 +26,9 @@
     {
         "caption": "Verilog: Insert FSM template",
         "command": "verilog_insert_fsm_template"
+    },
+    {
+        "caption": "Verilog: Show hierarchy",
+        "command": "verilog_show_hierarchy"
     }
 ]

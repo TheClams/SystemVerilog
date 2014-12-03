@@ -1,0 +1,21 @@
+SystemVerilog 1.10.0 Changelog:
+
+## New feature ##
+ - Display hierarchy (all sub-module) of the current module (Issue #14)
+
+## Improvement ##
+ - Alignment:
+  * Support of parameterized module (Issue #11)
+  * Support of "assign sign = value" (Issue #4)
+  * Support of "case() case_val : ..." (Issue #4)
+  * Support of "sign <= value" (Issue #4)
+
+ - Autocompletion:
+  * Support interface binding
+
+ - Large performance improvement for parse_module function (impact almost all features) (Issue #13)
+
+## Bug fixes ##
+ - Fix Expand_to_scope function that was not working in many cases (impact mainly alignment function)
+ - Fix issue with module cache not being properly associated with a filename
+ - Fix display type of array/queue correctly show in the status bar
