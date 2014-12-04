@@ -37,7 +37,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
             (txt,region) = self.assign_align(txt, region)
         if txt != '':
             self.view.replace(edit,region,txt)
-            sublimeutil.move_cursor(self.view,region)
+            sublimeutil.move_cursor(self.view,region.a+1)
         else :
             sublime.status_message('No alignement support for this block of code.')
 
@@ -167,7 +167,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def port_align(self,region):
         r = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
         txt = self.view.substr(r)
-        print(txt)
+        # print(txt)
         # Extract parameter and ports
         m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)\s*(?P<paramsfull>#\s*\(\s*parameter\s+(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,re.MULTILINE)
         if not m:

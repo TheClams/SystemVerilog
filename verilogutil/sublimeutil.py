@@ -61,9 +61,7 @@ def print_to_panel(txt,name):
     window.run_command("show_panel", {"panel": "output."+name})
 
 # Move cursor to the beginning of a region
-def move_cursor(view,r):
-    r.a = r.a + 1
-    r.b = r.a
+def move_cursor(view,pos):
     view.sel().clear()
-    view.sel().add(r)
-    view.show(r.a)
+    view.sel().add(sublime.Region(pos,pos))
+    view.show(pos)

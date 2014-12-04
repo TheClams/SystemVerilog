@@ -43,7 +43,7 @@ class VerilogGotoDeclarationCommand(sublime_plugin.TextCommand):
         for s in sl:
             r = self.view.find(s,0)
             if r:
-                sublimeutil.move_cursor(self.view,r)
+                sublimeutil.move_cursor(self.view,r.b-1)
                 return
 
 ############################################################################
@@ -65,7 +65,7 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
             # print('searching ' + s + ' => ' + str(r))
             if r:
                 # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
-                sublimeutil.move_cursor(self.view,r)
+                sublimeutil.move_cursor(self.view,r.a)
                 return
         # look for a connection explicit, implicit or by position
         sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\)\s*;)']
@@ -102,14 +102,14 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                                 if v in l:
                                     dl = [x['decl'] for x in mi['port']]
                                     if re.search(op,dl[j]) :
-                                        sublimeutil.move_cursor(self.view,r)
+                                        sublimeutil.move_cursor(self.view,r.a)
                                         return
                         if portname != '' :
                             op += portname+r'\b'
                             for x in mi['port']:
                                 m = re.search(op,x['decl'])
                                 if m:
-                                    sublimeutil.move_cursor(self.view,r)
+                                    sublimeutil.move_cursor(self.view,r.a)
                                     return
 
         # Everything failed
