@@ -97,7 +97,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if self.settings.get('sv.one_bind_per_line',True):
             txt = re.sub(r'\)[ \t]*,[ \t]*\.', '), \n.', txt,re.MULTILINE)
         # Parse bindings to find length of port and signals
-        re_str_bind_port = r'\.\s*(?P<port>\w+)\s*\(\s*'
+        re_str_bind_port = r'^[ \t]*\.\s*(?P<port>\w+)\s*\(\s*'
         re_str_bind_sig = r'(?P<signal>.*)\s*\)\s*(?P<comma>,)?\s*(?P<comment>\/\/.*?|\/\*.*?)?$'
         binds = re.findall(re_str_bind_port+re_str_bind_sig,txt,re.MULTILINE)
         max_port_len = 0
@@ -109,7 +109,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if sigs_len:
             max_sig_len = max(sigs_len)
         #TODO: if the .* is at the beginning make sure it is not follow by another binding
-        lines = txt.splitlines()
+        lines = txt.strip().splitlines()
         txt_new = ''
         # for each line apply alignment
         for i,line in enumerate(lines):
@@ -126,13 +126,13 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     is_split = True
                     # print('Detected split at Line ' + str(i) + ' : ' + l)
                 if m:
-                    # print('Line ' + str(i) + ' : ' + str(m.groups()) + ' => split = ' + str(is_split))
+                    # print('Line ' + str(i) + '/' + str(len(lines)) + ' : ' + str(m.groups()) + ' => split = ' + str(is_split))
                     txt_new += self.char_space*(nb_indent)
                     txt_new += '.' + m.group('port').ljust(max_port_len)
                     txt_new += '(' + m.group('signal').strip().ljust(max_sig_len)
                     if not is_split:
                         txt_new += ')'
-                        if m.group('comma'):
+                        if m.group('comma') and i!=(len(lines)-1):
                             txt_new += ', '
                         else:
                             txt_new += '  '
@@ -149,7 +149,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                                 txt_new += m.group('signal').strip().ljust(max_sig_len) + ')'
                             else :
                                 txt_new += ''.strip().ljust(max_sig_len) + ')'
-                            if m.group('comma'):
+                            if m.group('comma') and i!=(len(lines)-1):
                                 txt_new += ', '
                             else:
                                 txt_new += '  '

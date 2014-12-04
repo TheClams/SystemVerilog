@@ -1,0 +1,5 @@
+SystemVerilog 1.10.4 Changelog:
+
+## Bug fixes ##
+ - Fix Module instantiation alignment where commented port bindind get uncommented ...
+ - Module instantiation alignement now remove a dangling comma
