@@ -9,8 +9,10 @@ interface my_interface1;
         input one,
         output two
     );
-
 endinterface // my_interface1
+
+typedef logic [31:0] queue_of_levels [$];
+
 
     interface my_interface2;
         logic   one;

@@ -1,0 +1,5 @@
+SystemVerilog 1.10.2 Changelog:
+
+## Bug fixes ##
+ - Fix highlighting with typedef of a queue (issue #19)
+ - Fix cursor position on show driver/declaration
