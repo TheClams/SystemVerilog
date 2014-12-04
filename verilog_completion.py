@@ -40,8 +40,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion =  self.dot_completion(view,r)
         elif t==')':
             l = view.substr(view.line(r))
-            m = re.search(r'^\s*case\s*\((\w+)\)',l)
-            completion = self.case_completion(m.groups()[0])
+            m = re.search(r'^\s*case\s*\((.+?)\)',l)
+            if m:
+                completion = self.case_completion(m.groups()[0])
         return (completion, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
 
     def uvm_completion(self):
@@ -113,7 +114,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if ti['type'] is None and 'meta.module.systemverilog' not in scope:
                 return completion
             #Provide completion for different type
-            if ti['array']!='None' :
+            if ti['array']!='' :
                 completion = self.array_completion(ti['array'])
             elif ti['type']=='string':
                 completion = self.string_completion()
@@ -458,10 +459,19 @@ class VerilogHelper():
         a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'
         return (a_l,a_h,a_nr)
 
-    def get_case_template(view, sig_name):
-        ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),sig_name)
+    def get_case_template(view, sig_name, ti=None):
+        m = re.search(r'(?P<name>\w+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)
+        if not m:
+            print('[get_case_template] Could not parse ' + sig_name)
+            return (None,None)
+        if not ti:
+            ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),m.group('name'))
         if not ti['type']:
-            return
+            print('[get_case_template] Could not retrieve type of ' + m.group('name'))
+            return (None,None)
+        length = 0
+        if m.group('h'):
+            length = int(m.group('h')) - int(m.group('l')) + 1
         t = ti['type'].split()[0]
         if t not in ['enum','logic','bit','reg','wire']:
             #check first in current file
@@ -474,7 +484,7 @@ class VerilogHelper():
                         flines = str(f.read())
                     tti = verilogutil.get_type_info(flines,t)
             ti = tti
-        return verilogutil.fill_case(ti)
+        return verilogutil.fill_case(ti,length)
 
 ##############################################
 #
@@ -484,38 +494,31 @@ class VerilogInsertFsmTemplate(sublime_plugin.TextCommand):
     # Might want to add some type info in the show quick panel
     def run(self,edit):
         #List all signals available and let user choose one
-        int_decl = r'^\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*;'
-        enum_decl  = r'^\s*(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\']+\})\s*([A-Za-z_][\w=,\s]*)?\b\s*;'
-        self.dl=[]
-        dl_raw = []
-        # Find internal signal
-        d = self.view.find_all(int_decl, 0, '$6', dl_raw)
-        for x in dl_raw:
-            self.dl += re.findall(r"(\w+).*?(?:,|$)",x)
-        # Find enum
-        d = self.view.find_all(enum_decl, 0, '$5', dl_raw)
-        for x in dl_raw:
-            self.dl += re.findall(r"(\w+).*?(?:,|$)",x)
-        self.dl = sorted(self.dl)
+        mi = verilogutil.parse_module(self.view.substr(sublime.Region(0,self.view.size())),r'\w+')
+        self.til = [x for x in mi['port']]
+        self.til = [x for x in mi['signal']]
+        self.dl =[[x['name'],x['type']+' '+x['bw']] for x in self.til]
         sublime.active_window().show_quick_panel(self.dl, self.on_done )
         return
 
     def on_done(self, index):
         if index >= 0:
-            self.view.run_command("verilog_do_insert_fsm_template", {"args":{'sig_name':self.dl[index]}})
+            self.view.run_command("verilog_do_insert_fsm_template", {"args":{'ti':self.til[index]}})
 
 
 class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
 
     def run(self,edit, args):
+        # print('ti = ' + str(args['ti']))
+        sig_name = args['ti']['name']
         # Retrieve complete type information of signal
-        (s,el) = VerilogHelper.get_case_template(self.view, args['sig_name'])
+        (s,el) = VerilogHelper.get_case_template(self.view, sig_name,args['ti'])
         if not s:
             return
-        state_next = args['sig_name'] + '_next'
+        state_next = sig_name + '_next'
         s = s.replace('\n','\n\t') # insert an indentation level
-        s = 'case (' + args['sig_name']+')'+s
-        s = 'always_comb begin : proc_' + state_next + '\n\t' + state_next + ' = ' + args['sig_name'] +';\n\t' + s + '\nend'
+        s = 'case (' + sig_name+')'+s
+        s = 'always_comb begin : proc_' + state_next + '\n\t' + state_next + ' = ' + sig_name +';\n\t' + s + '\nend'
         (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
         fname = self.view.file_name()
         if fname:
@@ -526,7 +529,7 @@ class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
             a_l = 'always_ff ' + a_l
         else :
             a_l = 'always' + a_l
-        a_l = a_l.replace('$1',args['sig_name'])
+        a_l = a_l.replace('$1',sig_name)
         a_l = a_l.replace('<= 0','<= ' + str(el[0]))
         a_l = a_l.replace('$2',state_next)
         s = a_l + '\n\n' + s
@@ -537,5 +540,5 @@ class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
         # Check is state_next exist: if not, add it to the declaration next to state
         ti = verilogutil.get_type_info(self.view.substr(sublime.Region(0, self.view.size())),state_next)
         if not ti['type']:
-            r = self.view.find(verilogutil.re_decl+args['sig_name'],0)
-            self.view.replace(edit,r,re.sub(r'\b'+args['sig_name']+r'\b',args['sig_name']+', '+state_next,self.view.substr(r)))
+            r = self.view.find(args['ti']['type']+r'.+'+sig_name,0)
+            self.view.replace(edit,r,re.sub(r'\b'+sig_name+r'\b',sig_name+', '+state_next,self.view.substr(r)))

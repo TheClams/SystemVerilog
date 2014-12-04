@@ -1,0 +1,11 @@
+SystemVerilog 1.10.1 Changelog:
+
+## Bug fixes ##
+ - Alignement:
+   * Fix assign alignement (was completly broken ...)
+   * Fix case of module declaration with parameter.
+   * First line of module declaration is now cleaned
+
+ - AutoCompletion:
+   * FSM template can now be used on port signals and display the type of signals in the panel
+   * Case autocompletion correctly handles bitslice (cnt[1:0] gives a list 0 to 3 even if cnt is defined with more bits)

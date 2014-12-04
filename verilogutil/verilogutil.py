@@ -33,7 +33,8 @@ def get_type_info(txt,var_name):
     tag = 'decl'
     # print("get_type_info for var " + str(var_name) + " in \n" + str(txt))
     #if regex on signal/variable declaration failed, try looking for an enum, struct or a typedef enum/struct
-    if m is None:
+    ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag)[0]
+    if not ti['type']:
         m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
         tag = 'inst'
         if not m :
@@ -44,7 +45,8 @@ def get_type_info(txt,var_name):
                 tag = 'struct'
             idx_type = 1
             idx_bw = 3
-    return get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag)[0]
+        ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag)[0]
+    return ti
 
 # Extract all signal declaration
 def get_all_type_info(txt):
@@ -81,9 +83,10 @@ def get_all_type_info(txt):
 
 # Get type info from a match object
 def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
+    ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag':tag}
     #return a tuple of None if not found
     if m is None:
-        return [{'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name, 'tag':tag}]
+        return [ti_not_found]
     line = m.group(0).strip()
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
     t = str.rstrip(m.groups()[idx_type]).split('.')[0]
@@ -97,9 +100,12 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     elif t=="const": # identifying a variable as simply const is typical of a struct/union : look for it
         m = re.search( re_union+var_name+r'.*$', txt, flags=re.MULTILINE)
         if m is None:
-            return {'decl':None,'type':None,'array':"None",'bw':"None", 'name':var_name, 'tag':tag}
+            return [ti_not_found]
         t = m.groups()[1]
         idx_bw = 3
+    # Remove potential false positive
+    if t in ['begin','end','else']:
+        return [ti_not_found]
     # print("[get_type_info] type => " + str(t))
     ft = ''
     bw = 'None'
@@ -132,7 +138,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         ft += signal[0]
         # print("get_type_info: decl => " + ft)
         # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
-        at = "None"
+        at = ""
         if signal[1]!='':
             ft += '[' + signal[2] + ']'
             if signal[2] =="":
@@ -190,7 +196,8 @@ def parse_module(flines,mname):
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(m.group(0))
     # Extract port name
-    ports = None
+    ports = []
+    ports_name = []
     if m.group('content') is not None:
         s = clean_comment(m.group('content'))
         ports_name = re.findall(r"(\w+)\s*(?=,|$)",s)
@@ -199,13 +206,15 @@ def parse_module(flines,mname):
         ports = [ti for ti in ati if ti['name'] in ports_name]
     # Extract instances name
     inst = [ti for ti in ati if ti['type']!='module' and ti['tag']=='inst']
-    minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type')}
+    # Extract signal name
+    signals = [ti for ti in ati if ti['type']!='module' and ti['tag']!='inst' and ti['name'] not in ports_name]
+    minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
     # print (minfo)
     return minfo
 
 # Fill all entry of a case for enum or vector (limited to 8b)
 # ti is the type infor return by get_type_info
-def fill_case(ti):
+def fill_case(ti,length=0):
     if not ti['type']:
         return None
     t = ti['type'].split()[0]
@@ -225,7 +234,11 @@ def fill_case(ti):
     elif t in ['logic','bit','reg','wire']:
         m = re.search(r'\[\s*(\d+)\s*\:\s*(\d+)',ti['bw'])
         if m :
-            bw = int(m.groups()[0]) + 1 - int(m.groups()[1])
+            # If no length was provided use the complete bitwidth
+            if length>0:
+                bw = length
+            else :
+                bw = int(m.groups()[0]) + 1 - int(m.groups()[1])
             if bw <=8 :
                 for i in range(0,(1<<bw)):
                     s += '\t' + str(i).ljust(7) + ' : ;\n'
