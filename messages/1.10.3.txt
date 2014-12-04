@@ -1,0 +1,5 @@
+SystemVerilog 1.10.3 Changelog:
+
+## Bug fixes ##
+ - Fix Module instantiation with parameters (was not working at all due to recent change to module parsing)
+ - Fix Module instance alignement with consecutive module (issue #20)

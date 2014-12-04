@@ -167,15 +167,14 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def port_align(self,region):
         r = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
         txt = self.view.substr(r)
-        # print(txt)
         # Extract parameter and ports
         m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)\s*(?P<paramsfull>#\s*\(\s*parameter\s+(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,re.MULTILINE)
         if not m:
             sublime.status_message('Unable to match a module declaration !')
-            return
+            return ('',r)
         # Add module declaration
         nb_indent = self.get_indent_level(m.group('module'))
-        txt_new = '\n' + self.char_space*(nb_indent) + 'module ' + m.group('mname').strip()
+        txt_new = self.char_space*(nb_indent) + 'module ' + m.group('mname').strip()
         # Add optional parameter declaration
         if m.group('params'):
             m.group('params').strip()

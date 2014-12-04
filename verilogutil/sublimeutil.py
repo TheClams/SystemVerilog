@@ -21,7 +21,7 @@ def expand_to_scope(view, scope_name, region):
     while scope_name in scope:
         region.b = p
         p = view.find_by_class(p,True,sublime.CLASS_LINE_END)
-        scope = view.scope_name(p-1)
+        scope = view.scope_name(p)
         if p <= region.b:
             # print('End reached')
             break
@@ -29,8 +29,8 @@ def expand_to_scope(view, scope_name, region):
     # Retract backward until we find the scope back
     while scope_name not in scope and p>region.b:
         p=p-1
-        scope = view.scope_name(p-1)
-    region.b = p
+        scope = view.scope_name(p)
+    region.b = p+1
     # print('Retract done:' + str(p) + ' => text = ' + view.substr(region))
     #Expand backward word by word until scope does not match or end of file is reached
     p = region.a
@@ -38,7 +38,7 @@ def expand_to_scope(view, scope_name, region):
     while scope_name in scope:
         region.a = p
         p = view.find_by_class(p,False,sublime.CLASS_LINE_START)
-        scope = view.scope_name(p+1)
+        scope = view.scope_name(p-1)
         if p >= region.a:
             # print('Start reached')
             break
@@ -46,8 +46,8 @@ def expand_to_scope(view, scope_name, region):
     # Retract forward until we find the scope back
     while scope_name not in scope and p<region.a:
         p=p+1
-        scope = view.scope_name(p+1)
-    region.a = p
+        scope = view.scope_name(p)
+    region.a = p-1
     # print('Retract done:' + str(p) + ' => text = ' + view.substr(region))
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region

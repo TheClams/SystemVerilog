@@ -193,9 +193,10 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
         self.pm = verilogutil.parse_module_file(self.fname)
+        print(self.pm)
         if self.pm is not None:
             self.param_value = []
-            if self.pm['param'] is not None and self.view.settings().get('sv.fillparam'):
+            if self.pm['param'] and self.view.settings().get('sv.fillparam'):
                 self.cnt = 0
                 self.show_prompt()
             else:
@@ -231,7 +232,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         # pm = verilogutil.parse_module_file(args['text'])
         pm = args['pm']
         # Add signal port declaration
-        if isAutoConnect and pm['port'] is not None:
+        if isAutoConnect and pm['port']:
             decl = ""
             fname = self.view.file_name()
             indent_level = settings.get('sv.decl_indent')
@@ -359,7 +360,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             inst += "#(\n"
             for i in range(len(args['pv'])):
                 inst+= "\t." + args['pv'][i]['name'].ljust(max_len) + "("+args['pv'][i]['value']+")"
-                if i<len(pm['param'])-1:
+                if i<len(args['pv'])-1:
                     inst+=","
                 inst+="\n"
             inst += ") "

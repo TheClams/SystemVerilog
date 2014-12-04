@@ -189,7 +189,7 @@ def parse_module(flines,mname):
     params = None
     ## Parameter define in ANSI style
     if m.group('param'):
-        s = clean_comment(m.groups()[1])
+        s = clean_comment(m.group('param'))
         r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[\w\-\+`]+)")
         params = [m.groupdict() for m in r.finditer(s)]
     ##TODO: look for parameter not define in the module declaration (optionnaly?)
