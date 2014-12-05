@@ -1,0 +1,15 @@
+SystemVerilog 1.11.0 Changelog:
+
+## Improvement ##
+ - Completion:
+  * Support of scope for enum and package
+  * On binding connection, the signal name is selected
+
+ - Alignment:
+  * support interface in module declaration
+  * List of ports are excluded of alignement (need to think more on how to handle that ...)
+  * When no text is selected, alignement will work on a block of consecutive lines
+
+## Bug fixes ##
+ - type_info function now recognize typedef of parameterized type
+ - struct fields should not leak anymore in the signal list

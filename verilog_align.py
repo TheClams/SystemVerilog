@@ -27,11 +27,17 @@ class VerilogAlign(sublime_plugin.TextCommand):
         elif 'meta.module.systemverilog' in scope:
             (txt,region) = self.port_align(region)
         else :
-            region = self.view.line(self.view.sel()[0])
+            # empty region ? select all lines before and after until an empty line is found
+            if region.empty():
+                region = self.view.expand_by_class(region,sublime.CLASS_EMPTY_LINE)
+                # TODO: maybe have a better approach stopping at a begin end and line of comment as well
+            else:
+                region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
                 region.b -= 1;
+            if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
+                region.a += 1;
             txt = self.view.substr(region)
-            # print('Before decl_align txt = ' + txt)
             (txt,region) = self.decl_align(txt, region)
             # print('Before assign_align txt = ' + txt)
             (txt,region) = self.assign_align(txt, region)
@@ -179,7 +185,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if m.group('params'):
             m.group('params').strip()
             param_txt = re.sub(r'(^|,)\s*parameter','',m.group('params').strip()) # remove multiple parameter declaration
-            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>\w+)(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?)*(?P<comment>.*?$)'
+            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?)*(?P<comment>.*?$)'
             decl = re.findall(re_str,param_txt,re.MULTILINE)
             # print ('Searching in :\n' + param_txt)
             # print ('Found : \n' + str(decl))
@@ -194,7 +200,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
             # If not on one line align parameter together, otherwise keep as is
             if '\n' in param_txt:
                 txt_new += '\n'
-                for i,line in enumerate(param_txt.splitlines()):
+                lines = param_txt.splitlines()
+                for i,line in enumerate(lines):
                     txt_new += self.char_space*(nb_indent+1)
                     m_param = re.search(re_str,line.strip())
                     if len_type>0:
@@ -210,9 +217,14 @@ class VerilogAlign(sublime_plugin.TextCommand):
                             txt_new += m_param.group('sign').ljust(len_sign)
                         else:
                             txt_new += ''.ljust(len_sign+1)
+                    if len_bw>0:
+                        if m_param.group('bw'):
+                            txt_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
+                        else:
+                            txt_new += ''.ljust(len_bw+3)
                     txt_new += m_param.group('param').ljust(len_param)
                     txt_new += ' = ' + m_param.group('value').ljust(len_value)
-                    if m_param.group('sep'):
+                    if m_param.group('sep') and i!=(len(lines)-1):
                         txt_new += m_param.group('sep') + ' '
                     else:
                         txt_new += '  '
@@ -231,13 +243,21 @@ class VerilogAlign(sublime_plugin.TextCommand):
         # Add port list declaration
         txt_new += ' (\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
-        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<ports>\w+[\w, \t]*)[ \t]*(?P<comment>.*)'
+        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t]*)[ \t]*(?P<comment>.*)'
         decl = re.findall(re_str,m.group('ports'),re.MULTILINE)
         # Extract max length of the different field for vertical alignement
-        len_dir  = max([len(x[0]) for x in decl])
+        port_dir_l = [x[0] for x in decl if x[0] in verilogutil.port_dir]
+        port_if_l  = [x[0] for x in decl if x[0] not in verilogutil.port_dir]
+        len_dir = 0
+        if port_dir_l:
+            len_dir  = max([len(x) for x in port_dir_l])
+        len_if = 0
+        if port_if_l:
+            len_if  = max([len(x) for x in port_if_l])
         len_var  = max([len(x[1]) for x in decl])
         len_bw   = max([len(re.sub(r'\s*','',x[5])) for x in decl] )
         max_port_len = max([len(re.sub(r',',', ',re.sub(r'\s*','',x[6])))-2 for x in decl])
+        max_port_len = max([len(x[7]) for x in decl])
         len_sign = 0
         len_type = 0
         len_type_user = 0
@@ -259,78 +279,94 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if len_var > 0:
                 len_type_full += 4
             if len_bw > 0:
-                len_type_full += 3+len_bw
+                len_type_full += 2+len_bw
             if len_sign > 0:
                 len_type_full += 1+len_sign
+        max_len = len_type_full
         if len_type_user < len_type_full:
             len_type_user = len_type_full
-        # print('Len:  dir=' + str(len_dir) + ' type=' + str(len_type) + ' sign=' + str(len_sign) + ' bw=' + str(len_bw) + ' type_user=' + str(len_type_user) + ' port=' + str(max_port_len))
+        else :
+            max_len = len_type_user
+        # Adjust IF length compare to the other
+        if len_if < max_len+len_dir+1:
+            len_if = max_len+len_dir+1
+        else :
+            max_len = len_if-len_dir-1
+        if len_type_user < max_len:
+            len_type_user = max_len
+        # print('Len:  dir=' + str(len_dir) + ' if=' + str(len_if) + ' type=' + str(len_type) + ' sign=' + str(len_sign) + ' bw=' + str(len_bw) + ' type_user=' + str(len_type_user) + ' port=' + str(max_port_len) + ' max_len=' + str(max_len) + ' len_type_full=' + str(len_type_full))
         # Rewrite block line by line with padding for alignment
         lines = m.group('ports').splitlines()
 
         for i,line in enumerate(lines):
             # Remove leading and trailing space.
             l = line.strip()
-            m_port = re.search(re_str,l)
-            txt_new += self.char_space*(nb_indent+1)
-            if m_port:
-                # print('Line ' + str(i) + ' : ' + str(m_port.groups()))
-                # Add direction
-                txt_new += m_port.group('dir').ljust(len_dir)
-                # Align userdefined type differently from the standard type
-                if m_port.group('var') or m_port.group('sign') or m_port.group('bw') or m_port.group('type') in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
-                    if len_var>0:
-                        if m_port.group('var'):
-                            txt_new += ' ' + m_port.group('var')
-                        else:
-                            txt_new += ' '.ljust(len_var+1)
-                    if len_type>0:
-                        if m_port.group('type'):
-                            if m_port.group('type') not in ['signed','unsigned']:
-                                txt_new += ' ' + m_port.group('type').ljust(len_type)
-                            else:
-                                txt_new += ''.ljust(len_type+1) + ' ' + m_port.group('type').ljust(len_sign)
-                        else:
-                            txt_new += ''.ljust(len_type+1)
-                        # add sign space it exists at least for one port
-                        if len_sign>0:
-                            if m_port.group('sign'):
-                                txt_new += ' ' + m_port.group('sign').ljust(len_sign)
-                            elif m_port.group('type') not in ['signed','unsigned']:
-                                txt_new += ''.ljust(len_sign+1)
-                    elif len_sign>0:
-                        if m_port.group('type') in ['signed','unsigned']:
-                            txt_new += ' ' + m_port.group('type').ljust(len_sign)
-                        elif m_port.group('sign'):
-                            txt_new += ' ' + m_port.group('sign').ljust(len_sign)
-                        else:
-                            txt_new += ''.ljust(len_sign+1)
-                    # Add bus width if it exists at least for one port
-                    if len_bw>1:
-                        if m_port.group('bw'):
-                            txt_new += ' [' + m_port.group('bw').strip().rjust(len_bw) + ']'
-                        else:
-                            txt_new += ''.rjust(len_bw+3)
-                    if len_type_user > len_type_full:
-                        txt_new += ''.ljust(len_type_user-len_type_full)
-                elif m_port.group('type') :
-                    txt_new += ' ' + m_port.group('type').ljust(len_type_user)
-                else :
-                    txt_new += ' '.ljust(len_type_user)
-                # Add port list: space every port in the list by just on space
-                s = re.sub(r',',', ',re.sub(r'\s*','',m_port.group('ports')))
-                txt_new += ' '
-                if s.endswith(', '):
-                    txt_new += s[:-2].ljust(max_port_len) + ','
-                else:
-                    txt_new += s.ljust(max_port_len) + ' '
-                # Add comment
-                if m_port.group('comment') :
-                    txt_new += ' ' + m_port.group('comment')
-            else : # No port declaration ? recopy line with just the basic indentation level
-                txt_new += l
-            # Remove trailing spaces/tabs and add the end of line
-            txt_new = txt_new.rstrip(' \t') + '\n'
+            # ignore empty line at the begining and the end of the connection
+            if (i!=(len(lines)-1) and i!=0) or l !='':
+                m_port = re.search(re_str,l)
+                txt_new += self.char_space*(nb_indent+1)
+                #print('Line ' + str(i) + ' : ' + str(m_port.groups()))
+                if m_port:
+                    # For standard i/o
+                    if m_port.group('dir') in verilogutil.port_dir :
+                        txt_new += m_port.group('dir').ljust(len_dir)
+                        # Align userdefined type differently from the standard type
+                        if m_port.group('var') or m_port.group('sign') or m_port.group('bw') or m_port.group('type') in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
+                            if len_var>0:
+                                if m_port.group('var'):
+                                    txt_new += ' ' + m_port.group('var')
+                                else:
+                                    txt_new += ' '.ljust(len_var+1)
+                            if len_type>0:
+                                if m_port.group('type'):
+                                    if m_port.group('type') not in ['signed','unsigned']:
+                                        txt_new += ' ' + m_port.group('type').ljust(len_type)
+                                    else:
+                                        txt_new += ''.ljust(len_type+1) + ' ' + m_port.group('type').ljust(len_sign)
+                                else:
+                                    txt_new += ''.ljust(len_type+1)
+                                # add sign space it exists at least for one port
+                                if len_sign>0:
+                                    if m_port.group('sign'):
+                                        txt_new += ' ' + m_port.group('sign').ljust(len_sign)
+                                    elif m_port.group('type') not in ['signed','unsigned']:
+                                        txt_new += ''.ljust(len_sign+1)
+                            elif len_sign>0:
+                                if m_port.group('type') in ['signed','unsigned']:
+                                    txt_new += ' ' + m_port.group('type').ljust(len_sign)
+                                elif m_port.group('sign'):
+                                    txt_new += ' ' + m_port.group('sign').ljust(len_sign)
+                                else:
+                                    txt_new += ''.ljust(len_sign+1)
+                            # Add bus width if it exists at least for one port
+                            if len_bw>1:
+                                if m_port.group('bw'):
+                                    txt_new += ' [' + m_port.group('bw').strip().rjust(len_bw) + ']'
+                                else:
+                                    txt_new += ''.rjust(len_bw+3)
+                            if max_len > len_type_full:
+                                txt_new += ''.ljust(max_len-len_type_full)
+                        elif m_port.group('type') :
+                            txt_new += ' ' + m_port.group('type').ljust(len_type_user)
+                        else :
+                            txt_new += ' '.ljust(len_type_user+1)
+                    # For interface
+                    else :
+                        txt_new += m_port.group('dir').ljust(len_if)
+                    # Add port list: space every port in the list by just on space
+                    s = re.sub(r',',', ',re.sub(r'\s*','',m_port.group('ports')))
+                    txt_new += ' '
+                    if s.endswith(', ') and i!=(len(lines)-1):
+                        txt_new += s[:-2].ljust(max_port_len) + ','
+                    else:
+                        txt_new += s.ljust(max_port_len) + ' '
+                    # Add comment
+                    if m_port.group('comment') :
+                        txt_new += ' ' + m_port.group('comment')
+                else : # No port declaration ? recopy line with just the basic indentation level
+                    txt_new += l
+                # Remove trailing spaces/tabs and add the end of line
+                txt_new = txt_new.rstrip(' \t') + '\n'
         txt_new += self.char_space*(nb_indent) + ');'
         return (txt_new,r)
 

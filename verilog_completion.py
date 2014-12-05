@@ -38,6 +38,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion =  self.tick_completion()
         elif t=='.':
             completion =  self.dot_completion(view,r)
+        elif t==':':
+            completion =  self.scope_completion(view,r)
         elif t==')':
             l = view.substr(view.line(r))
             m = re.search(r'^\s*case\s*\((.+?)\)',l)
@@ -394,7 +396,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # TODO: find a way to know if the comma need to be inserted or not
         for x in l:
             if x['name'] not in b:
-                c.append([x['name']+'\t'+str(x['type']),x['name'].ljust(len_port)+'(' + x['name'] + '$0),'])
+                c.append([x['name']+'\t'+str(x['type']),x['name'].ljust(len_port)+'(${0:' + x['name'] + '}),'])
         return c
 
     # Complete case for an enum with all possible value
@@ -404,6 +406,48 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if s:
             c.append(['caseTemplate',s])
         return c
+
+    # Completion for ::
+    def scope_completion(self,view,r):
+        c = []
+        # select char before the : and quit with no completion if is not a scope operator
+        start_pos = r.a # save original position of the .
+        r.b = r.b-1
+        start_word = view.substr(view.word(r))
+        # print ('Start Word: ' + start_word)
+        if start_word != '::' :
+            return c
+        #Select previous word and get it's type
+        r.a -=1
+        r.b = r.a
+        r = view.word(r);
+        w = str.rstrip(view.substr(r))
+        # get type : expect a package, an enum or a class (not supported yet)
+        filelist = view.window().lookup_symbol_in_index(w)
+        if filelist:
+            for f in filelist:
+                fname = sublimeutil.normalize_fname(f[0])
+                with open(fname, 'r') as f:
+                    flines = str(f.read())
+                ti = verilogutil.get_type_info(flines,w)
+                if ti:
+                    break
+            if not ti:
+                return c
+            # print(ti)
+            # In case of enum, provide all possible value
+            if ti['type'] == 'enum' :
+                m = re.search(r'\{(.*)\}', ti['decl'])
+                if m :
+                    el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
+                    c = [[x[0],x[0]] for x in el]
+            elif ti['type'] == 'package':
+                ti = verilogutil.parse_package(flines)
+                c = [[x['name']+'\t'+x['type'],x['name']] for x in ti]
+            elif ti['type'] == 'class':
+                sublime.status_message('Autocompletion for class scope unsupported for the moment')
+        return c
+
 
 ##############################################
 #

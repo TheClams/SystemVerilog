@@ -32,8 +32,8 @@ module my_module
     )
   (
     my_interface1.sys   if1,
-    my_interface2       if2,
-    input   logic       clk,
+    my_interface2       if2, // Coment if2
+    input   logic       clk, /* comment clk */
     output  wire        my_out
   );
 

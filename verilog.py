@@ -193,7 +193,7 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
         self.pm = verilogutil.parse_module_file(self.fname)
-        print(self.pm)
+        # print(self.pm)
         if self.pm is not None:
             self.param_value = []
             if self.pm['param'] and self.view.settings().get('sv.fillparam'):
