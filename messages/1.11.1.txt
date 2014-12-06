@@ -1,0 +1,16 @@
+SystemVerilog 1.11.1 Changelog:
+
+## Improvement ##
+ - Completion:
+  * Add snippets for interface and package
+  * Add smart modport completion
+
+ - Alignment:
+  * support non ANSI-style in module declaration
+
+
+## Bug fixes ##
+ - Fix issue in show hierarchy that would get interrupted on first unknown block
+ - Fix parsing of interface/module with no port
+ - FSM list of available is cleaner (no more potential duplicate or typedef)
+ - Fix highlight for scoped defined usertype

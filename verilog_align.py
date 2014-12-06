@@ -248,15 +248,25 @@ class VerilogAlign(sublime_plugin.TextCommand):
         # Extract max length of the different field for vertical alignement
         port_dir_l = [x[0] for x in decl if x[0] in verilogutil.port_dir]
         port_if_l  = [x[0] for x in decl if x[0] not in verilogutil.port_dir]
+        # Get Direction length, if any
         len_dir = 0
         if port_dir_l:
             len_dir  = max([len(x) for x in port_dir_l])
+        # Get IF length, if any
         len_if = 0
         if port_if_l:
             len_if  = max([len(x) for x in port_if_l])
-        len_var  = max([len(x[1]) for x in decl])
-        len_bw   = max([len(re.sub(r'\s*','',x[5])) for x in decl] )
-        max_port_len = max([len(re.sub(r',',', ',re.sub(r'\s*','',x[6])))-2 for x in decl])
+        # Get Var length, if any
+        len_var = 0
+        for x in decl:
+            if x[1] != '':
+                len_var = 3
+        # Get Var length, if any
+        port_bw_l  = [re.sub(r'\s*','',x[5]) for x in decl]
+        len_bw = 0
+        if len(port_bw_l)>0:
+            len_bw  = max([len(x) for x in port_bw_l])
+        #max_port_len = max([len(re.sub(r',',', ',re.sub(r'\s*','',x[6])))-2 for x in decl])
         max_port_len = max([len(x[7]) for x in decl])
         len_sign = 0
         len_type = 0

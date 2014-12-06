@@ -1,0 +1,8 @@
+<snippet>
+	<name>Interface</name>
+	<content><![CDATA[interface ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} ();
+
+endinterface]]></content>
+	<tabTrigger>interface</tabTrigger>
+	<scope>source.systemverilog</scope>
+</snippet>

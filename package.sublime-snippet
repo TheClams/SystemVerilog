@@ -1,0 +1,8 @@
+<snippet>
+	<name>Package</name>
+	<content><![CDATA[package ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}};
+
+endpackage]]></content>
+	<tabTrigger>package</tabTrigger>
+	<scope>source.systemverilog</scope>
+</snippet>

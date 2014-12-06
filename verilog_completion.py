@@ -23,6 +23,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # Provide completion for most always block: in this case do not override normal sublime completion
         if(prefix.startswith('a')):
             return self.always_completion()
+        if(prefix.startswith('m')):
+            return self.modport_completion()
         # No additionnal completion if we are inside a word
         if(prefix!=''):
             return []
@@ -78,6 +80,24 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             c.append(['always_nr\talways Sync','always_ff '+a_nr])
         return c
 
+    def modport_completion(self):
+        c = []
+        txt = self.view.substr(sublime.Region(0,self.view.size()))
+        txt = verilogutil.clean_comment(txt)
+        # remove modports before looking for I/O and field to avoid duplication of signals
+        txt = re.sub(r'modport\s+\w+\s+\(.*?\);','',txt, flags=re.MULTILINE|re.DOTALL)
+        # remove cloking block input
+        txt = re.sub(r'clocking\b.*?endclocking(\s*:\s*\w+)?','',txt, flags=re.MULTILINE|re.DOTALL)
+        ti = verilogutil.parse_module(txt,r'\w+')
+        if not ti:
+            return c
+        modport = 'modport $0 ('
+        for i,s in enumerate(ti['signal']):
+            modport += s['name']
+            if i!= len(ti['signal'])-1:
+                modport += ', '
+        modport += ');'
+        return [['modport\tModport template',modport]]
 
 
     def dot_completion(self,view,r):
@@ -392,6 +412,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if m:
                 if m.start()>pos:
                     l = minfo['param']
+        if not l:
+            return c
         len_port = max([len(p['name']) for p in minfo['port']])
         # TODO: find a way to know if the comma need to be inserted or not
         for x in l:
@@ -539,8 +561,9 @@ class VerilogInsertFsmTemplate(sublime_plugin.TextCommand):
     def run(self,edit):
         #List all signals available and let user choose one
         mi = verilogutil.parse_module(self.view.substr(sublime.Region(0,self.view.size())),r'\w+')
+        print(mi)
         self.til = [x for x in mi['port']]
-        self.til = [x for x in mi['signal']]
+        self.til = [x for x in mi['signal'] if not x['decl'].startswith('typedef')]
         self.dl =[[x['name'],x['type']+' '+x['bw']] for x in self.til]
         sublime.active_window().show_quick_panel(self.dl, self.on_done )
         return

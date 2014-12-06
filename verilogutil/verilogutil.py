@@ -86,6 +86,8 @@ def get_all_type_info(txt):
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,3,'typedef')
         ti += [x for x in ti_tmp if x['type']]
+    # remove typedef declaration since the content could be interpreted as signal declaration
+    txt = r.sub('',txt)
     # Look for signal declaration
     # print('Look for signal declaration')
     r = re.compile(re_decl+r'(\w+(\[.*?\]\s*)?)\b\s*(;|,|\)\s*;)',flags=re.MULTILINE)
@@ -130,7 +132,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         return [ti_not_found]
     # print("[get_type_info] type => " + str(t))
     ft = ''
-    bw = 'None'
+    bw = ''
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):
         if m.groups()[i] is not None:
@@ -204,7 +206,7 @@ def parse_module_file(fname,mname=r'\w+'):
 
 def parse_module(flines,mname):
     # print("Parsing for module " + mname + ' in \n' + flines)
-    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(?P<param>#\s*\([^;]+\))?\s*\((?P<content>.+?)\)\s*;.*?(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
+    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(?P<param>#\s*\([^;]+\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')
@@ -221,8 +223,8 @@ def parse_module(flines,mname):
     # Extract port name
     ports = []
     ports_name = []
-    if m.group('content') is not None:
-        s = clean_comment(m.group('content'))
+    if m.group('port') is not None:
+        s = clean_comment(m.group('port'))
         ports_name = re.findall(r"(\w+)\s*(?=,|$)",s)
         # get type for each port
         ports = []

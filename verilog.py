@@ -137,18 +137,16 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
             li_next = []
             for i in li:
                 if i not in self.d.keys():
-                    # print('Parsing module ' + i)
                     filelist = self.view.window().lookup_symbol_in_index(i)
-                    if not filelist:
-                        break
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_module_file(fname,i)
+                    if filelist:
+                        for f in filelist:
+                            fname = sublimeutil.normalize_fname(f[0])
+                            mi = verilogutil.parse_module_file(fname,i)
+                            if mi:
+                                break
                         if mi:
-                            break
-                    if mi:
-                        li_next += [x['type'] for x in mi['inst']]
-                        self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
+                            li_next += [x['type'] for x in mi['inst']]
+                            self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
             li = li_next
         txt = top_level + '\n'
         txt += self.print_submodule(top_level,1)
@@ -317,8 +315,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                             wc[p['name']] = 'Incompatible port direction not an inout'
                         # check type
                         ds = re.sub(r'input |output |inout ','',ti['decl']) # remove I/O indication
-                        ds = re.sub(r'var |signed |unsigned ','',ds) # remove qualifier like var, signedm unsigned indication
+                        ds = re.sub(r'var |signed |unsigned ','',ds.strip()) # remove qualifier like var, signedm unsigned indication
                         d  = re.sub(r'signed |unsigned ','',d) # remove qualifier like var, signedm unsigned indication
+                        d = re.sub(r'\(|\)','',d) # remove () for interface
                         if ti['type'].startswith(('input','output','inout')) :
                             ds = sig_type + ' ' + ds
                         elif '.' in ds: # For interface remove modport
