@@ -132,7 +132,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             modport_only = False
             # get type information on the variable
             ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
-            # print ('Type info: ' + str(ti))
+            print ('Type info: ' + str(ti))
             if ti['type'] is None and 'meta.module.systemverilog' not in scope:
                 return completion
             #Provide completion for different type
@@ -158,8 +158,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     modport_only = True
                 else:
                     t = ti['type']
+                t = re.sub(r'\w+\:\:','',t) # remove scope from type. TODO: use the scope instead of rely on global lookup
                 filelist = view.window().lookup_symbol_in_index(t)
-                # print(' Filelist for ' + t + ' = ' + str(filelist))
+                print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
                     fname = sublimeutil.normalize_fname(filelist[0][0])
                     # print(w + ' of type ' + t + ' defined in ' + str(fname))
