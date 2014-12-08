@@ -1,0 +1,11 @@
+SystemVerilog 1.11.2 Changelog:
+
+## Improvement ##
+ - Improve performances of autoconnect: current module is parsed only once to get information about all existing signals, and looking for prefix/suffix is done only on signal list instead of whole text
+
+## Bug fixes ##
+ - Fix completion for signal defined with a scope.
+ - Fix signal declaration extraction with list of signals
+ - Toggle .* does not insert a .* if no connection is implicit.
+ - Toggle .* does not insert a trailing comma if all connection are implicit
+

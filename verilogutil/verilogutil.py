@@ -133,8 +133,19 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     # print("[get_type_info] type => " + str(t))
     ft = ''
     bw = ''
+    if var_name!='':
+        signal_list = re.findall(r'('+var_name + r')\b\s*(\[(.*?)\]\s*)?', m.groups()[idx_max+1], flags=re.MULTILINE)
+    else:
+        signal_list = []
+        if m.groups()[idx_max]:
+            signal_list = re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max], flags=re.MULTILINE)
+        if m.groups()[idx_max+1]:
+            signal_list += re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max+1], flags=re.MULTILINE)
+    # remove reserved keyword that could end up in the list
+    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate']]
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):
+        # print('[get_type_info_from_match] tag='+tag+ ' name='+str(signal_list)+ ' match (' + str(i) + ') = ' + str(m.groups()[i]).strip())
         if m.groups()[i] is not None:
             tmp = m.groups()[i].strip()
             # Cleanup space in enum/struct declaration
@@ -147,25 +158,15 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
             # regex can catch more than wanted, so filter based on a list
             if tmp not in ['end']:
                 ft += tmp + ' '
-    if var_name!='':
-        signal_list = re.findall(r'('+var_name + r')\b\s*(\[(.*?)\]\s*)?', m.groups()[idx_max+1], flags=re.MULTILINE)
-    else:
-        signal_list = []
-        if m.groups()[idx_max]:
-            signal_list = re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max], flags=re.MULTILINE)
-        if m.groups()[idx_max+1]:
-            signal_list += re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max+1], flags=re.MULTILINE)
-    # remove reserved keyword that could end up in the list
-    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate']]
     # print("[get_type_info] signal_list = " + str(signal_list) + ' for line ' + line)
     ti = []
     for signal in signal_list :
-        ft += signal[0]
+        fts = ft + signal[0]
         # print("get_type_info: decl => " + ft)
         # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
         at = ""
         if signal[1]!='':
-            ft += '[' + signal[2] + ']'
+            fts += '[' + signal[2] + ']'
             if signal[2] =="":
                 at='dynamic'
             elif signal[2]=='$':
@@ -179,7 +180,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
                 else:
                     at='fixed'
         # print("Array: " + str(m) + "=>" + str(at))
-        ti.append({'decl':ft,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag})
+        ti.append({'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag})
     return ti
 
 
@@ -204,9 +205,9 @@ def parse_module_file(fname,mname=r'\w+'):
     cache_module['date']  = fdate
     return minfo
 
-def parse_module(flines,mname):
+def parse_module(flines,mname=r'\w+'):
     # print("Parsing for module " + mname + ' in \n' + flines)
-    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(?P<param>#\s*\([^;]+\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
+    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(?P<param>#\s*\(.*?\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')
@@ -223,7 +224,7 @@ def parse_module(flines,mname):
     # Extract port name
     ports = []
     ports_name = []
-    if m.group('port') is not None:
+    if m.group('port'):
         s = clean_comment(m.group('port'))
         ports_name = re.findall(r"(\w+)\s*(?=,|$)",s)
         # get type for each port
