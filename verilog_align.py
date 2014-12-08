@@ -129,8 +129,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 # No complete binding : look for just the beginning then
                 if not m:
                     m = re.search(re_str_bind_port+r'(?P<signal>.*?)\s*(?P<comma>)(?P<comment>)$',l)
-                    is_split = True
-                    # print('Detected split at Line ' + str(i) + ' : ' + l)
+                    if m:
+                        is_split = True
+                        # print('Detected split at Line ' + str(i) + ' : ' + l)
                 if m:
                     # print('Line ' + str(i) + '/' + str(len(lines)) + ' : ' + str(m.groups()) + ' => split = ' + str(is_split))
                     txt_new += self.char_space*(nb_indent)

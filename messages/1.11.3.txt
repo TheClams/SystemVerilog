@@ -1,0 +1,7 @@
+SystemVerilog 1.11.3 Changelog:
+
+## Bug fixes ##
+ - Fix alignement of module instantiation with multi-line comment
+ - Fix highlight of { in concatenation (was displayed as a keyword instead if operator)
+ - Goto driver now go to connection instead of module if one port of the module is the driver
+

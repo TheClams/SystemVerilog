@@ -56,6 +56,7 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region).strip()
+        v_word = r'\b'+v+r'\b'
         # look for an input or an interface of the current module, and for an assignement
         sl = [r'\s*input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + v + r'\b']
         sl.append(r'^\s*\w+\.\w+\s+' + v + r'\b')
@@ -93,25 +94,32 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
                         op = r'^(output\s+.*|\w+\.\w+\s+)'
                         # Output port string to search
                         portname = ''
-                        if k==1:
+                        if k==1: #Explicit connection
                             portname = v
-                        elif k==0:
+                        elif k==0: #implicit connection
                             portname = pl[i]
-                        elif k==2 :
+                        elif k==2 : #connection by position
                             for j,l in enumerate(txt.split(',')) :
                                 if v in l:
                                     dl = [x['decl'] for x in mi['port']]
                                     if re.search(op,dl[j]) :
-                                        sublimeutil.move_cursor(self.view,r.a)
+                                        r_v = self.view.find(v_word,rm.a)
+                                        if r_v and r_v.b<=rm.b:
+                                            sublimeutil.move_cursor(self.view,r_v.a)
+                                        else:
+                                            sublimeutil.move_cursor(self.view,r.a)
                                         return
                         if portname != '' :
                             op += portname+r'\b'
                             for x in mi['port']:
                                 m = re.search(op,x['decl'])
                                 if m:
-                                    sublimeutil.move_cursor(self.view,r.a)
+                                    r_v = self.view.find(v_word,rm.a)
+                                    if r_v and r_v.b<=rm.b:
+                                        sublimeutil.move_cursor(self.view,r_v.a)
+                                    else:
+                                        sublimeutil.move_cursor(self.view,r.a)
                                     return
-
         # Everything failed
         sublime.status_message("Could not find driver of " + v)
 
