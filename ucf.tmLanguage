@@ -44,6 +44,20 @@
             </dict>
             <dict>
                 <key>match</key>
+                <string>(//).*$\n?</string>
+                <key>name</key>
+                <string>comment.line.double-slash</string>
+            </dict>
+            <dict>
+                <key>begin</key>
+                <string>/\*</string>
+                <key>end</key>
+                <string>\*/</string>
+                <key>name</key>
+                <string>comment.block</string>
+            </dict>
+            <dict>
+                <key>match</key>
                 <string>\b(?i)(\d+\s*(fs|ps|ns|us|ms|s)?)\b</string>
                 <key>name</key>
                 <string>constant.numeric.ucfconstraints</string>
