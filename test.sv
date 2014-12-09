@@ -27,7 +27,7 @@ typedef logic [31:0] queue_of_levels [$];
 
 module my_module
   #(parameter int P1=0,
-    logic [15:0] P2 = 0,
+    logic [15:0] P2 = 16'b0000_1111,
     real P3 = my_pkg::pp,
     )
   (

@@ -1079,7 +1079,7 @@
 				<array>
 					<dict>
 						<key>match</key>
-						<string>(\b\d+)?'(s?[bB]\s*[0-1_xXzZ?]+|s?[oO]\s*[0-7_xXzZ?]+|s?[dD]\s*[0-9_xXzZ?]+|s?[hH]\s*[0-9a-fA-F_xXzZ?]+)((e|E)(\+|-)?[0-9]+)?(?!'|\w)</string>
+						<string>(\b\d+)?'(s?[bB]\s*[0-1xXzZ?][0-1_xXzZ?]*|s?[oO]\s*[0-7xXzZ?][0-7_xXzZ?]*|s?[dD]\s*[0-9xXzZ?][0-9_xXzZ?]*|s?[hH]\s*[0-9a-fA-FxXzZ?][0-9a-fA-F_xXzZ?]*)((e|E)(\+|-)?[0-9]+)?(?!'|\w)</string>
 						<key>name</key>
 						<string>constant.numeric.systemverilog</string>
 					</dict>
