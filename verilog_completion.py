@@ -25,15 +25,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return self.always_completion()
         if(prefix.startswith('m')):
             return self.modport_completion()
-        # No additionnal completion if we are inside a word
-        if(prefix!=''):
-            return []
+        # If there is a prefix, allow sublime to provide completion ?
+        flag = 0
+        if(prefix==''):
+            flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
         # No prefix ? Get previous character and check if it is a '.' , '`' or '$'
         r = view.sel()[0]
-        r.a -=1
+        r.a = r.a - 1 - len(prefix)
+        r.b = r.a+1
         t = view.substr(r)
         completion = []
-        # Select Competion based on character
+        # Select completion based on character
         if t=='$':
             completion = self.systemtask_completion()
         elif t=='`':
@@ -47,7 +49,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             m = re.search(r'^\s*case\s*\((.+?)\)',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
-        return (completion, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
+        return (completion, flag)
 
     def uvm_completion(self):
         c = []
@@ -132,7 +134,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             modport_only = False
             # get type information on the variable
             ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
-            print ('Type info: ' + str(ti))
+            # print ('Type info: ' + str(ti))
             if ti['type'] is None and 'meta.module.systemverilog' not in scope:
                 return completion
             #Provide completion for different type
@@ -160,7 +162,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     t = ti['type']
                 t = re.sub(r'\w+\:\:','',t) # remove scope from type. TODO: use the scope instead of rely on global lookup
                 filelist = view.window().lookup_symbol_in_index(t)
-                print(' Filelist for ' + t + ' = ' + str(filelist))
+                # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
                     fname = sublimeutil.normalize_fname(filelist[0][0])
                     # print(w + ' of type ' + t + ' defined in ' + str(fname))
@@ -562,7 +564,7 @@ class VerilogInsertFsmTemplate(sublime_plugin.TextCommand):
     def run(self,edit):
         #List all signals available and let user choose one
         mi = verilogutil.parse_module(self.view.substr(sublime.Region(0,self.view.size())),r'\w+')
-        print(mi)
+        # print(mi)
         self.til = [x for x in mi['port']]
         self.til = [x for x in mi['signal'] if not x['decl'].startswith('typedef')]
         self.dl =[[x['name'],x['type']+' '+x['bw']] for x in self.til]

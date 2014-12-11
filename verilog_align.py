@@ -8,7 +8,8 @@ import sublimeutil
 class VerilogAlign(sublime_plugin.TextCommand):
 
     def run(self,edit):
-        if len(self.view.sel())!=1 : return; # No multi-selection allowed (yet?)
+        if len(self.view.sel())==0 : return;
+        # TODO: handle multi cursor. Currently only first one ise used
         # Expand the selection to a complete scope supported by the one of the align function
         # Get sublime setting
         self.settings = self.view.settings()
@@ -103,13 +104,13 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if self.settings.get('sv.one_bind_per_line',True):
             txt = re.sub(r'\)[ \t]*,[ \t]*\.', '), \n.', txt,re.MULTILINE)
         # Parse bindings to find length of port and signals
-        re_str_bind_port = r'^[ \t]*\.\s*(?P<port>\w+)\s*\(\s*'
+        re_str_bind_port = r'^[ \t]*(?P<lcomma>,)?[ \t]*\.\s*(?P<port>\w+)\s*\(\s*'
         re_str_bind_sig = r'(?P<signal>.*)\s*\)\s*(?P<comma>,)?\s*(?P<comment>\/\/.*?|\/\*.*?)?$'
         binds = re.findall(re_str_bind_port+re_str_bind_sig,txt,re.MULTILINE)
         max_port_len = 0
         max_sig_len = 0
-        ports_len = [len(x[0]) for x in binds]
-        sigs_len = [len(x[1].strip()) for x in binds]
+        ports_len = [len(x[1]) for x in binds]
+        sigs_len = [len(x[2].strip()) for x in binds]
         if ports_len:
             max_port_len = max(ports_len)
         if sigs_len:
@@ -139,7 +140,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     txt_new += '(' + m.group('signal').strip().ljust(max_sig_len)
                     if not is_split:
                         txt_new += ')'
-                        if m.group('comma') and i!=(len(lines)-1):
+                        if i!=(len(lines)-1): # Add comma for all lines except last
                             txt_new += ', '
                         else:
                             txt_new += '  '
@@ -186,10 +187,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if m.group('params'):
             m.group('params').strip()
             param_txt = re.sub(r'(^|,)\s*parameter','',m.group('params').strip()) # remove multiple parameter declaration
-            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?)*(?P<comment>.*?$)'
+            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
             decl = re.findall(re_str,param_txt,re.MULTILINE)
-            # print ('Searching in :\n' + param_txt)
-            # print ('Found : \n' + str(decl))
             len_type  = max([len(x[0]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[1]) for x in decl])
             len_bw    = max([len(x[3]) for x in decl])
@@ -237,6 +236,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     txt_new += '\n' + self.char_space*(nb_indent)
             else :
                 txt_new += ' ' + param_txt
+                print('len Comment = ' + str(len_comment)+ ': ' + str([x[9] for x in decl])+ '"')
                 if len_comment > 0 :
                     txt_new += '\n' + self.char_space*(nb_indent)
             txt_new += ')'
@@ -316,7 +316,6 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if (i!=(len(lines)-1) and i!=0) or l !='':
                 m_port = re.search(re_str,l)
                 txt_new += self.char_space*(nb_indent+1)
-                #print('Line ' + str(i) + ' : ' + str(m_port.groups()))
                 if m_port:
                     # For standard i/o
                     if m_port.group('dir') in verilogutil.port_dir :
@@ -367,8 +366,10 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     # Add port list: space every port in the list by just on space
                     s = re.sub(r',',', ',re.sub(r'\s*','',m_port.group('ports')))
                     txt_new += ' '
-                    if s.endswith(', ') and i!=(len(lines)-1):
-                        txt_new += s[:-2].ljust(max_port_len) + ','
+                    if s.endswith(', '):
+                        txt_new += s[:-2].ljust(max_port_len)
+                        if i!=(len(lines)-1):
+                            txt_new += ','
                     else:
                         txt_new += s.ljust(max_port_len) + ' '
                     # Add comment

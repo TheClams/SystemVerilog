@@ -9,25 +9,36 @@ Description
  * SystemVerilog / Verilog
  * UCF (Xilinx Constraint file)
 
-####Various snippets:
- * module
- * class
- * always block
- * case
- * function/task
- * ...
+####Code Navigation:
 
-####Features:
  * Show signal declaration in status bar
  * Goto declaration : move cursor to the declaration of the selected signal
  * Goto driver : select a signal a go to the driver (port, assignement, connection)
- * Module instantiation: Select a module from a list and create instantiation and connection
+ * Find Instances: find all instance of a module inside a project
+ * Show hierarchy of a module (all its sub-module)
+
+####Code Completion :
+
  * Smart Autocompletion: method for standard type,  field for struct/interface, system task, ...
- * Insert template for FSM
- * Show hierarchy of a module
- * Alignment of block of code: support module port/signal declaration and module instantiation (Palette command "Verilog: Alignment")
- * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
+ * Smart snippet for always, case
  * 'begin end' macro to surround a text by begin/end (cf Keymapping section to see how to use it)
+ * Various Snippets (module, interface, class, for, ...)
+ * Insert template for FSM
+ * Find/Remove all unused signals
+
+####Module Instance helper:
+
+ * Instantiation: Select a module from a list and create instantiation and connection
+ * Reconnect: remove connection to deleted port, add connection to new port
+ * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
+
+####Code Alignement:
+
+ * Align module port
+ * Align signal declaration
+ * Align module instantiation
+ * Align assignement
+
 
 ####Configuration
 To see all existing configuration option, go to Preferences->Package Settings->SystemVerilog->Settings (Default).

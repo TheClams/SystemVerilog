@@ -1,0 +1,17 @@
+SystemVerilog 1.12.0 Changelog:
+
+## New Features ##
+ - Reconnect module: calling the module instantiation command while inside a module instantiation will run a reconnect, checking for deleted and added port
+ - Find instances: from the palette call "Verilog: Find Instances". This will open a new buffer with all the instances of the current module (or selected module name). Use the classic goto symbol (F12) to navigate.
+ - Find unused signals: from the palette call "Verilog: Find Unused signals". This will prompt an input panel with a list of all unused signals. remove those you want to keep or press enter to remove their declaration
+
+## Improvement ##
+ - List of file for module instantiation:
+  * Keep only file with module inside
+  * Getting the list is now run in the background to avoid blocking the UI and is kept for later used by project. It is re-updated each time the command is run ...
+ - Align module instantiation ensures comma is at the end of each binding except last. Any leading comma is removed to have it at the end instead
+ - Allow smart autocompletion to be called even if there already a word after the special character (., `, $ ...)
+ - Provides highlighting for "Show hierarchy" results
+
+## Bug Fix ##
+ - Allow running alignment when there is multiple cursor. Only first one is used currently.

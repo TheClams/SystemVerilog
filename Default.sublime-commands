@@ -1,6 +1,6 @@
 [
     {
-        "caption": "Verilog: Show signal/variable type",
+        "caption": "Verilog: Show Signal/Variable Type",
         "command": "verilog_type"
     },
     {
@@ -28,7 +28,15 @@
         "command": "verilog_insert_fsm_template"
     },
     {
-        "caption": "Verilog: Show hierarchy",
+        "caption": "Verilog: Show Hierarchy",
         "command": "verilog_show_hierarchy"
+    },
+    {
+        "caption": "Verilog: Find Instance",
+        "command": "verilog_find_instance"
+    },
+    {
+        "caption": "Verilog: Find Unused Signals",
+        "command": "verilog_find_unused"
     }
 ]
