@@ -58,7 +58,8 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         self.window.show_quick_panel(list_module_files[projname], functools.partial(self.on_select_done,projname))
 
     def on_select_done(self, projname, index):
-        # print ("Selected: " + str(index) + " " + list_module_files[projname][[index])
+        # print ("Selected: " + str(index) + " " + list_module_files[projname][index])
+        # TODO: handle multiple module definition in a file
         if index >= 0:
             self.view.run_command("verilog_do_module_parse", {"args":{'fname':list_module_files[projname][index]}})
 

@@ -26,7 +26,7 @@
 			<!-- Function Task capture -->
 			<dict>
 				<key>begin</key>
-				<string>\b(function|task)(\s+automatic)?</string>
+				<string>\b(function|task)\b(\s+automatic)?</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -72,6 +72,30 @@
 				</array>
 				<key>name</key>
 				<string>meta.function.systemverilog</string>
+			</dict>
+			<dict>
+				<key>match</key>
+				<string>\s*\b(task)\s+(automatic)?\s*(\w+);</string>
+				<key>captures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>3</key>
+					<dict>
+						<key>name</key>
+						<string>entity.name.function.systemverilog</string>
+					</dict>
+				</dict>
+				<key>name</key>
+				<string>meta.task.simple.systemverilog</string>
 			</dict>
 			<!-- Typedef Struct/enum-->
 			<dict>
