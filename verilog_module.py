@@ -55,20 +55,29 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
             callback()
 
     def on_list_done(self,projname):
-        self.window.show_quick_panel(list_module_files[projname], functools.partial(self.on_select_done,projname))
+        self.window.show_quick_panel(list_module_files[projname], functools.partial(self.on_select_file_done,projname))
 
-    def on_select_done(self, projname, index):
-        # print ("Selected: " + str(index) + " " + list_module_files[projname][index])
-        # TODO: handle multiple module definition in a file
+    def on_select_file_done(self, projname, index):
         if index >= 0:
-            self.view.run_command("verilog_do_module_parse", {"args":{'fname':list_module_files[projname][index]}})
+            fname = list_module_files[projname][index]
+            with open(fname, "r") as f:
+                flines = str(f.read())
+            self.ml=re.findall(r'^\s*module\s+(\w+)',flines,re.MULTILINE);
+            if len(self.ml)<2:
+                self.view.run_command("verilog_do_module_parse", {"args":{'fname': fname, 'mname':r'\w+'}})
+            else:
+                sublime.set_timeout_async(lambda: self.window.show_quick_panel(self.ml, functools.partial(self.on_select_module_done,fname)),0)
+
+    def on_select_module_done(self, fname, index):
+        if index >= 0:
+            self.view.run_command("verilog_do_module_parse", {"args":{'fname': fname, 'mname':self.ml[index]}})
 
 class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, args):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
-        self.pm = verilogutil.parse_module_file(self.fname)
+        self.pm = verilogutil.parse_module_file(self.fname, args['mname'])
         # print(self.pm)
         if self.pm is not None:
             self.param_value = []

@@ -1,0 +1,4 @@
+SystemVerilog 1.12.1 Changelog:
+
+## Improvement ##
+ - Module instantiation now supports multiple modules in a file: after selecting a file, user is asked to select a module if there is more than one module in the file

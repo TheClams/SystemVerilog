@@ -75,7 +75,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(task)\s+(automatic)?\s*(\w+);</string>
+				<string>\s*\b(task)\s+(automatic)?\s*(\w+)\s*;</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
