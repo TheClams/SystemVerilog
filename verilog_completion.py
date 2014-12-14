@@ -74,12 +74,16 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             c.append(['always_ffh\talways_ff Async high','always_ff '+a_h])
             c.append(['always_c\talways_comb','always_comb begin : proc_$0\n\nend'])
             c.append(['always_l\talways_latch','always_latch begin : proc_$0\n\nend'])
-            c.append(['always_ff_nr\talways_ff Sync','always_ff '+a_nr])
+            c.append(['always_ff_nr\talways_ff No reset','always_ff '+a_nr])
+            c.append(['always_ffs\talways_ff Sync','always_ff '+re.sub(r' or negedge \w+','',a_l)])
+            c.append(['always_ffsh\talways_ff Sync high','always_ff '+re.sub(r' or posedge \w+','',a_h)])
         if not is_sv or not self.settings.get('sv.always_sv_only') :
             c.append(['always\talways Async','always '+a_l])
             c.append(['alwaysh\talways Async high','always '+a_h])
             c.append(['alwaysc\talways *','always @(*) begin : proc_$0\n\nend'])
-            c.append(['always_nr\talways Sync','always_ff '+a_nr])
+            c.append(['always_nr\talways NoReset','always_ff '+a_nr])
+            c.append(['alwayss\talways sync','always '+re.sub(r' or negedge \w+','',a_l)])
+            c.append(['alwayssh\talways sync high','always '+re.sub(r' or posedge \w+','',a_h)])
         return c
 
     def modport_completion(self):
@@ -542,7 +546,7 @@ class VerilogHelper():
         if m.group('h'):
             length = int(m.group('h')) - int(m.group('l')) + 1
         t = ti['type'].split()[0]
-        if t not in ['enum','logic','bit','reg','wire']:
+        if t not in ['enum','logic','bit','reg','wire','input','output']:
             #check first in current file
             tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'])
             if not tti:

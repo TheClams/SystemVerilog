@@ -31,8 +31,12 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         txt = self.view.substr(sublime.Region(0, pos))
         # Extract type
         ti = verilogutil.get_type_info(txt,var_name)
-        # print(ti)
-        return ti['decl']
+        txt = ti['decl']
+        if len(txt) > 128: # fix hard limit to signal declaration to 128 to ensure it can be displayed
+            txt = re.sub(r'\{.*\}','',txt) # A long signal is typical of an enum, struct : remove content to only let the type appear
+            if len(txt) > 128:
+                txt = txt[:127]
+        return txt
 
 ###################################################################
 # Move cursor to the declaration of the signal currently selected #
@@ -247,18 +251,20 @@ class VerilogFindUnusedCommand(sublime_plugin.TextCommand):
                     self.us += ', '
                 self.us += s
         self.sid = {x['name']:x for x in mi['signal'] if x['name'] in self.us}
-        sl = self.us.split(', ')
-        re_str = '('
-        for i,s in enumerate(sl):
-            re_str += r'\b'+s+r'\b'
-            if i!=len(sl)-1:
-                re_str+='|'
-        re_str += ')'
-        rl = self.view.find_all(re_str)
-        self.view.sel().clear()
-        self.view.sel().add_all(rl)
         if self.us:
+            sl = self.us.split(', ')
+            re_str = '('
+            for i,s in enumerate(sl):
+                re_str += r'\b'+s+r'\b'
+                if i!=len(sl)-1:
+                    re_str+='|'
+            re_str += ')'
+            rl = self.view.find_all(re_str)
+            self.view.sel().clear()
+            self.view.sel().add_all(rl)
             panel = sublime.active_window().show_input_panel("Unused signal to remove", self.us, self.on_prompt_done, None, None)
+        else:
+            sublime.status_message('No unused signals !')
 
     # Remove all signals kept in the input panel
     def on_prompt_done(self, content):

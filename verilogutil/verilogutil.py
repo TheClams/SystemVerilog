@@ -128,7 +128,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin','end','else']:
+    if t in ['begin','end','else', 'posedge', 'negedge']:
         return [ti_not_found]
     # print("[get_type_info] type => " + str(t))
     ft = ''
@@ -276,7 +276,8 @@ def parse_package(flines,pname=r'\w+'):
 # ti is the type infor return by get_type_info
 def fill_case(ti,length=0):
     if not ti['type']:
-        return None
+        print('[fill_case] No type for signal ' + str(ti['name']))
+        return (None,None)
     t = ti['type'].split()[0]
     s = '\n'
     if t == 'enum':
@@ -291,7 +292,7 @@ def fill_case(ti,length=0):
                 s += '\t' + x[0].ljust(maxlen) + ' : ;\n'
             s += '\tdefault'.ljust(maxlen+1) + ' : ;\nendcase'
             return (s,[x[0] for x in el])
-    elif t in ['logic','bit','reg','wire']:
+    elif t in ['logic','bit','reg','wire','input','output']:
         m = re.search(r'\[\s*(\d+)\s*\:\s*(\d+)',ti['bw'])
         if m :
             # If no length was provided use the complete bitwidth
@@ -304,5 +305,6 @@ def fill_case(ti,length=0):
                     s += '\t' + str(i).ljust(7) + ' : ;\n'
                 s += '\tdefault : ;\nendcase'
                 return (s,range(0,(1<<bw)))
-    return None
+    print('[fill_case] Type not supported: ' + str(t))
+    return (None,None)
 

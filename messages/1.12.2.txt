@@ -1,0 +1,9 @@
+SystemVerilog 1.12.2 Changelog:
+
+## Improvements ##
+ - Add always completion with synchronous reset (Reset name is not identified automatically currently)
+
+## Bug fix ##
+ - Fix issue with Show type on enum/struct with long declaration (Issue #5)
+ - Fix issue #31: always with comma are inscorrectly parsed as signals declaration
+ - Fix case completion for I/O
