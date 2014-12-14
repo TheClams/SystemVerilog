@@ -61,7 +61,7 @@ my_module i_my_module
   );
 
 parameter
-    my_module.test_param = 23;
+    my_module.test_param = 23'h44;
 
 localparam mytype myvar = mytype'(MY_INIT/4+8);
 localparam myvar1 = MY_INIT1;
@@ -90,7 +90,7 @@ covergroup cg @(e);
         bins b23    = {[2:3]};
         bins others = default;
         option.comment = "comment";
-        option.at_least = 10; //
+        option.at_least = 1_000; //
     }
 endgroup
 

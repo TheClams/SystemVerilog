@@ -1115,15 +1115,21 @@
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\b(\d+(e|E)(\+|-)?[0-9]+)\b</string>
+						<string>\b((\d[\d_]*)(e|E)(\+|-)?[0-9]+)\b</string>
 						<key>name</key>
-						<string>constant.numeric.systemverilog</string>
+						<string>constant.numeric.exp.systemverilog</string>
+					</dict>
+					<dict>
+						<key>match</key>
+						<string>\b(\d[\d_]*)\b</string>
+						<key>name</key>
+						<string>constant.numeric.decimal.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>
 						<string>\b(\d+(fs|ps|ns|us|ms|s)?)\b</string>
 						<key>name</key>
-						<string>constant.numeric.systemverilog</string>
+						<string>constant.numeric.time.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>
