@@ -62,43 +62,49 @@ def get_type_info(txt,var_name):
 # Extract all signal declaration
 def get_all_type_info(txt):
     # txt = clean_comment(txt)
+    # print(txt)
     # Suppose text has already been cleaned
     ti = []
     # Look for enum declaration
     # print('Look for enum declaration')
-    r = re.compile(re_enum+r'(\w+)\b\s*;',flags=re.MULTILINE)
+    r = re.compile(re_enum+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,'enum')
+        # print('[get_all_type_info] enum groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove enum declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for struct declaration
     # print('Look for struct declaration')
-    r = re.compile(re_union+r'(\w+)\b\s*;',flags=re.MULTILINE)
+    r = re.compile(re_union+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,'struct')
+        # print('[get_all_type_info] struct groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove struct declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for struct declaration
     # print('Look for struct declaration')
-    r = re.compile(re_tdp+r'(\w+)\b\s*;.*$',flags=re.MULTILINE)
+    r = re.compile(re_tdp+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;.*$',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,3,'typedef')
+        # print('[get_all_type_info] typedef groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove typedef declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for signal declaration
     # print('Look for signal declaration')
-    r = re.compile(re_decl+r'(\w+(\[.*?\]\s*)?)\b\s*(;|,|\)\s*;)',flags=re.MULTILINE)
+    r = re.compile(re_decl+r'(\w+\b(\s*\[.*?\]\s*)?)\s*(;|,|\)\s*;)',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'decl')
+        # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
     # print('Look for interface instantiation')
-    r = re.compile(re_inst+r'(\w+)\b\s*\(',flags=re.MULTILINE)
+    r = re.compile(re_inst+r'(\w+\b(\s*\[.*?\]\s*)?)\s*\(',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'inst')
+        # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # print(ti)
     return ti
@@ -138,9 +144,9 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     else:
         signal_list = []
         if m.groups()[idx_max]:
-            signal_list = re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max], flags=re.MULTILINE)
+            signal_list = re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max], flags=re.MULTILINE)
         if m.groups()[idx_max+1]:
-            signal_list += re.findall(r'(\w+)\s*(\[.*?\]\s*,)?', m.groups()[idx_max+1], flags=re.MULTILINE)
+            signal_list += re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max+1], flags=re.MULTILINE)
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate']]
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
@@ -226,7 +232,7 @@ def parse_module(flines,mname=r'\w+'):
     ports_name = []
     if m.group('port'):
         s = clean_comment(m.group('port'))
-        ports_name = re.findall(r"(\w+)\s*(?=,|$)",s)
+        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*,)",s)
         # get type for each port
         ports = []
         ports = [ti for ti in ati if ti['name'] in ports_name]

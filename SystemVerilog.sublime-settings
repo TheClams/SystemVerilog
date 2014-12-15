@@ -13,12 +13,14 @@
 	"sv.rst_name": "rst",     // Default reset active high
 	"sv.rst_n_name": "rst_n", // Default reset active low
 	"sv.always_name_auto": true, // Look for existing always block in the file to retrieve name of clk/reset
+	"sv.always_label": true, // Enable label for always block
 	"sv.always_sv_only" : true, // In .sv file only display completion for always_comb, always_ff or always_latch (no simple always)
 	"sv.clk_en_name": "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
 	"sv.always_ce_auto" : true, // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
 	// SystemVerilog Module instantiation configuration
 	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
+	"sv.param_explicit": false,     // Control if parameter setting explicit (appear in module instantiation even when default is used)
 	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
 	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
 	"sv.autoconnect_port_prefix": [], // List of prefix to remove from the port before looking for a signal connection

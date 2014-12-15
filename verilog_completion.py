@@ -490,6 +490,7 @@ class VerilogHelper():
         clk_en_name      = settings.get('sv.clk_en_name','clk_en')
         always_name_auto = settings.get('sv.always_name_auto',True)
         always_ce_auto   = settings.get('sv.always_ce_auto',True)
+        always_label     = settings.get('sv.always_label',True)
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
         if always_name_auto :
             pl = [] # posedge list
@@ -516,7 +517,11 @@ class VerilogHelper():
             if not r :
                 clk_en_name = ''
         # define basic always block with asynchronous reset
-        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin : proc_$1\n'
+        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin'
+        if always_label :
+            a_l +=  ' : proc_$1\n'
+        else :
+            a_l +=  '\n'
         a_l += '\tif(~'+rst_n_name + ') begin\n'
         a_l += '\t\t$1 <= 0;'
         a_l += '\n\tend else '
@@ -526,7 +531,11 @@ class VerilogHelper():
         a_l += '\t\t$1 <= $2;'
         a_l+= '\n\tend\nend'
         a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
-        a_nr = '@(posedge '+clk_name +') begin : proc_$1\n\t'
+        a_nr = '@(posedge '+clk_name +') begin'
+        if always_label :
+            a_nr +=  ' : proc_$1\n\t'
+        else :
+            a_nr +=  '\n\t'
         if clk_en_name != '':
             a_nr += 'if(' + clk_en_name + ')'
         a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'

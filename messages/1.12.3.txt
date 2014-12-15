@@ -1,0 +1,10 @@
+SystemVerilog 1.12.3 Changelog:
+
+## Improvements ##
+ - Always snippets block label can now be turned off with setting "sv.always_label"
+ - Parameterized module instantiation can now have explicit binding for parameter with setting "sv.param_explicit"
+ - Signal declaration for parameterized module now uses the value given for the parameter instead of the parameter name (fix Issue #24)
+
+## Bug fix ##
+ - Fix Issue #33: arrays of port are correctly recognised as port
+ - Fix highlight of decimal number with _

@@ -78,6 +78,7 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
         self.pm = verilogutil.parse_module_file(self.fname, args['mname'])
+        self.param_explicit = self.view.settings().get('sv.param_explicit')
         # print(self.pm)
         if self.pm is not None:
             self.param_value = []
@@ -90,6 +91,8 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
     def on_prompt_done(self, content):
         if not content.startswith("Default"):
             self.param_value.append({'name':self.pm['param'][self.cnt]['name'] , 'value': content});
+        elif self.param_explicit :
+            self.param_value.append({'name':self.pm['param'][self.cnt]['name'] , 'value': content[9:]});
         self.cnt += 1
         if self.pm['param'] is None:
             return
@@ -114,6 +117,11 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         isAutoConnect = settings.get('sv.autoconnect')
         # pm = verilogutil.parse_module_file(args['text'])
         pm = args['pm']
+        # print(pm)
+        for p in args['pv']:
+            for pmp in pm['param']:
+                if pmp['name']==p['name']:
+                    pmp['value']=p['value']
         # print('[VerilogDoModuleInstCommand] pm = '+ str(pm))
         decl = ''
         ac = {}
@@ -224,6 +232,11 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         for (name,ti) in signal_dict.items():
             signal_dict_text += name+'\n'
         # print ('Signal Dict = ' + signal_dict_text)
+        if pm['param']:
+            param_dict = {p['name']:p['value'] for p in pm['param']}
+        else:
+            param_dict = {}
+        # print(param_dict)
         # Add signal declaration
         for p in pm['port']:
             pname = p['name']
@@ -290,6 +303,18 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     d = sig_type + ' ' + d
                 elif '.' in d: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
                     d = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',d)
+                for (k,v) in param_dict.items():
+                    if k in d:
+                        d = re.sub(r'\b'+k+r'\b',v,d)
+                # try to cleanup the array size: [16-1:0] should give a proper [15:0]
+                # Still very basic, but should be ok for most cases
+                fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',d)
+                for f in fa:
+                    if f[3]=='+':
+                        value = int(f[2])+int(f[4])
+                    else:
+                        value = int(f[2])-int(f[4])
+                    d = d.replace(f[0],f[1]+str(value))
                 # If no signal is found, add declaration
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + pname + " => " + str(p['decl'] + ' => ' + d))
