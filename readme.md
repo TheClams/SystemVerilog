@@ -34,6 +34,7 @@ Description
 
 ####Code Alignement:
 
+ * Reindent
  * Align module port
  * Align signal declaration
  * Align module instantiation
@@ -46,7 +47,7 @@ To see all existing configuration option, go to Preferences->Package Settings->S
 To edit settings open the Settings (User), and add parameter with the value you want.
 
 ####Detail documentation
-For a detail documentation on the different features, check (online documentation)[http://sv-doc.readthedocs.org/en/latest/].
+For a detail documentation on the different features, check online documentation: http://sv-doc.readthedocs.org/en/latest .
 
 
 
@@ -81,6 +82,13 @@ To map key to the different feature, simply add the following to your user .subl
 	},
 	{
 		"keys": ["ctrl+shift+a"], "command": "verilog_align",
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["alt+shift+a"], "command": "verilog_align", "args":{"cmd":"reindent"},
 		"context":
 		[
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}

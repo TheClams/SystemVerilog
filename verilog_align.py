@@ -7,7 +7,7 @@ import sublimeutil
 
 class VerilogAlign(sublime_plugin.TextCommand):
 
-    def run(self,edit):
+    def run(self,edit, cmd=""):
         if len(self.view.sel())==0 : return;
         # TODO: handle multi cursor. Currently only first one ise used
         # Expand the selection to a complete scope supported by the one of the align function
@@ -21,9 +21,18 @@ class VerilogAlign(sublime_plugin.TextCommand):
             self.char_space = '\t'
         # region = self.view.extract_scope(self.view.line(self.view.sel()[0]).a)
         region = self.view.sel()[0]
+        region_start = region
         scope = self.view.scope_name(region.a)
         txt = ''
-        if 'meta.module.inst' in scope:
+        if cmd == 'reindent':
+            # Select whole text if nothing is selected
+            # Otherwise expand to the line
+            if region.empty():
+                region = sublime.Region(0,self.view.size())
+            else :
+                region = self.view.line(self.view.sel()[0])
+            txt = self.reindent(self.view.substr(region))
+        elif 'meta.module.inst' in scope:
             (txt,region) = self.inst_align(region)
         elif 'meta.module.systemverilog' in scope:
             (txt,region) = self.port_align(region)
@@ -40,11 +49,10 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 region.a += 1;
             txt = self.view.substr(region)
             (txt,region) = self.decl_align(txt, region)
-            # print('Before assign_align txt = ' + txt)
             (txt,region) = self.assign_align(txt, region)
-        if txt != '':
+        if txt:
             self.view.replace(edit,region,txt)
-            sublimeutil.move_cursor(self.view,region.a+1)
+            sublimeutil.move_cursor(self.view,region_start.a)
         else :
             sublime.status_message('No alignement support for this block of code.')
 
@@ -236,7 +244,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     txt_new += '\n' + self.char_space*(nb_indent)
             else :
                 txt_new += ' ' + param_txt
-                print('len Comment = ' + str(len_comment)+ ': ' + str([x[9] for x in decl])+ '"')
+                # print('len Comment = ' + str(len_comment)+ ': ' + str([x[9] for x in decl])+ '"')
                 if len_comment > 0 :
                     txt_new += '\n' + self.char_space*(nb_indent)
             txt_new += ')'
@@ -498,3 +506,119 @@ class VerilogAlign(sublime_plugin.TextCommand):
 
         return (txt_new,region)
 
+    # Parse text and apply proper indentation
+    def reindent(self, txt):
+        words = re.findall(r"\w+|[^\w\s]|[ \t]+|\n", txt, re.MULTILINE)
+        incr_w_now = ['begin', 'case']
+        incr_w = ['module', 'class', 'interface','function','task', 'package']
+        incr_next = False
+        decr_w = ['end', 'endmodule', 'endclass', 'endinterface', 'endfunction', 'endtask', 'endcase', 'endpackage']
+        nb_indent = self.get_indent_level(txt)
+        txt_new = ''
+        last_token = '\n'
+        last_w = ''
+        line = ''
+        next_token = ''
+        cnt_brace = 0
+        is_split = 0
+        is_block_indent = [] # list of block level at which a block indent has been found (GNU style begin/end or {})
+        is_block_decl = False # 1 when inside a block declaration like struct {} or constraint {}
+        cnt_line = 0
+        has_decr = False
+        for w in words:
+            if w == '\n':
+                cnt_line +=1
+                last_w = ''
+            # Inside a single line comment ? simply copy until the end of line
+            if last_token=='//':
+                if w!='\n':
+                    txt_new += w
+                    continue
+            # Inside a multiline comment ? simply copy until the */
+            if last_token=='/*':
+                txt_new += w
+                if last_w=='*' and w=='/':
+                    last_token=''
+                last_w = w
+                continue
+            # Check for decrease indent word
+            if w in decr_w or ( w == '}' and is_block_decl):
+                if nb_indent >0: # Should never happen ...
+                    nb_indent -= 1
+                has_decr = True
+                print('[Reindent Line %d] Decr indent level to %d due to token %s' %(cnt_line,nb_indent,w)) ##DEBUG
+            # Check for declaration block for struct, union, constraint, ...
+            if w in ['struct', 'union', 'constraint']:
+                is_block_decl = True
+            elif w == '}' and cnt_brace==1:
+                is_block_decl = False
+            # Insert indentation
+            if last_token=='\n':
+                if not w.strip():
+                    if w == '\n':
+                        txt_new += w
+                        last_w = ''
+                    else :
+                        last_w = w
+                    continue
+                if w in [')', '}']:
+                    print('[Reindent Line %d] Reseting is_split after %s'%(cnt_line,w)) ##DEBUG
+                    is_split = 0
+                if w != '/' or is_split!=0:
+                    txt_new += self.char_space*(nb_indent+is_split+len(is_block_indent))
+                else :
+                    txt_new += last_w
+                    print('[Reindent Line %d] Comment line, keep indentation "%s"'%(cnt_line,last_w)) ##DEBUG
+            if w in ['end', '}'] and is_block_indent and is_block_indent[-1]==cnt_brace:
+                is_block_indent.pop()
+                print('[Reindent Line %d] pop is_block_indent=%s  afer token %s' %(cnt_line,is_block_indent,w)) ##DEBUG
+            # Check for increase indent word
+            if w in incr_w_now:
+                print('[Reindent Line %d] Incr indent level to %d due to token %s.' %(cnt_line,nb_indent,w)) ##DEBUG
+                nb_indent += 1
+            elif w == '{' and is_block_decl:
+                print('[Reindent Line %d] Incr indent level to %d due to token %s (is_block_decl).' %(cnt_line,nb_indent,w)) ##DEBUG
+                nb_indent += 1
+            elif w in incr_w:
+                if not line.strip().startswith('import'):
+                    print('[Reindent Line %d] Incr indent will be increase on next ; due to token %s' %(cnt_line,w)) ##DEBUG
+                    incr_next = True
+            if w == '{':
+                cnt_brace += 1
+            elif w == '}':
+                cnt_brace -= 1
+            if w=='\n' and line.strip():
+                m = re.search(r'(;|{)\s*$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)\s*$|(`\w+)\s*(\(.*\))?\s*$|^\s*(`\w+)\s*',line)
+                m_str = 'None'
+                if line.strip() in ['begin','{'] :
+                    is_block_indent.append(cnt_brace)
+                    print('[Reindent Line %d] block_indent=%s due to line %s. ' %(cnt_line,is_block_indent,line)) ##DEBUG
+                if m:
+                    m_str = str(m.groups())
+                if line.strip().endswith('{') and not is_block_decl:
+                    is_split = 1
+                    print('[Reindent Line %d] is_split due to {' %(cnt_line)) ##DEBUG
+                elif not m and last_token not in decr_w and not has_decr:
+                    is_split = 1
+                    print('[Reindent Line %d] is_split. m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
+                else :
+                    print('[Reindent Line %d] End of line, no is_split: m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
+                    is_split = 0
+                    if incr_next and m and m.groups()[0]==';':
+                        incr_next = False
+                        nb_indent += 1
+                        print('[Reindent Line %d] Incr indent level to %d due to previous incr_next' %(cnt_line,nb_indent)) ##DEBUG
+                line = ''
+                has_decr = False
+            else :
+                line += w
+            # Add word to the new text
+            txt_new += w
+            # Concat word for token
+            if last_token =='/':
+                last_token += w
+                if last_token in ['/*','//']  :
+                    line = line[:-2]
+            else :
+                last_token = w
+        return txt_new

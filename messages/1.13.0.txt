@@ -1,0 +1,7 @@
+SystemVerilog 1.13.0 Changelog:
+
+## New Features ##
+ - Add reindent function: in the palette "Verilog: Reindent" or check keybinding alt+shift+a example in readme.md
+
+## Bug Fix ##
+ - Fix highlight in case of struct/union inside another struct/union

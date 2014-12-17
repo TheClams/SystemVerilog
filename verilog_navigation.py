@@ -193,11 +193,9 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
         if self.view.sel()[0].empty():
             txt = self.view.substr(sublime.Region(0, self.view.size()))
             txt = verilogutil.clean_comment(txt)
-            print(txt[:500])
             m = re.search(r"(?s)^\s*(?P<type>module|interface)\s+(?P<name>\w+\b)",txt, re.MULTILINE)
             if not m:
                 return
-            print(m.groups())
             mname = m.group('name')
         else:
             mname = self.view.substr(self.view.sel()[0])
@@ -306,6 +304,11 @@ class VerilogDeleteSignalCommand(sublime_plugin.TextCommand):
                         cnt +=1
                         self.delete_comment_line(edit,r)
         sublime.status_message('Removed %d declaration(s)' % (cnt))
+        # cleanup empty declaration
+        if cnt>0:
+            rl = [r for r in self.view.sel() if not r.empty()]
+            self.view.sel().clear()
+            self.view.sel().add_all(rl)
 
     def delete_comment_line(self,edit,r):
         r_tmp = self.view.full_line(r.a)

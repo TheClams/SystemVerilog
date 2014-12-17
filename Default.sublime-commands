@@ -12,6 +12,11 @@
         "command": "verilog_align"
     },
     {
+        "caption": "Verilog: Reindent",
+        "command": "verilog_align",
+        "args" : {"cmd": "reindent"}
+    },
+    {
         "caption": "Verilog: Toggle .*",
         "command": "verilog_toggle_dot_star"
     },

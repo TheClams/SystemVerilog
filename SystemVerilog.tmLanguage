@@ -143,6 +143,10 @@
 				<array>
 					<dict>
 						<key>include</key>
+						<string>#struct-anonymous</string>
+					</dict>
+					<dict>
+						<key>include</key>
 						<string>#base-grammar</string>
 					</dict>
 				</array>
@@ -1545,6 +1549,44 @@
 						<string>keyword.control.systemverilog</string>
 					</dict>
 				</array>
+			</dict>
+			<!-- Anonymous struct/union-->
+			<key>struct-anonymous</key>
+			<dict>
+				<key>begin</key>
+				<string>\s*\b(struct|union)\s*(packed)?\s*</string>
+				<key>beginCaptures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.control.systemverilog</string>
+					</dict>
+				</dict>
+				<key>end</key>
+				<string>(})\s*([a-zA-Z_]\w*)\s*;</string>
+				<key>endCaptures</key>
+				<dict>
+					<key>1</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.other.systemverilog</string>
+					</dict>
+				</dict>
+				<key>patterns</key>
+				<array>
+					<dict>
+						<key>include</key>
+						<string>#base-grammar</string>
+					</dict>
+				</array>
+				<key>name</key>
+				<string>meta.struct.anonymous.systemverilog</string>
 			</dict>
 		</dict>
 		<key>scopeName</key>
