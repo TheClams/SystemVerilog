@@ -546,7 +546,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 if nb_indent >0: # Should never happen ...
                     nb_indent -= 1
                 has_decr = True
-                print('[Reindent Line %d] Decr indent level to %d due to token %s' %(cnt_line,nb_indent,w)) ##DEBUG
+                # print('[Reindent Line %d] Decr indent level to %d due to token %s' %(cnt_line,nb_indent,w)) ##DEBUG
             # Check for declaration block for struct, union, constraint, ...
             if w in ['struct', 'union', 'constraint']:
                 is_block_decl = True
@@ -562,26 +562,26 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         last_w = w
                     continue
                 if w in [')', '}']:
-                    print('[Reindent Line %d] Reseting is_split after %s'%(cnt_line,w)) ##DEBUG
+                    # print('[Reindent Line %d] Reseting is_split after %s'%(cnt_line,w)) ##DEBUG
                     is_split = 0
                 if w != '/' or is_split!=0:
                     txt_new += self.char_space*(nb_indent+is_split+len(is_block_indent))
                 else :
                     txt_new += last_w
-                    print('[Reindent Line %d] Comment line, keep indentation "%s"'%(cnt_line,last_w)) ##DEBUG
+                    # print('[Reindent Line %d] Comment line, keep indentation "%s"'%(cnt_line,last_w)) ##DEBUG
             if w in ['end', '}'] and is_block_indent and is_block_indent[-1]==cnt_brace:
                 is_block_indent.pop()
-                print('[Reindent Line %d] pop is_block_indent=%s  afer token %s' %(cnt_line,is_block_indent,w)) ##DEBUG
+                # print('[Reindent Line %d] pop is_block_indent=%s  afer token %s' %(cnt_line,is_block_indent,w)) ##DEBUG
             # Check for increase indent word
             if w in incr_w_now:
-                print('[Reindent Line %d] Incr indent level to %d due to token %s.' %(cnt_line,nb_indent,w)) ##DEBUG
+                # print('[Reindent Line %d] Incr indent level to %d due to token %s.' %(cnt_line,nb_indent,w)) ##DEBUG
                 nb_indent += 1
             elif w == '{' and is_block_decl:
-                print('[Reindent Line %d] Incr indent level to %d due to token %s (is_block_decl).' %(cnt_line,nb_indent,w)) ##DEBUG
+                # print('[Reindent Line %d] Incr indent level to %d due to token %s (is_block_decl).' %(cnt_line,nb_indent,w)) ##DEBUG
                 nb_indent += 1
             elif w in incr_w:
                 if not line.strip().startswith('import'):
-                    print('[Reindent Line %d] Incr indent will be increase on next ; due to token %s' %(cnt_line,w)) ##DEBUG
+                    # print('[Reindent Line %d] Incr indent will be increase on next ; due to token %s' %(cnt_line,w)) ##DEBUG
                     incr_next = True
             if w == '{':
                 cnt_brace += 1
@@ -592,22 +592,22 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 m_str = 'None'
                 if line.strip() in ['begin','{'] :
                     is_block_indent.append(cnt_brace)
-                    print('[Reindent Line %d] block_indent=%s due to line %s. ' %(cnt_line,is_block_indent,line)) ##DEBUG
+                    # print('[Reindent Line %d] block_indent=%s due to line %s. ' %(cnt_line,is_block_indent,line)) ##DEBUG
                 if m:
                     m_str = str(m.groups())
                 if line.strip().endswith('{') and not is_block_decl:
                     is_split = 1
-                    print('[Reindent Line %d] is_split due to {' %(cnt_line)) ##DEBUG
+                    # print('[Reindent Line %d] is_split due to {' %(cnt_line)) ##DEBUG
                 elif not m and last_token not in decr_w and not has_decr:
                     is_split = 1
-                    print('[Reindent Line %d] is_split. m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
+                    # print('[Reindent Line %d] is_split. m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
                 else :
-                    print('[Reindent Line %d] End of line, no is_split: m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
+                    # print('[Reindent Line %d] End of line, no is_split: m=%s, last_token=%s, line="%s"' %(cnt_line,m_str,last_token,line.strip())) ##DEBUG
                     is_split = 0
                     if incr_next and m and m.groups()[0]==';':
                         incr_next = False
                         nb_indent += 1
-                        print('[Reindent Line %d] Incr indent level to %d due to previous incr_next' %(cnt_line,nb_indent)) ##DEBUG
+                        # print('[Reindent Line %d] Incr indent level to %d due to previous incr_next' %(cnt_line,nb_indent)) ##DEBUG
                 line = ''
                 has_decr = False
             else :
