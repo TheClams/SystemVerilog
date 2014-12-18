@@ -114,7 +114,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
     #TODO: check base indentation
     def run(self, edit, args):
         settings = self.view.settings()
-        isAutoConnect = settings.get('sv.autoconnect')
+        isAutoConnect = settings.get('sv.autoconnect',False)
+        isParamOneLine = settings.get('sv.param_oneline',True)
+        isInstOneLine = settings.get('sv.inst_oneline',True)
         # pm = verilogutil.parse_module_file(args['text'])
         pm = args['pm']
         # print(pm)
@@ -134,33 +136,69 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 r = self.get_region_decl(self.view,settings)
                 self.view.insert(edit, r, '\n'+decl)
                 sublime.status_message('Adding ' + str(len(decl.splitlines())) + ' signals declaration' )
-
+        inst_name = settings.get('sv.instance_prefix','') + pm['name'] + settings.get('sv.instance_suffix','')
+        # Check if instantiation can fit on one line only
+        if isInstOneLine :
+            len_inst = len(pm['name']) + 1 + len(inst_name) + 2
+            if len(args['pv']) > 0:
+                len_inst += 2
+                for p in args['pv']:
+                    len_inst += len(p['name']) + len(p['value']) + 5
+            if len_inst+3 > settings.get('sv.max_line_length',120):
+                isParamOneLine = False
+            elif pm['port']:
+                for p in pm['port']:
+                    len_inst += len(p['name']) + 5
+                    if p['name'] in ac.keys():
+                        len_inst+= len(ac[p['name']])
+                    else :
+                        len_inst+= len(p['name'])
+            if len_inst+3 > settings.get('sv.max_line_length',120):
+                isInstOneLine = False
         # Instantiation
         inst = pm['name'] + " "
         # Parameters: bind only parameters for which a value different from default was set
         if len(args['pv']) > 0:
-            max_len = max([len(x['name']) for x in args['pv']])
-            inst += "#(\n"
+            if isParamOneLine:
+                max_len = 0
+            else:
+                max_len = max([len(x['name']) for x in args['pv']])
+            inst += "#("
+            if not isParamOneLine:
+                inst += "\n"
             for i in range(len(args['pv'])):
-                inst+= "\t." + args['pv'][i]['name'].ljust(max_len) + "("+args['pv'][i]['value']+")"
+                if not isParamOneLine:
+                    inst += "\t"
+                inst+= "." + args['pv'][i]['name'].ljust(max_len) + "("+args['pv'][i]['value']+")"
                 if i<len(args['pv'])-1:
                     inst+=","
-                inst+="\n"
+                if not isParamOneLine:
+                    inst+="\n"
+                elif i<len(args['pv'])-1:
+                    inst+=" "
             inst += ") "
         #Port binding
-        inst += settings.get('sv.instance_prefix') + pm['name'] + settings.get('sv.instance_suffix') + " (\n"
+        inst +=  inst_name + " ("
+        if not isInstOneLine:
+             inst+="\n"
         if pm['port']:
             # Get max length of a port to align everything
-            max_len_p = max([len(x['name']) for x in pm['port']])
-            max_len_s = max_len_p
+            if isInstOneLine:
+                max_len_p = 0
+                max_len_s = 0
+            else :
+                max_len_p = max([len(x['name']) for x in pm['port']])
+                max_len_s = max_len_p
             # print('Autoconnect dict = ' + str([ac[x] for x in ac]))
-            if len(ac)>0 :
-                max_len_s = max([len(ac[x]) for x in ac])
-                if max_len_p>max_len_s:
-                    max_len_s = max_len_p
+                if len(ac)>0 :
+                    max_len_s = max([len(ac[x]) for x in ac])
+                    if max_len_p>max_len_s:
+                        max_len_s = max_len_p
             for i in range(len(pm['port'])):
                 portname = pm['port'][i]['name']
-                inst+= "\t." + portname.ljust(max_len_p) + "("
+                if not isInstOneLine:
+                    inst += "\t"
+                inst+= "." + portname.ljust(max_len_p) + "("
                 if isAutoConnect:
                     if portname in ac.keys():
                         inst+= ac[portname].ljust(max_len_s)
@@ -169,9 +207,12 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 inst+= ")"
                 if i<len(pm['port'])-1:
                     inst+=","
-                if portname in wc.keys():
-                    inst+=" // TODO: Check connection ! " + wc[portname]
-                inst+="\n"
+                if not isInstOneLine:
+                    if portname in wc.keys():
+                        inst+=" // TODO: Check connection ! " + wc[portname]
+                    inst+="\n"
+                elif i<len(pm['port'])-1:
+                    inst+=" "
         inst += ");\n"
         self.view.insert(edit, self.view.sel()[0].a, inst)
         # Status report
@@ -330,14 +371,19 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                         wc[p['name']] = 'Incompatible port direction not an inout'
                     # check type
                     ds = re.sub(r'input |output |inout ','',ti['decl']) # remove I/O indication
-                    ds = re.sub(r'var |signed |unsigned ','',ds.strip()) # remove qualifier like var, signedm unsigned indication
-                    d  = re.sub(r'signed |unsigned ','',d) # remove qualifier like var, signedm unsigned indication
-                    d = re.sub(r'\(|\)','',d) # remove () for interface
+                    # remove qualifier like var, signed, unsigned indication
+                    ds = re.sub(r'var |signed |unsigned ','',ds.strip())
+                    d  = re.sub(r'signed |unsigned ','',d)
+                    # remove () for interface
+                    d = re.sub(r'\(|\)','',d)
                     if ti['type'].startswith(('input','output','inout')) :
                         ds = sig_type + ' ' + ds
                     elif '.' in ds: # For interface remove modport
                         ds = re.sub(r'(\w+)\b(.*)',r'\1',ds)
                         d = re.sub(r'(\w+)\b(.*)',r'\1',d)
+                    # convert wire/reg to logic
+                    ds = re.sub(r'\b(wire|reg)\b','logic',ds.strip())
+                    d  = re.sub(r'\b(wire|reg)\b','logic',d.strip())
                     # In case of smart autoconnect replace the signal name by the port name
                     if pname in ac.keys():
                         ds = re.sub(r'\b' + ac[p['name']] + r'\b', pname,ds)

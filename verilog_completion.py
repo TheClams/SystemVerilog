@@ -392,7 +392,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         for s in slist: c.append([s[0]+'\tI/O',s[0]])
                     elif m[0].strip() == 'parameter':
                         for s in slist: c_param.append([s[0]+'\tParam',s[0]])
-                    else :
+                    elif m[0].strip() not in ['initial'] :
                         for s in slist: c.append([s[0]+'\tField',s[0]])
         # Completion for modports:
         if modports:

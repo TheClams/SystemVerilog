@@ -11,7 +11,7 @@ re_decl  = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)?(\w+)\s*(#\s*\(.*?\))?\s*()\b'
-re_inst  = r'^\s*()()()(\w+)\s*(#\s*\([^;]+\))?\s*()\b'
+re_inst  = r'^\s*(virtual)?(\s*)()(\w+)\s*(#\s*\([^;]+\))?\s*()\b'
 
 # Port direction list constant
 port_dir = ['input', 'output','inout', 'ref']
@@ -62,7 +62,8 @@ def get_type_info(txt,var_name):
 # Extract all signal declaration
 def get_all_type_info(txt):
     # txt = clean_comment(txt)
-    # print(txt)
+    # Cleanup function contents since this can contains some signal declaration
+    txt = re.sub(r'(?s)^[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
     # Suppose text has already been cleaned
     ti = []
     # Look for enum declaration
@@ -107,6 +108,22 @@ def get_all_type_info(txt):
         # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # print(ti)
+    # Look for non-ansi declaration where a signal is declared twice (I/O then reg/wire) and merge it into one declaration
+    ti_dict = {}
+    pop_list = []
+    for (i,x) in enumerate(ti[:]) :
+        if x['name'] in ti_dict:
+            ti_index = ti_dict[x['name']][1]
+            # print('[get_all_type_info] Duplicate found for %s => %s and %s' %(x['name'],ti_dict[x['name']],x))
+            if ti[ti_index]['type'].split()[0] in ['input', 'output', 'inout']:
+               ti[ti_index]['decl'] = ti[ti_index]['decl'].replace(ti[ti_index]['type'],ti[ti_index]['type'].split()[0] + ' ' + x['type'])
+               ti[ti_index]['type'] = x['type']
+               pop_list.append(i)
+        else :
+            ti_dict[x['name']] = (x,i)
+    for i in sorted(pop_list,reverse=True):
+        ti.pop(i)
+    # print(ti)
     return ti
 
 # Get type info from a match object
@@ -134,7 +151,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin','end','else', 'posedge', 'negedge']:
+    if t in ['begin','end','else', 'posedge', 'negedge', 'timeunit', 'timeprecision']:
         return [ti_not_found]
     # print("[get_type_info] type => " + str(t))
     ft = ''
@@ -232,7 +249,7 @@ def parse_module(flines,mname=r'\w+'):
     ports_name = []
     if m.group('port'):
         s = clean_comment(m.group('port'))
-        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*,)",s)
+        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*(,|$))",s)
         # get type for each port
         ports = []
         ports = [ti for ti in ati if ti['name'] in ports_name]
@@ -241,7 +258,6 @@ def parse_module(flines,mname=r'\w+'):
     # Extract signal name
     signals = [ti for ti in ati if ti['type']!='module' and ti['tag']!='inst' and ti['name'] not in ports_name]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
-    # print (minfo)
     return minfo
 
 def parse_package(flines,pname=r'\w+'):

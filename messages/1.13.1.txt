@@ -1,0 +1,12 @@
+SystemVerilog 1.13.1 Changelog:
+
+## Improvements ##
+ - Add option in module instantiation to get the instance or param binding on one line (if it fits a configruable max length line)
+
+## Bug Fix ##
+ - Fix issue with module instance declared with non-ANSI style (could create duplicate port)
+ - Fix cursor position in goto_driver when driver is an input port
+ - Fix false warning on autoconnect between logic/reg/wire
+ - Fix completion for virtual interface
+ - Fix incorrect completion of interface with initial block
+ - Fix array of port in last position not being recognised as a port (issue #33)

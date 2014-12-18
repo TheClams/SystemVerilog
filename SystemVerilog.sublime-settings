@@ -19,6 +19,8 @@
 	"sv.always_ce_auto" : true, // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
 	// SystemVerilog Module instantiation configuration
 	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter
+	"sv.param_oneline": true,   // On module instantiation with parameter, check if paramter binding can fit on one line
+	"sv.inst_oneline": true,    // On module instantiation check if complete instantiation can fit on one line
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
 	"sv.param_explicit": false,     // Control if parameter setting explicit (appear in module instantiation even when default is used)
 	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port

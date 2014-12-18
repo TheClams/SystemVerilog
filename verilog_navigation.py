@@ -67,7 +67,7 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         v = self.view.substr(region).strip()
         v_word = r'\b'+v+r'\b'
         # look for an input or an interface of the current module, and for an assignement
-        sl = [r'\s*input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + v + r'\b']
+        sl = [r'input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + v + r'\b']
         sl.append(r'^\s*\w+\.\w+\s+' + v + r'\b')
         sl.append(r'\b' + v + r'\b\s*<?\=[^\=]')
         for s in sl:
