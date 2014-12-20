@@ -249,7 +249,7 @@ def parse_module(flines,mname=r'\w+'):
     ports_name = []
     if m.group('port'):
         s = clean_comment(m.group('port'))
-        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*(,|$))",s)
+        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*(?=,|$))",s)
         # get type for each port
         ports = []
         ports = [ti for ti in ati if ti['name'] in ports_name]
