@@ -5,7 +5,7 @@ import unittest
 import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
-from verilogutil import parse_module
+from verilogutil import parse_module, clean_comment
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -13,6 +13,22 @@ class Tests(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_clean_comment(self):
+        self.maxDiff = None
+        for root, _, files in os.walk(os.path.join('verilogutil_data', 'clean_comment_data')):
+            # files = ["test0.sv"]
+            for afile in files:
+                aname, atype = os.path.splitext(afile)
+                if atype:  # ignore files without extension
+                    test_file = os.path.join(root, afile)
+                    expected_file = os.path.join(root, aname)
+                    with open(test_file) as af:
+                        actual = clean_comment(af.read())
+                        print(actual)
+                        with open(expected_file) as ef:
+                            expected = ef.read()
+                            self.assertEqual(actual, expected, msg="See test: "+str(test_file))
 
     def test_parse_module(self):
         self.maxDiff = None
