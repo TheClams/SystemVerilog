@@ -1,4 +1,5 @@
 syntax: glob
 *.cache
+*.idea
 Default.sublime-commands
 Default*.sublime-keymap
