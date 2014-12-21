@@ -25,7 +25,8 @@ class Tests(unittest.TestCase):
                     expected_file = os.path.join(root, aname)
                     with open(test_file) as af:
                         actual = clean_comment(af.read())
-                        print(actual)
+                        actual = "\n".join((i.strip() for i in actual.splitlines()))
+                        # print(repr(actual))
                         with open(expected_file) as ef:
                             expected = ef.read()
                             self.assertEqual(actual, expected, msg="See test: "+str(test_file))
@@ -48,7 +49,7 @@ class Tests(unittest.TestCase):
                             self.assertEqual(actual, expected, msg="See test: "+str(test_file))
 
 
-def runTests():
+def run_tests():
     tests = [
         'test_parse_module'
     ]
@@ -58,4 +59,4 @@ def runTests():
 
 if __name__ == '__main__':
     unittest.main()
-    # runTests()
+    # run_tests()

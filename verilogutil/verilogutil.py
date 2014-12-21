@@ -19,13 +19,20 @@ port_dir = ['input', 'output','inout', 'ref']
 # TODO: create a class to handle the cache for N module
 cache_module = {'mname' : '', 'fname' : '', 'date' : 0, 'info' : None}
 
-def clean_comment(txt):
-    txt_nc = txt
-    #remove multiline comment
-    txt_nc = re.sub(r"(?s)/\*.*?\*/","",txt_nc)
-    #remove singleline comment
-    txt_nc = re.sub(r"//.*?$","",txt_nc, flags=re.MULTILINE)
-    return txt_nc
+
+def clean_comment(text):
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return " " # note: a space and not an empty string
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    # do we need trim whitespaces?
+    return re.sub(pattern, replacer, text)
 
 # Extract the declaration of var_name from txt
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
