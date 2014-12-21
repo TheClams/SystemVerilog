@@ -1,5 +1,6 @@
 syntax: glob
 *.cache
 *.idea
+__pycache__
 Default.sublime-commands
 Default*.sublime-keymap
