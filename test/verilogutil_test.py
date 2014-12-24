@@ -7,6 +7,7 @@ import yaml
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 from verilogutil import parse_module, clean_comment
 
+
 class Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -18,45 +19,58 @@ class Tests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def _helper(self, data_dir):
-        for root, _, files in os.walk(data_dir):
-            for afile in files:
-                aname, atype = os.path.splitext(afile)
-                if atype == '.sv':
-                    test_file = os.path.join(root, afile)
-                    expected_file = os.path.join(root, aname + '.yaml')
-                    yield test_file, expected_file
 
-    def test_clean_comment(self):
-        data_path = os.path.join('verilogutil_data', 'clean_comment_data')
-        for test_file, expected_file in self._helper(data_path):
-            with open(test_file) as af, open(expected_file) as ef:
-                actual = clean_comment(af.read())
-                actual = "\n".join((i.strip() for i in actual.splitlines()))
-                # print(repr(actual))
-                expected = ef.read()
-                self.assertEqual(actual, expected, msg="See test: "+str(test_file))
-
-    def test_parse_module(self):
-        data_path = os.path.join('verilogutil_data', 'parse_module_data')
-        for test_file, expected_file in self._helper(data_path):
-            with open(test_file) as af, open(expected_file) as ef:
-                actual = parse_module(af.read())
-                # pprint.pprint(actual)
-                # print(yaml.dump(actual, default_flow_style=False))
-                expected = yaml.load(ef)
-                self.assertEqual(actual, expected, msg="See test: "+str(test_file))
+def _clean_comment(test_file, expected_file):
+    def test(self):
+        with open(test_file) as af, open(expected_file) as ef:
+            actual = clean_comment(af.read())
+            actual = "\n".join((i.strip() for i in actual.splitlines()))
+            # print(repr(actual))
+            expected = ef.read()
+            self.assertEqual(actual, expected, msg="See test: "+str(test_file))
+    return test
 
 
-def run_tests():
-    tests = [
-        'test_parse_module',
-        'test_clean_comment',
-    ]
+def _parse_module(test_file, expected_file):
+    def test(self):
+        with open(test_file) as af, open(expected_file) as ef:
+            actual = parse_module(af.read())
+            # pprint.pprint(actual)
+            # print(yaml.dump(actual, default_flow_style=False))
+            expected = yaml.load(ef)
+            self.assertEqual(actual, expected, msg="See test: "+str(test_file))
+    return test
 
-    suite = unittest.TestSuite(list(map(Tests, tests)))
-    unittest.TextTestRunner(verbosity=3).run(suite)
+
+def _helper(data_dir):
+    for root, _, files in os.walk(data_dir):
+        for afile in files:
+            aname, atype = os.path.splitext(afile)
+            if atype == '.sv':
+                test_file = os.path.join(root, afile)
+                expected_file = os.path.join(root, aname + '.yaml')
+                yield aname, test_file, expected_file
+
+
+def bind_test_suite(method, data_path):
+    for test_id, test_file_path, expected_file_path in _helper(data_path):
+        test = method(test_file_path, expected_file_path)
+        test_name = "test{}_{}".format(method.__name__, test_id)
+        setattr(Tests, test_name, test)
+
+
+def bind_all_tests():
+    suites = (
+        (_parse_module, os.path.join('verilogutil_data', 'parse_module_data')),
+        (_clean_comment, os.path.join('verilogutil_data', 'clean_comment_data'))
+    )
+    for method, data_path in suites:
+        bind_test_suite(method, data_path)
+
+# dynamically populate class Tests with test methods
+bind_all_tests()
 
 if __name__ == '__main__':
     unittest.main()
-    # run_tests()
+    # to run one test execute
+    # py -m unittest verilogutil_test.Tests.test_clean_comment_test0
