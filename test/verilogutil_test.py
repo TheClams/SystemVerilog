@@ -35,6 +35,8 @@ def _parse_module(test_file, expected_file):
     def test(self):
         with open(test_file) as af, open(expected_file) as ef:
             actual = parse_module(af.read())
+            # ignore signal
+            actual['signal'] = []
             # pprint.pprint(actual)
             # print(yaml.dump(actual, default_flow_style=False))
             expected = yaml.load(ef)
@@ -70,7 +72,14 @@ def bind_all_tests():
 # dynamically populate class Tests with test methods
 bind_all_tests()
 
+
+def run_specific_test(t="test_clean_comment_test0"):
+    suite = unittest.TestSuite()
+    suite.addTest(Tests(t))
+    unittest.TextTestRunner().run(suite)
+
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    run_specific_test("test_parse_module_test4")
     # to run one test execute
     # py -m unittest verilogutil_test.Tests.test_clean_comment_test0

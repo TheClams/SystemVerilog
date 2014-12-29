@@ -1,8 +1,4 @@
 module m1 (
-input a, aa,
-output b, bb,
-inout c, cc,
-
 input wire a1, aa1,
 output wire b1, bb1,
 inout wire c2, cc2,
@@ -10,10 +6,6 @@ inout wire c2, cc2,
 input reg a2, aa2,
 output reg b2, bb2,
 inout reg c2, cc2,
-
-input [1:0] a3, aa3,
-output [1:0] b3, bb3,
-inout [1:0] c3, cc3,
 
 input wire [1:0] a4, aa4,
 output wire [1:0] b4, bb4,
@@ -23,10 +15,6 @@ input reg [1:0] a5, aa5,
 output reg [1:0] b5, bb5,
 inout reg [1:0] c5, cc5,
 
-input [1:5] a6, aa6,
-output [1:5] b6, bb6,
-inout [1:5] c6, cc6,
-
 input wire [1:5] a7, aa7,
 output wire [1:5] b7, bb7,
 inout wire [1:5] c7, cc7,
@@ -35,16 +23,9 @@ input reg [1:5] a8, aa8,
 output reg [1:5] b8, bb8,
 inout reg [1:5] c8, cc8,
 
-input signed a9, aa9,
-output signed b9, bb9,
-inout signed c9, cc9,
-
-input wire signed a10, aa10,
-output wire signed b10, bb10,
-inout wire signed c10, cc10,
 
 
-output dump,
+output reg dump
 );
 
 endmodule
