@@ -79,7 +79,7 @@ def run_specific_test(t="test_clean_comment_test0"):
     unittest.TextTestRunner().run(suite)
 
 if __name__ == '__main__':
-    # unittest.main()
-    run_specific_test("test_parse_module_test4")
+    unittest.main()
+    # run_specific_test("test_parse_module_test3")
     # to run one test execute
     # py -m unittest verilogutil_test.Tests.test_clean_comment_test0
