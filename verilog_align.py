@@ -48,6 +48,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
                 region.a += 1;
             txt = self.view.substr(region)
+            txt = self.reindent(self.view.substr(region))
             (txt,region) = self.decl_align(txt, region)
             (txt,region) = self.assign_align(txt, region)
         if txt:
@@ -395,46 +396,49 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def decl_align(self,txt, region):
         lines = txt.splitlines()
         #TODO handle array
-        re_str = r'^[ \t]*(\w+\:\:)?(\w+)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*([\w\[\]]+)[ \t]*(,[\w, \t]*)?;[ \t]*(.*)'
+        re_str = r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-` \t]+)\])?[ \t]*([A-Za-z_][\w\[\]]*)[ \t]*(,[\w, \t]*)?;[ \t]*(.*)'
         lines_match = []
-        len_max = [0,0,0,0,0,0,0,0]
-        nb_indent = -1
+        len_max = {}
         one_decl_per_line = self.settings.get('sv.one_decl_per_line',False)
         # Process each line to identify a signal declaration, save the match information in an array, and process the max length for each field
         for l in lines:
             m = re.search(re_str,l)
-            lines_match.append(m)
             if m:
-                if nb_indent < 0:
-                    nb_indent = self.get_indent_level(l)
+                ilvl = self.get_indent_level(l)
+                if ilvl not in len_max:
+                    len_max[ilvl] = [0,0,0,0,0,0,0,0]
                 for i,g in enumerate(m.groups()):
                     if g:
-                        if len(g.strip()) > len_max[i]:
-                            len_max[i] = len(g.strip())
+                        if len(g.strip()) > len_max[ilvl][i]:
+                            len_max[ilvl][i] = len(g.strip())
                         if i==6 and one_decl_per_line:
                             for s in g.split(','):
-                                if len(s.strip()) > len_max[5]:
-                                    len_max[5] = len(s.strip())
+                                if len(s.strip()) > len_max[ilvl][5]:
+                                    len_max[ilvl][5] = len(s.strip())
+            else:
+                ilvl = 0
+            lines_match.append((l,m,ilvl))
         # Update alignement of each line
         txt_new = ''
-        for line,m in zip(lines,lines_match):
+        for line,m,ilvl in lines_match:
             if m:
-                l = self.char_space*nb_indent
+                l = self.char_space*ilvl
                 if m.groups()[0]:
-                    l += m.groups()[0]
-                l += m.groups()[1].ljust(len_max[0]+len_max[1]+1)
+                    l += (m.groups()[0]+m.groups()[1]).ljust(len_max[ilvl][0]+len_max[ilvl][1]+1)
+                else:
+                    l += m.groups()[1].ljust(len_max[ilvl][0]+len_max[ilvl][1]+1)
                 #Align with signess only if it exist in at least one of the line
-                if len_max[2]>0:
+                if len_max[ilvl][2]>0:
                     if m.groups()[2]:
-                        l += m.groups()[2].ljust(len_max[2]+1)
+                        l += m.groups()[2].ljust(len_max[ilvl][2]+1)
                     else:
-                        l += ''.ljust(len_max[2]+1)
+                        l += ''.ljust(len_max[ilvl][2]+1)
                 #Align with signess only if it exist in at least one of the line
-                if len_max[4]>1:
+                if len_max[ilvl][4]>1:
                     if m.groups()[4]:
-                        l += '[' + m.groups()[4].strip().rjust(len_max[4]) + '] '
+                        l += '[' + m.groups()[4].strip().rjust(len_max[ilvl][4]) + '] '
                     else:
-                        l += ''.rjust(len_max[4]+3)
+                        l += ''.rjust(len_max[ilvl][4]+3)
                 d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
                 # list of signals : do not align with the end of lign
                 if m.groups()[6]:
@@ -442,11 +446,11 @@ class VerilogAlign(sublime_plugin.TextCommand):
                     if one_decl_per_line:
                         for s in m.groups()[6].split(','):
                             if s != '':
-                                l += ';\n' + d + s.strip().ljust(len_max[5])
+                                l += ';\n' + d + s.strip().ljust(len_max[ilvl][5])
                     else :
                         l += m.groups()[6].strip()
                 else :
-                    l += m.groups()[5].ljust(len_max[5])
+                    l += m.groups()[5].ljust(len_max[ilvl][5])
                 l += ';'
                 if m.groups()[7]:
                     l += ' ' + m.groups()[7].strip()
@@ -459,22 +463,22 @@ class VerilogAlign(sublime_plugin.TextCommand):
     def assign_align(self,txt, region):
         #TODO handle array
         re_str_l = []
-        re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:)\s*(?P<statement>.*)$')
+        re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:(?!\:))\s*(?P<statement>.*)$')
         re_str_l.append(r'^[ \t]*(?P<scope>assign)\s+(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>=)\s*(?P<statement>.*)$')
         re_str_l.append(r'^[ \t]*(?P<scope>)(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>(<)?=)\s*(?P<statement>.*)$')
         txt_new = txt
+        max_len_glob = {}
         for re_str in re_str_l:
             lines = txt_new.splitlines()
             lines_match = []
-            nb_indent = -1
-            max_len = 0
+            matched = False
             # Process each line to identify a signal declaration, save the match information in an array, and process the max length for each field
             for l in lines:
                 m = re.search(re_str,l)
-                lines_match.append(m)
+                ilvl = self.get_indent_level(l)
+                len_c = 0
                 if m:
-                    if nb_indent < 0:
-                        nb_indent = self.get_indent_level(l)
+                    matched = True
                     len_c = len(m.group('name'))
                     if m.group('scope'):
                         len_c += len(m.group('scope'))
@@ -482,14 +486,26 @@ class VerilogAlign(sublime_plugin.TextCommand):
                             len_c+=1
                     if m.group('bitslice'):
                         len_c += len(re.sub(r'\s','',m.group('bitslice')))+2
-                    if len_c > max_len:
-                        max_len = len_c
+                    if ilvl not in max_len_glob or len_c>max_len_glob[ilvl]:
+                        max_len_glob[ilvl] = len_c
+                lines_match.append((l,m,ilvl,len_c))
             # If no match return text as is
-            if max_len!=0 :
+            if matched :
                 txt_new = ''
+                ilvl_prev = -1
                 # Update alignement of each line
-                for line,m in zip(lines,lines_match):
+                for idx,(line,m,ilvl,len_c) in enumerate(lines_match):
                     if m:
+                        # check for max length in the block with same indent
+                        # if ilvl!=ilvl_prev:
+                        #     max_len = 0
+                        #     idx_l = idx
+                        #     # print('New block indent')
+                        #     while(idx_l<len(lines_match) and lines_match[idx_l][2]==ilvl and lines_match[idx_l][1]):
+                        #         # print('Length for ' + str(lines_match[idx_l]))
+                        #         if lines_match[idx_l][3]>max_len:
+                        #             max_len = lines_match[idx_l][3]
+                        #         idx_l+=1
                         l = ''
                         if m.group('scope'):
                             l += m.group('scope')
@@ -498,9 +514,12 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         l += m.group('name')
                         if m.group('bitslice'):
                             l += '[' + re.sub(r'\s','',m.group('bitslice')) + ']'
-                        l = self.char_space*nb_indent + l.ljust(max_len) + ' ' + m.group('op') + ' ' + m.group('statement')
+                        # l = self.char_space*ilvl + l.ljust(max_len) + ' ' + m.group('op') + ' ' + m.group('statement')
+                        l = self.char_space*ilvl + l.ljust(max_len_glob[ilvl]) + ' ' + m.group('op') + ' ' + m.group('statement')
+                        ilvl_prev = ilvl
                     else :
                         l = line
+                        ilvl_prev = -1
                     txt_new += l + '\n'
                 txt_new = txt_new[:-1]
 

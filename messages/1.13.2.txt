@@ -1,0 +1,6 @@
+SystemVerilog 1.13.2 Changelog:
+
+## Bug Fix ##
+ - Fix some module parsing issue (when there is no comment on the port declaration)
+ - Fix Alignement issue for signal declaration with a scope (mypkg::mytype signal)
+ - Alignement is now done on block of text of same indentation level
