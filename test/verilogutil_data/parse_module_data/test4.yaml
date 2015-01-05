@@ -18,7 +18,7 @@
            'decl': 'input signed c',
            'name': 'c',
            'tag': 'decl',
-           'type': 'logic'},
+           'type': 'logic signed'},
           {'array': '',
            'bw': '',
            'decl': 'input wire d',

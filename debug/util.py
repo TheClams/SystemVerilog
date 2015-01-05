@@ -3,9 +3,6 @@ import os
 import platform
 import logger
 
-alog = logger.getLogger('sv_console_debug')
-
-
 def deployment(action='install'):
     my_sys = platform.system()
 
@@ -18,10 +15,10 @@ def deployment(action='install'):
 
         if action == 'install':
             shutil.copytree(src=src, dst=dst, ignore=shutil.ignore_patterns(".hg", ".idea"))
-            alog.warning('Deployment DONE')
+            print('[deployment] Deployment DONE')
         elif action == 'uninstall':
-            alog.warning('Undeployment DONE')
+            print('[deployment] Undeployment DONE')
         else:
-            alog.warning('Unknown command')
+            print('[deployment] Unknown command')
     else:
-        alog.warning('Unsupported system ' + my_sys)
+        print('[deployment] Unsupported system ' + my_sys)

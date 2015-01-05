@@ -5,15 +5,10 @@ import re, string, os, sys, functools, mmap
 try:
     from SystemVerilog.verilogutil import verilogutil
     from SystemVerilog.verilogutil import sublimeutil
-    from SystemVerilog.debug import logger
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'debug'))
     import verilogutil
     import sublimeutil
-    import logger
-
-alog = logger.getLogger('sv_console_debug')
 
 list_module_files = {}
 lmf_update_ongoing = False
@@ -24,7 +19,6 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
 
     #TODO: Run the search in background and keep a cache to improve performance
     def run(self,edit):
-        alog.warning("ping")
         global list_module_files
         if len(self.view.sel())>0 :
             r = self.view.sel()[0]

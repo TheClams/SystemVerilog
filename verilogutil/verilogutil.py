@@ -1,5 +1,6 @@
 # Class/function to process verilog file
 import re, string, os
+import pprint
 
 # regular expression for signal/variable declaration:
 #   start of line follow by 1 to 4 word,
@@ -7,7 +8,7 @@ import re, string, os
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
+re_decl  = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_]\w*\s*(?:=\s*\w+)?,\s*)*\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)?(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -251,6 +252,7 @@ def parse_module(flines,mname=r'\w+'):
     ##TODO: look for parameter not define in the module declaration (optionnaly?)
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(m.group(0))
+    # pprint.pprint(ati,width=200)
     # Extract port name
     ports = []
     ports_name = []
@@ -265,6 +267,7 @@ def parse_module(flines,mname=r'\w+'):
     # Extract signal name
     signals = [ti for ti in ati if ti['type']!='module' and ti['tag']!='inst' and ti['name'] not in ports_name]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
+    # pprint.pprint(minfo,width=200)
     return minfo
 
 def parse_package(flines,pname=r'\w+'):
