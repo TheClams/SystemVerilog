@@ -21,10 +21,13 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region)
         region = self.view.line(region)
-        s = self.get_type(v,region.b)
-        if s is None:
-            s = "No definition found for " + v
-        sublime.status_message(s)
+        if re.match(r'^\w+$',v):
+            s = self.get_type(v,region.b)
+            if s is None:
+                s = "No definition found for " + v
+            sublime.status_message(s)
+        else:
+            pass
 
     def get_type(self,var_name,pos):
         # select whole file
@@ -32,7 +35,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # Extract type
         ti = verilogutil.get_type_info(txt,var_name)
         txt = ti['decl']
-        if len(txt) > 128: # fix hard limit to signal declaration to 128 to ensure it can be displayed
+        if txt and len(txt) > 128: # fix hard limit to signal declaration to 128 to ensure it can be displayed
             txt = re.sub(r'\{.*\}','',txt) # A long signal is typical of an enum, struct : remove content to only let the type appear
             if len(txt) > 128:
                 txt = txt[:127]
@@ -241,7 +244,7 @@ class VerilogFindUnusedCommand(sublime_plugin.TextCommand):
             return
         sl = [x['name'] for x in mi['signal']]
         self.us = ''
-        words = re.findall(r'\w+',txt,re.MULTILINE)
+        words = re.findall(r'(?<!\.)\w+',txt,re.MULTILINE)
         cnt = Counter(words)
         for s in sl:
             if cnt[s]==1 :
@@ -251,7 +254,7 @@ class VerilogFindUnusedCommand(sublime_plugin.TextCommand):
         self.sid = {x['name']:x for x in mi['signal'] if x['name'] in self.us}
         if self.us:
             sl = self.us.split(', ')
-            re_str = '('
+            re_str = '(?<!\.)('
             for i,s in enumerate(sl):
                 re_str += r'\b'+s+r'\b'
                 if i!=len(sl)-1:

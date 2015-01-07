@@ -1,7 +1,7 @@
 module m1 (
 
 input wire [1:5] a7, aa7,
-output wire [1:5] b7, bb7
+output wire [1:5] b7, bb7,
 inout wire [1:5] c7, cc7,
 
 input reg [1:5] a8, aa8,

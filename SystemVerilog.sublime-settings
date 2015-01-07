@@ -2,7 +2,7 @@
 	"word_wrap": false,
 	"extensions": ["v", "vh", "sv", "svh"],
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
-	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$`:"} ],
+	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$`:{,"} ],
 
 	// SystemVerilog Alignment configuration
 	"sv.one_bind_per_line" : true, // When aligning module instantiation force only one binding per line

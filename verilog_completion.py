@@ -17,25 +17,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         self.view = view
         self.settings = view.settings()
-        # Provide completion for most used uvm function: in this case do not override normal sublime completion
-        if(prefix.startswith('u')):
-            return self.uvm_completion()
-        # Provide completion for most always block: in this case do not override normal sublime completion
-        if(prefix.startswith('a')):
-            return self.always_completion()
-        if(prefix.startswith('m')):
-            return self.modport_completion()
+        r = view.sel()[0]
+        scope = view.scope_name(r.a)
         # If there is a prefix, allow sublime to provide completion ?
         flag = 0
         if(prefix==''):
             flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
-        # No prefix ? Get previous character and check if it is a '.' , '`' or '$'
-        r = view.sel()[0]
+        # Get previous character
         r.a = r.a - 1 - len(prefix)
         r.b = r.a+1
         t = view.substr(r)
         completion = []
-        # Select completion based on character
+        # print('[on_query_completions] prefix="%s" previous char="%s"' %(prefix,t))
+        # Select completion function
         if t=='$':
             completion = self.systemtask_completion()
         elif t=='`':
@@ -49,6 +43,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             m = re.search(r'^\s*case\s*\((.+?)\)',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
+        elif 'meta.struct.assign' in scope:
+            completion = self.struct_assign_completion(view,r)
+        elif prefix:
+            # Provide completion for most used uvm function
+            if(prefix.startswith('u')):
+                completion = self.uvm_completion()
+            # Provide completion for most always block
+            elif(prefix.startswith('a')):
+                completion = self.always_completion()
+            # Provide completion for modport
+            elif(prefix.startswith('m')):
+                completion = self.modport_completion()
         return (completion, flag)
 
     def uvm_completion(self):
@@ -131,7 +137,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         mi = verilogutil.parse_module_file(fname,mname)
                         if mi:
                             break
-                    completion = self.module_binding_completion(txt, mi,start_pos-r.a)
+                    is_param = 'meta.module-param' in scope
+                    completion = self.module_binding_completion(txt, mi,start_pos-r.a,is_param)
             else :
                 return completion
         else :
@@ -169,18 +176,23 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
                     fname = sublimeutil.normalize_fname(filelist[0][0])
-                    # print(w + ' of type ' + t + ' defined in ' + str(fname))
-                    # TODO: use a cache system to give better response time
-                    with open(fname, 'r') as f:
-                        flines = str(f.read())
-                    tti = verilogutil.get_type_info(flines,t)
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        # print(w + ' of type ' + t + ' defined in ' + str(fname))
+                        # Parse only systemVerilog file. Check might be a bit too restrictive ...
+                        if fname.lower().endswith(('sv','svh')):
+                            with open(fname, 'r') as f:
+                                flines = str(f.read())
+                            tti = verilogutil.get_type_info(flines,ti['type'])
+                            if tti['type']:
+                                break
+                    # print(tti)
                     if tti['type']=='interface':
                         return self.interface_completion(flines,modport_only)
                     elif tti['type']=='enum':
                         completion = self.enum_completion()
                     elif tti['type'] in ['struct','union']:
                         completion = self.struct_completion(tti['decl'])
-                    #TODO: Provides more completion (enum, struct, interface, ...)
             #Add randomize function for rand variable
             if ti['decl']:
                 if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
@@ -353,16 +365,87 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['name' , 'name()' ])
         return c
 
-    def struct_completion(self,decl):
+    def struct_completion(self,decl, isAssign=False, fe=[]):
         c = []
-        # extract fields from the declaration
         m = re.search(r'\{(.*)\}', decl)
         if m is not None:
-            # print (m.groups()[0])
-            fl = re.findall(r"(\w+)\s*;",m.groups()[0])
-            for f in fl:
-                c.append([f,f])
+            fti = verilogutil.get_all_type_info(m.groups()[0])
+            if isAssign and not fe:
+                c.append(['all_fields\tAll fields',', '.join([f['name']+':' for f in fti])])
+            for f in fti:
+                if f['name'] not in fe:
+                    f_type = f['type']
+                    m = re.search(r'\[.*\]', f['decl'])
+                    if m:
+                        f_type += m.group(0)
+                    f_name = f['name']
+                    if isAssign:
+                        f_name += ':'
+                    c.append([f['name']+'\t'+f_type,f_name])
+
         return c
+
+    def struct_assign_completion(self,view,r):
+        start_pos = r.a # save original position of the .
+        r_start = r.a
+        r_end = r.a
+        scope = view.scope_name(r.a)
+        # Go to the = sign of the assign
+        while('meta.struct.assign' in scope):
+            r_tmp = view.find_by_class(r_start,False,sublime.CLASS_PUNCTUATION_START)
+            scope = view.scope_name(r_tmp)
+            # Make sure we do not end into an infinite loop, even though this should never happen due to the check on scope
+            if r_start==r_tmp:
+                break
+            if 'meta.struct.assign' in scope:
+                r_start=r_tmp
+        # Find end
+        scope = view.scope_name(r.a)
+        while('meta.struct.assign' in scope):
+            r_tmp = view.find_by_class(r_end,True,sublime.CLASS_PUNCTUATION_START)
+            scope = view.scope_name(r_tmp)
+            # Make sure we do not end into an infinite loop, even though this should never happen due to the check on scope
+            if r_end==r_tmp:
+                break
+            if 'meta.struct.assign' in scope:
+                r_end=r_tmp
+        if(r_end<start_pos):
+            r_end = start_pos
+        # Go to the end to get the full scope
+        content = view.substr(sublime.Region(r_start,r_end))
+        print('[struct_assign_completion] content = %s' % (content))
+        if not content.startswith('='):
+            # print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
+            return []
+        # get the variable name
+        v = view.substr(view.word(sublime.Region(r_start-1,r_start-1)))
+        txt = self.view.substr(sublime.Region(0, r_start))
+        ti = verilogutil.get_type_info(txt,v)
+        # print('[struct_assign_completion] ti = %s' % (ti))
+        if not ti['type']:
+            return []
+        if ti['type'] == 'struct':
+            tti = ti
+        else :
+            filelist = view.window().lookup_symbol_in_index(ti['type'])
+            if filelist:
+                fname = sublimeutil.normalize_fname(filelist[0][0])
+                for f in filelist:
+                    fname = sublimeutil.normalize_fname(f[0])
+                    # Parse only systemVerilog file. Check might be a bit too restrictive ...
+                    if fname.lower().endswith(('sv','svh')):
+                        with open(fname, 'r') as f:
+                            flines = str(f.read())
+                        tti = verilogutil.get_type_info(flines,ti['type'])
+                        if tti:
+                            # print('[struct_assign_completion] Type %s found in %s: %s' %(ti['type'],fname,str(tti)))
+                            break
+        # print('[struct_assign_completion] tti = %s' % (tti))
+        if not tti:
+            return []
+        c = []
+        fe = re.findall(r'(\w+)\s*:',content)
+        return self.struct_completion(tti['decl'],True,fe)
 
     # Interface completion: all signal declaration can be used as completion
     def interface_completion(self,flines, modport_only=False):
@@ -405,27 +488,31 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Provide completion for module binding:
     # Extract all parameter and ports from module definition
     # and filter based on position (parameter or ports) and existing binding
-    def module_binding_completion(self,txt,minfo,pos):
+    def module_binding_completion(self,txt,minfo,pos, is_param):
         c = []
-        # print('[module_binding_completion] Module ' + mname + ' : ' + str(minfo))
         if not minfo:
             return c
         # Extract all exising binding
         b = re.findall(r'\.(\w+)\s*\(',txt,flags=re.MULTILINE)
-        # Find position of limit between parameter and port
-        l = minfo['port']
-        if minfo['param']:
-            m = re.search(r'\)\s*\(',txt,flags=re.MULTILINE)
-            if m:
-                if m.start()>pos:
-                    l = minfo['param']
+        # Select parameter or port for completion
+        if is_param:
+            l = minfo['param']
+        else:
+            l = minfo['port']
         if not l:
             return c
-        len_port = max([len(p['name']) for p in minfo['port']])
+        # print('[module_binding_completion] Port/param : ' + str(l))
+        len_port = max([len(p['name']) for p in l])
         # TODO: find a way to know if the comma need to be inserted or not
         for x in l:
             if x['name'] not in b:
-                c.append([x['name']+'\t'+str(x['type']),x['name'].ljust(len_port)+'(${0:' + x['name'] + '}),'])
+                if is_param:
+                    tips = '\t' + str(x['value'])
+                    def_val = str(x['value'])
+                else:
+                    tips = '\t' + str(x['type'])
+                    def_val = x['name']
+                c.append([x['name']+tips,x['name'].ljust(len_port)+'(${0:' + def_val + '}),'])
         return c
 
     # Complete case for an enum with all possible value

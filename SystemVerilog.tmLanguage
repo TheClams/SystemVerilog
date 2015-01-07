@@ -820,7 +820,7 @@
 			<!-- Variable/Parameter/localparameter with user-defined type -->
 			<dict>
 				<key>match</key>
-				<string>^\s*(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=([a-zA-Z][a-zA-Z0-9_\s\[\]']*)(;|,|=|'\{))</string>
+				<string>^\s*(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=(#\s*\([\w,]+\)\s*)?([a-zA-Z][a-zA-Z0-9_\s\[\]']*)(;|,|=|'\{))</string>
 				<key>name</key>
 				<string>meta.userdefined.systemverilog</string>
 				<key>captures</key>
@@ -883,15 +883,14 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(|rand|randc)\b</string>
+				<string>\s*\b(rand|randc)\b</string>
 				<key>name</key>
 				<string>storage.type.rand.systemverilog</string>
 			</dict>
 			<!-- Module instantiation with parameter -->
 			<dict>
 				<key>begin</key>
-				<!-- not sure why ^ cannot be used with \s-->
-				<string>\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(#)(?=[^#])</string>
+				<string>^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=#[^#])</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -899,11 +898,11 @@
 						<key>name</key>
 						<string>storage.module.systemverilog</string>
 					</dict>
-					<key>2</key>
+					<!-- <key>2</key>
 					<dict>
 						<key>name</key>
 						<string>keyword.operator.param.systemverilog</string>
-					</dict>
+					</dict> -->
 				</dict>
 				<key>end</key>
 				<string>(?=;|=|:)</string>
@@ -935,7 +934,7 @@
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\))</string>
+						<string>\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?=\s*(\(|$))</string>
 						<key>name</key>
 						<string>entity.name.type.module.systemverilog</string>
 					</dict>
@@ -1508,16 +1507,18 @@
 			</dict>
 			<key>module-param</key>
 			<dict>
+				<key>name</key>
+				<string>meta.module-param.systemverilog</string>
 				<key>begin</key>
-				<string>\s*\(</string>
-				<!-- <key>beginCaptures</key>
+				<string>(#)\s*\(</string>
+				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
 					<dict>
 						<key>name</key>
 						<string>keyword.operator.param.systemverilog</string>
 					</dict>
-				</dict> -->
+				</dict>
 				<key>end</key>
 				<string>\)</string>
 				<key>patterns</key>
