@@ -178,12 +178,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     fname = sublimeutil.normalize_fname(filelist[0][0])
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
-                        # print(w + ' of type ' + t + ' defined in ' + str(fname))
                         # Parse only systemVerilog file. Check might be a bit too restrictive ...
                         if fname.lower().endswith(('sv','svh')):
+                            # print(w + ' of type ' + t + ' defined in ' + str(fname))
                             with open(fname, 'r') as f:
                                 flines = str(f.read())
-                            tti = verilogutil.get_type_info(flines,ti['type'])
+                            tti = verilogutil.get_type_info(flines,t)
                             if tti['type']:
                                 break
                     # print(tti)
@@ -424,10 +424,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # print('[struct_assign_completion] ti = %s' % (ti))
         if not ti['type']:
             return []
-        if ti['type'] == 'struct':
+        t = ti['type']
+        if t == 'struct':
             tti = ti
         else :
-            filelist = view.window().lookup_symbol_in_index(ti['type'])
+            t = re.sub(r'\w+\:\:','',t)
+            filelist = view.window().lookup_symbol_in_index(t)
             if filelist:
                 fname = sublimeutil.normalize_fname(filelist[0][0])
                 for f in filelist:
@@ -436,7 +438,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if fname.lower().endswith(('sv','svh')):
                         with open(fname, 'r') as f:
                             flines = str(f.read())
-                        tti = verilogutil.get_type_info(flines,ti['type'])
+                        tti = verilogutil.get_type_info(flines,t)
                         if tti:
                             # print('[struct_assign_completion] Type %s found in %s: %s' %(ti['type'],fname,str(tti)))
                             break
