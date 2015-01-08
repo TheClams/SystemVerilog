@@ -1,0 +1,11 @@
+SystemVerilog 1.13.3 Changelog:
+
+## Improvement ##
+ - Provides completion for structure assignement (var = '{f0:...}')
+ - Structure Field completion now provides type information
+
+## Bug Fix ##
+ - Fix completion for parameter in interface/module instance (Was not working at all...)
+ - Fix special completion when a prefix is existing and start with u, a or m
+ - Fix highlighting around parameterized interface/module
+ - Fix 'Find Unused signal' when a port name in a module connection has the same name as the signal

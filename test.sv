@@ -50,7 +50,8 @@ logic [3:0]  sig_logic = 4'shC;
 
 // psl a_mypsl_assert: assert never {sig_logic!=4'hX};
 
-my_interface1 if1();
+my_interface1#(1) if1(clk,rst_n);
+    virtual my_interface1#(3,4) if2;
 
 my_module i_my_module
   (
