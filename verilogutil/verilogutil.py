@@ -54,7 +54,7 @@ def get_type_info(txt,var_name):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m:
-                m = re.search(re_decl+r'('+var_name+r'\b(\[.*?\]\s*)?)[^\.]*$', txt, flags=re.MULTILINE)
+                m = re.search(re_decl+r'('+var_name+r'\b(\[[^=\^\&\|]*?\]\s*)?)[^\.]*$', txt, flags=re.MULTILINE)
                 tag = 'decl'
                 idx_type = 3
                 idx_bw = 4
@@ -75,7 +75,7 @@ def get_all_type_info(txt):
     ti = []
     # Look for enum declaration
     # print('Look for enum declaration')
-    r = re.compile(re_enum+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;',flags=re.MULTILINE)
+    r = re.compile(re_enum+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,'enum')
         # print('[get_all_type_info] enum groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
@@ -84,7 +84,7 @@ def get_all_type_info(txt):
     txt = r.sub('',txt)
     # Look for struct declaration
     # print('Look for struct declaration')
-    r = re.compile(re_union+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;',flags=re.MULTILINE)
+    r = re.compile(re_union+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,'struct')
         # print('[get_all_type_info] struct groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
@@ -93,7 +93,7 @@ def get_all_type_info(txt):
     txt = r.sub('',txt)
     # Look for typedef declaration
     # print('Look for typedef declaration')
-    r = re.compile(re_tdp+r'(\w+\b(\s*\[.*?\]\s*)?)\s*;',flags=re.MULTILINE)
+    r = re.compile(re_tdp+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,3,'typedef')
         # print('[get_all_type_info] typedef groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
@@ -102,14 +102,14 @@ def get_all_type_info(txt):
     txt = r.sub('',txt)
     # Look for signal declaration
     # print('Look for signal declaration')
-    r = re.compile(re_decl+r'(\w+\b(\s*\[.*?\]\s*)?)\s*(?=;|,|\)\s*;)',flags=re.MULTILINE)
+    r = re.compile(re_decl+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*(?=;|,|\)\s*;)',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
     # print('Look for interface instantiation')
-    r = re.compile(re_inst+r'(\w+\b(\s*\[.*?\]\s*)?)\s*\(',flags=re.MULTILINE)
+    r = re.compile(re_inst+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*\(',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'inst')
         # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
@@ -158,7 +158,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin','end','else', 'posedge', 'negedge', 'timeunit', 'timeprecision']:
+    if t in ['begin','end','else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign']:
         return [ti_not_found]
     # print("[get_type_info] type => " + str(t))
     ft = ''
@@ -257,7 +257,7 @@ def parse_module(flines,mname=r'\w+'):
     ports_name = []
     if m.group('port'):
         s = clean_comment(m.group('port'))
-        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[.*?\]\s*(?=,|$))",s)
+        ports_name = re.findall(r"(\w+)\s*(?=,|$|\[[^=\^\&\|]*?\]\s*(?=,|$))",s)
         # get type for each port
         ports = []
         ports = [ti for ti in ati if ti['name'] in ports_name]
@@ -297,7 +297,7 @@ def parse_package(flines,pname=r'\w+'):
         ti += [x for x in ti_tmp if x['type']]
     # Look for variable declaration
     # print('Look for signal declaration')
-    r = re.compile(re_var+r'(\w+(\[.*?\]\s*)?)\b.*?;',flags=re.MULTILINE)
+    r = re.compile(re_var+r'(\w+(\[[^=\^\&\|]*?\]\s*)?)\b.*?;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'var')
         ti += [x for x in ti_tmp if x['type']]

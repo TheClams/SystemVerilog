@@ -1,0 +1,5 @@
+SystemVerilog 1.13.4 Changelog:
+
+## Bug Fix ##
+ - Fix module parsing for assign with bit field selection wrongly parsed as signal declaration
+ - Fix completion for structure declared within a scope (mypkg::mystruct_t mystruct)
