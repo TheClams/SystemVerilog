@@ -1003,7 +1003,7 @@
 				<key>name</key>
 				<string>meta.struct.assign.systemverilog</string>
 				<key>begin</key>
-				<string>\b\s+(=)\s*(\'{)</string>
+				<string>\b\s+(&lt;?=)\s*(\'{)</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>1</key>
@@ -1012,6 +1012,11 @@
 						<string>keyword.operator.other.systemverilog</string>
 					</dict>
 					<key>2</key>
+					<dict>
+						<key>name</key>
+						<string>keyword.operator.other.systemverilog</string>
+					</dict>
+					<key>3</key>
 					<dict>
 						<key>name</key>
 						<string>keyword.operator.other.systemverilog</string>

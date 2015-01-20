@@ -247,7 +247,7 @@ def parse_module(flines,mname=r'\w+'):
     if m.group('param'):
         s = clean_comment(m.group('param'))
         r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[\w\-\+`]+)")
-        params = [m.groupdict() for m in r.finditer(s)]
+        params = [mp.groupdict() for mp in r.finditer(s)]
     ##TODO: look for parameter not define in the module declaration (optionnaly?)
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(m.group(0))

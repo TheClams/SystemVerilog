@@ -1,0 +1,5 @@
+SystemVerilog 1.13.5 Changelog:
+
+## Bug Fix ##
+ - Fix module reconnection when the region for signal declaration does not exist
+ - Fix highlighting of struct non-blocking assign

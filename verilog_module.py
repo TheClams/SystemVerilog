@@ -232,8 +232,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         if s!='':
             sublimeutil.print_to_panel(s,'sv')
 
-    def get_region_decl(self, view, settings):
-        r = view.sel()[0].begin()
+    def get_region_decl(self, view, settings, r=None):
+        if not r:
+            r = view.sel()[0].begin()
         s = settings.get('sv.decl_start','')
         if s!='' :
             r_start = view.find(s,0,sublime.LITERAL)
@@ -545,8 +546,8 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
                     decl_clean += m.group(0) +'\n'
             nb_decl = len(decl_clean.splitlines())
             if decl_clean:
-                r = VerilogDoModuleInstCommand.get_region_decl(self, self.view,settings)
-                self.view.insert(edit, r, '\n'+decl_clean)
+                r_start = VerilogDoModuleInstCommand.get_region_decl(self, self.view,settings,r.a)
+                self.view.insert(edit, r_start, '\n'+decl_clean)
                 s+= 'Adding ' + str(nb_decl) + ' signal(s) declaration(s)\n'
             if len(ac_clean)>0 :
                 s+= 'Non-perfect name match for ' + str(len(ac_clean)) + ' port(s) : ' + str(ac_clean) + '\n'
