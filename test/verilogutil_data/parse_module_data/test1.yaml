@@ -41,7 +41,7 @@
            'tag': 'inst',
            'type': 'm_name6'}],
  'name': 'add1',
- 'param': null,
+ 'param': [],
  'port': [{'array': '',
            'bw': '',
            'decl': 'input a',

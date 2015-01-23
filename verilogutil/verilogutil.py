@@ -13,6 +13,7 @@ re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
 re_inst  = r'^\s*(virtual)?(\s*)()(\w+)\s*(#\s*\([^;]+\))?\s*()\b'
+re_param = r'^\s*parameter\b((?:\s*(?:\w+\s+)?(?:[A-Za-z_]\w+)\s*=\s*(?:[^,;]*)\s*,)*)(\s*(\w+\s+)?([A-Za-z_]\w+)\s*=\s*([^,;]*)\s*;)'
 
 # Port direction list constant
 port_dir = ['input', 'output','inout', 'ref']
@@ -242,15 +243,24 @@ def parse_module(flines,mname=r'\w+'):
         return None
     mname = m.group('name')
     # Extract parameter name
-    params = None
+    params = []
     ## Parameter define in ANSI style
+    r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[^,;\n]+)")
     if m.group('param'):
         s = clean_comment(m.group('param'))
-        r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[\w\-\+`]+)")
-        params = [mp.groupdict() for mp in r.finditer(s)]
-    ##TODO: look for parameter not define in the module declaration (optionnaly?)
+        params+=[mp.groupdict() for mp in r.finditer(s)]
+    ## look for parameter not define in the module declaration
+    if m.group('content'):
+        s = clean_comment(m.group('content'))
+        r_param_list = re.compile(re_param,flags=re.MULTILINE)
+        for mpl in r_param_list.finditer(s):
+            params+=[mp.groupdict() for mp in r.finditer(mpl.group(0))]
+    ## Cleanup param value
+    if params:
+        for param in params:
+            param['value'] = param['value'].strip()
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
-    ati = get_all_type_info(m.group(0))
+    ati = get_all_type_info(clean_comment(m.group(0)))
     # pprint.pprint(ati,width=200)
     # Extract port name
     ports = []

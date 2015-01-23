@@ -11,8 +11,7 @@ parser.add_argument("pattern", nargs='?', default="", help="run tests by name, c
 args = parser.parse_args()
 
 
-skipped_tests = ("test_parse_module_test4",
-				 "test_parse_module_test8"
+skipped_tests = ("test_parse_module_test4"
                  )
 
 

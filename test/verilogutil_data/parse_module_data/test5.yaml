@@ -1,6 +1,6 @@
 {'inst': [],
  'name': 'm1',
- 'param': null,
+ 'param': [],
  'port': [{'array': '',
            'bw': '[1:5]',
            'decl': 'input wire [1:5] a7',

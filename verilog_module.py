@@ -99,7 +99,7 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         elif self.param_explicit :
             self.param_value.append({'name':self.pm['param'][self.cnt]['name'] , 'value': content[9:]});
         self.cnt += 1
-        if self.pm['param'] is None:
+        if not self.pm['param']:
             return
         if self.cnt < len(self.pm['param']):
             self.show_prompt()

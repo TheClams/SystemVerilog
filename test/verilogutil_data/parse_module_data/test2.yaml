@@ -1,6 +1,6 @@
 {'inst': [],
  'name': 'simple',
- 'param': null,
+ 'param': [],
  'port': [],
  'signal': [],
  'type': 'module'}
