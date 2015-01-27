@@ -567,7 +567,7 @@
 			</dict>
 			<dict>
 				<key>match</key>
-				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|randomize|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|begin|fork|forkjoin)\b</string>
+				<string>\s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|static|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|chandle|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|begin|fork|forkjoin)\b</string>
 				<key>captures</key>
 				<dict>
 					<key>1</key>
@@ -606,24 +606,6 @@
 				<string>\b(std)\b::</string>
 				<key>name</key>
 				<string>support.class.systemverilog</string>
-			</dict>
-			<dict>
-				<key>match</key>
-				<string>\.(atob|atohex|atoi|atooct|atoreal|bintoa|hextoa|itoa|octtoa|realtoa|len|getc|putc|toupper|tolower|compare|icompare|substr|num|exists|first|last|name|index|find|find_first|find_last|find_index|find_first_index|find_last_index|min|max|unique|unique_index|sort|rsort|shuffle|reverse|sum|product|xor|status|kill|self|await|suspend|resume|get|put|peek|try_get|try_peek|try_put|eq|neq|next|prev|new|size|delete|empty|pop_front|pop_back|front|back|insert|insert_range|erase|erase_range|set|swap|clear|purge|start|finish|randomize|rand_mode|pre_randomize|post_randomize|constraint_mode|random_mode)\s*\(</string>
-				<key>name</key>
-				<string>support.function.systemverilog</string>
-			</dict>
-			<dict>
-				<key>match</key>
-				<string>\b(get_randstate|set_randstate)\s*\(</string>
-				<key>name</key>
-				<string>support.function.systemverilog</string>
-			</dict>
-			<dict>
-				<key>match</key>
-				<string>\b(uvm_report_info|uvm_report_warning|uvm_report_error|uvm_report_fatal|set_config_object|get_config_object|set_config_int|get_config_int|run_test)\s*\(</string>
-				<key>name</key>
-				<string>support.function.uvm.systemverilog</string>
 			</dict>
 			<dict>
 				<key>captures</key>
@@ -890,7 +872,7 @@
 			<!-- Module instantiation with parameter -->
 			<dict>
 				<key>begin</key>
-				<string>^(\s*(bind)\s+([a-zA-Z_]\w*))?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=#[^#])</string>
+				<string>^(\s*(bind)\s+([a-zA-Z_][\w\.]*))?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=#[^#])</string>
 				<key>beginCaptures</key>
 				<dict>
 					<key>2</key>
