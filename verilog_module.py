@@ -130,7 +130,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         isAutoConnect = settings.get('sv.autoconnect',False)
         isParamOneLine = settings.get('sv.param_oneline',True)
         isInstOneLine = settings.get('sv.inst_oneline',True)
-        self.indent_level = settings.get('sv.decl_indent')
+        indent_level = settings.get('sv.decl_indent')
         param_decl = ''
         pm = args['pm']
         # print(pm)
@@ -140,7 +140,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 if pmp['name']==p['name']:
                     if p['value'].startswith('parameter') or p['value'].startswith('localparam'):
                         pmp['value']= p['name']
-                        param_decl +=  self.indent_level*'\t' + p['value'] + ';\n'
+                        param_decl +=  indent_level*'\t' + p['value'] + ';\n'
                         m = re.search(r"(?P<name>\w+)\s*=",p['value'])
                         p['value'] = m.group('name')
                     else:
@@ -277,6 +277,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         # get settings
         port_prefix = settings.get('sv.autoconnect_port_prefix')
         port_suffix = settings.get('sv.autoconnect_port_suffix')
+        indent_level = settings.get('sv.decl_indent')
         #default signal type to logic, except verilog file use wire (if type is implicit)
         fname = view.file_name()
         sig_type = 'logic'
@@ -381,7 +382,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 # If no signal is found, add declaration
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + pname + " => " + str(p['decl'] + ' => ' + d))
-                    decl += self.indent_level*'\t' + d + ';\n'
+                    decl += indent_level*'\t' + d + ';\n'
                 # Else check signal coherence
                 else :
                     # Check port direction
