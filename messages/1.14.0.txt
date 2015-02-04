@@ -1,0 +1,14 @@
+SystemVerilog 1.14.0 Changelog:
+
+## Improvement ##
+
+ - Parameterized module:
+    The user input for parameter value now accept syntax like "parameter myparam = value".
+    This will connect the module parameter to a newly declared myparam.  Works also with localparameter.
+    The default value can be changed to a new parameter declaration by setting sv.param_propagate to true.
+
+ - Add missing uvm_report_fatal in autocompletion
+
+
+## Bug Fix ##
+ - Fix highlight of typedef union and scope inside parameter binding

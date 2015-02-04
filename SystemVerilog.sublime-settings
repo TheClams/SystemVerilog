@@ -22,7 +22,8 @@
 	"sv.param_oneline": true,   // On module instantiation with parameter, check if paramter binding can fit on one line
 	"sv.inst_oneline": true,    // On module instantiation check if complete instantiation can fit on one line
 	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
-	"sv.param_explicit": false,     // Control if parameter setting explicit (appear in module instantiation even when default is used)
+	"sv.param_explicit": false,     // Control if parameter setting is explicit (appears in module instantiation even when default is used)
+	"sv.param_propagate": false,     // Control if parameter setting is explicit (appear in module instantiation even when default is used)
 	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
 	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
 	"sv.autoconnect_port_prefix": [], // List of prefix to remove from the port before looking for a signal connection

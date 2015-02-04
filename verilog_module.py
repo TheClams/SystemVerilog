@@ -83,7 +83,8 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
         self.pm = verilogutil.parse_module_file(self.fname, args['mname'])
-        self.param_explicit = self.view.settings().get('sv.param_explicit')
+        self.param_explicit = self.view.settings().get('sv.param_explicit',False)
+        self.param_propagate = self.view.settings().get('sv.param_propagate',False)
         # print(self.pm)
         if self.pm is not None:
             self.param_value = []
@@ -108,7 +109,14 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
 
     def show_prompt(self):
         p = self.pm['param'][self.cnt]
-        panel = sublime.active_window().show_input_panel(p['name'], "Default: " + p['value'], self.on_prompt_done, None, None)
+        if self.param_propagate:
+            default = 'parameter '
+            if p['decl']:
+                default += p['decl'] + ' '
+            default += '{0} = {1}'.format(p['name'],p['value'])
+        else:
+            default = 'Default: {0}'.format(p['value'])
+        panel = sublime.active_window().show_input_panel(p['name'], default, self.on_prompt_done, None, None)
         #select the whole line (to ease value change)
         r = panel.line(panel.sel()[0])
         panel.sel().clear()
@@ -122,13 +130,22 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         isAutoConnect = settings.get('sv.autoconnect',False)
         isParamOneLine = settings.get('sv.param_oneline',True)
         isInstOneLine = settings.get('sv.inst_oneline',True)
-        # pm = verilogutil.parse_module_file(args['text'])
+        self.indent_level = settings.get('sv.decl_indent')
+        param_decl = ''
         pm = args['pm']
         # print(pm)
+        # Update Module information with parameter value for later signal declaration using correct type
         for p in args['pv']:
             for pmp in pm['param']:
                 if pmp['name']==p['name']:
-                    pmp['value']=p['value']
+                    if p['value'].startswith('parameter') or p['value'].startswith('localparam'):
+                        pmp['value']= p['name']
+                        param_decl +=  self.indent_level*'\t' + p['value'] + ';\n'
+                        m = re.search(r"(?P<name>\w+)\s*=",p['value'])
+                        p['value'] = m.group('name')
+                    else:
+                        pmp['value']=p['value']
+                    break
         # print('[VerilogDoModuleInstCommand] pm = '+ str(pm))
         decl = ''
         ac = {}
@@ -137,9 +154,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         if isAutoConnect and pm['port']:
             (decl,ac,wc) = self.get_connect(self.view, settings, pm)
             #Find location where to insert signal declaration: default to just before module instantiation
-            if decl != "":
+            if decl or param_decl:
                 r = self.get_region_decl(self.view,settings)
-                self.view.insert(edit, r, '\n'+decl)
+                self.view.insert(edit, r, '\n'+param_decl+decl)
                 sublime.status_message('Adding ' + str(len(decl.splitlines())) + ' signals declaration' )
         inst_name = settings.get('sv.instance_prefix','') + pm['name'] + settings.get('sv.instance_suffix','')
         # Check if instantiation can fit on one line only
@@ -258,7 +275,6 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         ac = {} # autoconnection (entry is port name)
         wc = {} # warning connection (entry is port name)
         # get settings
-        indent_level = settings.get('sv.decl_indent')
         port_prefix = settings.get('sv.autoconnect_port_prefix')
         port_suffix = settings.get('sv.autoconnect_port_suffix')
         #default signal type to logic, except verilog file use wire (if type is implicit)
@@ -365,7 +381,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 # If no signal is found, add declaration
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + pname + " => " + str(p['decl'] + ' => ' + d))
-                    decl += indent_level*'\t' + d + ';\n'
+                    decl += self.indent_level*'\t' + d + ';\n'
                 # Else check signal coherence
                 else :
                     # Check port direction

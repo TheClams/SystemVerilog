@@ -64,6 +64,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['uvm_report_info'   , 'uvm_report_info("$1", "$0", UVM_NONE);' ])
         c.append(['uvm_report_warning', 'uvm_report_warning("$1", "$0");' ])
         c.append(['uvm_report_error'  , 'uvm_report_error("$1", "$0");' ])
+        c.append(['uvm_report_fatal'  , 'uvm_report_fatal("$1", "$0");' ])
         return c
 
     def always_completion(self):

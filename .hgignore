@@ -4,3 +4,4 @@ syntax: glob
 __pycache__
 Default.sublime-commands
 Default*.sublime-keymap
+*.pyc

@@ -7,7 +7,7 @@ import pprint
 #   an optionnal array size,
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
-re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
+re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-\+`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_]\w*\s*(?:=\s*\w+)?,\s*)*\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
@@ -244,17 +244,31 @@ def parse_module(flines,mname=r'\w+'):
     mname = m.group('name')
     # Extract parameter name
     params = []
+    param_type = ''
     ## Parameter define in ANSI style
-    r = re.compile(r"(?P<name>\w+)\s*=\s*(?P<value>[^,;\n]+)")
+    r = re.compile(r"(parameter\s+)?(?P<decl>\b\w+\b\s*(\[[\w\:\-\+`\s]+\]\s*)?)?(?P<name>\w+)\s*=\s*(?P<value>[^,;\n]+)")
     if m.group('param'):
         s = clean_comment(m.group('param'))
-        params+=[mp.groupdict() for mp in r.finditer(s)]
+        for mp in r.finditer(s):
+            params.append(mp.groupdict())
+            if not params[-1]['decl']:
+                params[-1]['decl'] = param_type;
+            else :
+                params[-1]['decl'] = params[-1]['decl'].strip();
+                param_type = params[-1]['decl']
     ## look for parameter not define in the module declaration
     if m.group('content'):
         s = clean_comment(m.group('content'))
         r_param_list = re.compile(re_param,flags=re.MULTILINE)
         for mpl in r_param_list.finditer(s):
-            params+=[mp.groupdict() for mp in r.finditer(mpl.group(0))]
+            param_type = ''
+            for mp in r.finditer(mpl.group(0)):
+                params.append(mp.groupdict())
+                if not params[-1]['decl']:
+                    params[-1]['decl'] = param_type;
+                else :
+                    params[-1]['decl'] = params[-1]['decl'].strip();
+                    param_type = params[-1]['decl']
     ## Cleanup param value
     if params:
         for param in params:
