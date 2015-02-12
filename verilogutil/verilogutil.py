@@ -8,7 +8,7 @@ import pprint
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-\+`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*([A-Za-z_]\w*\s*(?:=\s*\w+)?,\s*)*\b'
+re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*\w+)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -131,7 +131,7 @@ def get_all_type_info(txt):
             ti_dict[x['name']] = (x,i)
     for i in sorted(pop_list,reverse=True):
         ti.pop(i)
-    # print(ti)
+    # pprint.pprint(ti, width=200)
     return ti
 
 # Get type info from a match object
@@ -161,7 +161,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     # Remove potential false positive
     if t in ['begin','end','else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign']:
         return [ti_not_found]
-    # print("[get_type_info] type => " + str(t))
+    # print("[get_type_info] Group => " + str(m.groups()))
     ft = ''
     bw = ''
     if var_name!='':
@@ -174,6 +174,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
             signal_list += re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max+1], flags=re.MULTILINE)
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate']]
+    # print("[get_type_info] signal_list = " + str(signal_list) + ' for line ' + line)
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):
         # print('[get_type_info_from_match] tag='+tag+ ' name='+str(signal_list)+ ' match (' + str(i) + ') = ' + str(m.groups()[i]).strip())
@@ -189,7 +190,6 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
             # regex can catch more than wanted, so filter based on a list
             if tmp not in ['end']:
                 ft += tmp + ' '
-    # print("[get_type_info] signal_list = " + str(signal_list) + ' for line ' + line)
     ti = []
     for signal in signal_list :
         fts = ft + signal[0]

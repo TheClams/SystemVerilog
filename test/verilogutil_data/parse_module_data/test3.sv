@@ -7,9 +7,9 @@ input reg a2, aa2,
 output reg b2, bb2,
 inout reg c2, cc2,
 
-input wire [1:0] a4, aa4,
-output wire [1:0] b4, bb4,
-inout wire [1:0] c4, cc4,
+input wire [1:0] a4, aa4, aaa4,
+output wire [1:0] b4, bb4, bbb4, bbbb4,
+inout wire [1:0] c4, cc4, ccc4, cccc4, ccccc4,
 
 input reg [1:0] a5, aa5,
 output reg [1:0] b5, bb5,
