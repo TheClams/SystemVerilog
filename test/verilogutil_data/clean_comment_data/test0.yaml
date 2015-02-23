@@ -10,4 +10,5 @@ big comment
 that one is fake "certainly//"?
 may and that one "nope"
 multi fake "/*not me*/"
-int x=5;
+int x=32'h5;
+int y=32'h4;

@@ -30,7 +30,7 @@ def clean_comment(text):
         else:
             return s
     pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        r'//.*?$|/\*.*?\*/|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
     )
     # do we need trim whitespaces?

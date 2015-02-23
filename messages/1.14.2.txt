@@ -1,0 +1,4 @@
+SystemVerilog 1.14.2 Changelog:
+
+## Bug Fix ##
+ - Fix issue with clean comment that could prevent most parsing function to work
