@@ -1,0 +1,6 @@
+SystemVerilog 1.15 Changelog:
+
+## Improvement ##
+ - The show information can now use the new tooltip API (sublime 3072 minimum)
+ - The show information now works on port binding name
+ - Change scope name of all caps variable to constant.other.net.systemVerilog: this allows user to configure color/style or disable this particular highlight in their color scheme.

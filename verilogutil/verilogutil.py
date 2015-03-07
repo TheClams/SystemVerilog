@@ -101,6 +101,15 @@ def get_all_type_info(txt):
         ti += [x for x in ti_tmp if x['type']]
     # remove typedef declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
+    # Look all modports
+    r = re.compile(r'modport\s+(\w+)\s+\((.*?)\);', flags=re.MULTILINE)
+    modports = r.findall(txt)
+    if modports:
+        for modport in modports:
+            ti.append({'decl':modport[1],'type':'','array':'','bw':'', 'name':modport[0], 'tag':'modport'})
+        # print(modports)
+        # remove modports before looking for I/O and field to avoid duplication of signals
+        txt = r.sub('',txt)
     # Look for signal declaration
     # print('Look for signal declaration')
     r = re.compile(re_decl+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*(?=;|,|\)\s*;)',flags=re.MULTILINE)
@@ -290,6 +299,9 @@ def parse_module(flines,mname=r'\w+'):
     # Extract signal name
     signals = [ti for ti in ati if ti['type']!='module' and ti['tag']!='inst' and ti['name'] not in ports_name]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
+    modports = [ti for ti in ati if ti['tag']=='modport']
+    if modports:
+        minfo['modport'] = modports
     # pprint.pprint(minfo,width=200)
     return minfo
 

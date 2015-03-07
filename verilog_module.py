@@ -1,7 +1,6 @@
 import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap
 
-
 try:
     from SystemVerilog.verilogutil import verilogutil
     from SystemVerilog.verilogutil import sublimeutil
@@ -12,6 +11,33 @@ except ImportError:
 
 list_module_files = {}
 lmf_update_ongoing = False
+
+def lookup_module(view,mname):
+    mi = None
+    filelist = view.window().lookup_symbol_in_index(mname)
+    if filelist:
+        for f in filelist:
+            fname = sublimeutil.normalize_fname(f[0])
+            mi = verilogutil.parse_module_file(fname,mname)
+            if mi:
+                break
+    return mi
+
+def lookup_type(view, t):
+    ti = None
+    filelist = view.window().lookup_symbol_in_index(t)
+    if filelist:
+        for f in filelist:
+            fname = sublimeutil.normalize_fname(f[0])
+            # Parse only systemVerilog file. Check might be a bit too restrictive ...
+            if fname.lower().endswith(('sv','svh')):
+                # print(w + ' of type ' + t + ' defined in ' + str(fname))
+                with open(fname, 'r') as f:
+                    flines = str(f.read())
+                ti = verilogutil.get_type_info(flines,t)
+                if ti['type']:
+                    break
+    return ti
 
 ########################################
 # Create module instantiation skeleton #

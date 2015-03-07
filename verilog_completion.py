@@ -131,7 +131,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 txt = view.substr(r)
                 mname = re.findall(r'\w+',txt)[0]
                 filelist = view.window().lookup_symbol_in_index(mname)
-                # TODO: get type to identify if is a module, an interface or a function and use the relevant completion function
                 if filelist:
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
@@ -176,7 +175,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 filelist = view.window().lookup_symbol_in_index(t)
                 # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
-                    fname = sublimeutil.normalize_fname(filelist[0][0])
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
                         # Parse only systemVerilog file. Check might be a bit too restrictive ...
@@ -432,7 +430,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             t = re.sub(r'\w+\:\:','',t)
             filelist = view.window().lookup_symbol_in_index(t)
             if filelist:
-                fname = sublimeutil.normalize_fname(filelist[0][0])
                 for f in filelist:
                     fname = sublimeutil.normalize_fname(f[0])
                     # Parse only systemVerilog file. Check might be a bit too restrictive ...

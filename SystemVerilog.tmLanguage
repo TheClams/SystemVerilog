@@ -1125,7 +1125,7 @@
 						<key>match</key>
 						<string>\b([A-Z][A-Z0-9_]*)\b</string>
 						<key>name</key>
-						<string>constant.other.systemverilog</string>
+						<string>constant.other.net.systemverilog</string>
 					</dict>
 					<dict>
 						<key>match</key>

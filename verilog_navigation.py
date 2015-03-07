@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap
+import re, string, os, sys, functools, mmap, pprint
 from collections import Counter
+from plistlib import readPlistFromBytes
 
 sys.path.append(os.path.dirname(__file__))
 import verilog_module
@@ -9,6 +10,79 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
 import verilogutil
 import sublimeutil
 
+
+############################################################################
+# Init
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
+
+use_tooltip = False
+sv_settings = None
+tooltip_css = ''
+
+def plugin_loaded():
+    global sv_settings
+    global pref_settings
+    pref_settings = sublime.load_settings('Preferences.sublime-settings')
+    pref_settings.clear_on_change('reload')
+    pref_settings.add_on_change('reload',plugin_loaded)
+    sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
+    sv_settings.clear_on_change('reload')
+    sv_settings.add_on_change('reload',plugin_loaded)
+    init_css()
+
+def init_css():
+    global use_tooltip
+    global tooltip_css
+    if int(sublime.version()) >= 3072 :
+        use_tooltip = sv_settings.get('sv.tooltip',True)
+        color_plist = readPlistFromBytes(sublime.load_binary_resource(pref_settings.get('color_scheme')))
+        color_dict = {x['scope']:x['settings'] for x in color_plist['settings'] if 'scope' in x}
+        color_dict['__GLOBAL__'] = color_plist['settings'][0]['settings'] # first settings contains global settings, without scope(hopefully)
+        #pprint.pprint(color_dict, width=200)
+        bg = int(color_dict['__GLOBAL__']['background'][1:],16)
+        fg = int(color_dict['__GLOBAL__']['foreground'][1:],16)
+        # Get color for keyword, support, storage, default to foreground
+        kw  = fg if 'keyword' not in color_dict else int(color_dict['keyword']['foreground'][1:],16)
+        sup = fg if 'support' not in color_dict else int(color_dict['support']['foreground'][1:],16)
+        sto = fg if 'storage' not in color_dict else int(color_dict['storage']['foreground'][1:],16)
+        op = fg if 'keyword.operator' not in color_dict else int(color_dict['keyword.operator']['foreground'][1:],16)
+        num = fg if 'constant.numeric' not in color_dict else int(color_dict['constant.numeric']['foreground'][1:],16)
+        # Create background and border color based on the background color
+        b = bg & 255
+        g = (bg>>8) & 255
+        r = (bg>>16) & 255
+        if b > 128:
+            bgHtml = b - 0x33
+            bgBody = b - 0x20
+        else:
+            bgHtml = b + 0x33
+            bgBody = b + 0x20
+        if g > 128:
+            bgHtml += (g - 0x33)<<8
+            bgBody += (g - 0x20)<<8
+        else:
+            bgHtml += (g + 0x33)<<8
+            bgBody += (g + 0x20)<<8
+        if r > 128:
+            bgHtml += (r - 0x33)<<16
+            bgBody += (r - 0x20)<<16
+        else:
+            bgHtml += (r + 0x33)<<16
+            bgBody += (r + 0x20)<<16
+        tooltip_css = 'html {{ background-color: #{bg:06x}; color: #{fg:06x}; }}\n'.format(bg=bgHtml, fg=fg)
+        tooltip_css+= 'body {{ background-color: #{bg:06x}; margin: 1px; font-size: 1em; }}\n'.format(bg=bgBody)
+        tooltip_css+= 'p {padding-left: 0.6em;}\n'
+        tooltip_css+= '.content {margin: 0.8em;}\n'
+        tooltip_css+= '.keyword {{color: #{c:06x};}}\n'.format(c=kw)
+        tooltip_css+= '.support {{color: #{c:06x};}}\n'.format(c=sup)
+        tooltip_css+= '.storage {{color: #{c:06x};}}\n'.format(c=sto)
+        tooltip_css+= '.operator {{color: #{c:06x};}}\n'.format(c=op)
+        tooltip_css+= '.numeric {{color: #{c:06x};}}\n'.format(c=num)
+        tooltip_css+= '.extra-info {font-size: 0.9em; }\n'
+        #print(tooltip_css)
+    else :
+       use_tooltip  = False
+       tooltip_css = ''
 
 ############################################################################
 # Display type of the signal/variable under the cursor into the status bar #
@@ -20,26 +94,102 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
         v = self.view.substr(region)
-        region = self.view.line(region)
-        if re.match(r'^\w+$',v):
-            s = self.get_type(v,region.b)
+        if re.match(r'^\w+$',v): # Check this is valid a valid word
+            s = self.get_type(v,region)
             if s is None:
-                s = "No definition found for " + v
-            sublime.status_message(s)
-        else:
-            pass
+                sublime.status_message('No definition found for ' + v)
+            # Check if we use tooltip or statusbar to display information
+            elif use_tooltip :
+                s,udt = self.color_str(s)
+                if udt:
+                    mi = verilog_module.lookup_type(self.view,udt)
+                    if mi:
+                        #print(mi)
+                        if mi['tag'] == 'enum':
+                            m = re.search(r'\{(.*)\}', mi['decl'])
+                            if m:
+                                s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[0])
+                        elif mi['tag'] == 'struct':
+                            m = re.search(r'\{(.*)\}', mi['decl'])
+                            if m:
+                                fti = verilogutil.get_all_type_info(m.groups()[0])
+                                if fti:
+                                    for ti in fti:
+                                        s += '<br>{0}{1}'.format('&nbsp;'*4,self.color_str(ti['decl'])[0])
+                        elif 'interface' in mi['decl']:
+                            mi = verilog_module.lookup_module(self.view,mi['name'])
+                            if mi :
+                                #TODO: use modport info if it exists
+                                for x in mi['signal']:
+                                    if x['tag']=='decl':
+                                        s+='<br>{0}{1}'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
+                self.view.show_popup(s,location=-1, max_width=500)
+            else :
+                # fix hard limit to signal declaration to 128 to ensure it can be displayed
+                if s and len(s) > 128:
+                    s = re.sub(r'\{.*\}','',s) # A long signal is typical of an enum, struct : remove content to only let the type appear
+                    if len(s) > 128:
+                        s = s[:127]
+                sublime.status_message(s)
 
-    def get_type(self,var_name,pos):
-        # select whole file
-        txt = self.view.substr(sublime.Region(0, pos))
-        # Extract type
-        ti = verilogutil.get_type_info(txt,var_name)
-        txt = ti['decl']
-        if txt and len(txt) > 128: # fix hard limit to signal declaration to 128 to ensure it can be displayed
-            txt = re.sub(r'\{.*\}','',txt) # A long signal is typical of an enum, struct : remove content to only let the type appear
-            if len(txt) > 128:
-                txt = txt[:127]
+    def get_type(self,var_name,region):
+        scope = self.view.scope_name(region.a)
+        # Extract type info from module if we are on port connection
+        if 'support.function.port' in scope:
+            region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
+            txt = self.view.substr(region)
+            mname = re.search(r'\w+',txt).group(0)
+            #print('Find module with name {0}'.format(mname))
+            mi = verilog_module.lookup_module(self.view,mname)
+            txt = ''
+            if mi:
+                for p in mi['port']:
+                    if p['name']==var_name:
+                        txt = p['decl']
+        # Simply lookup in the file before the use of the variable
+        else :
+            # select whole file until end of current line
+            region = self.view.line(region)
+            txt = self.view.substr(sublime.Region(0, region.b))
+            # Extract type
+            ti = verilogutil.get_type_info(txt,var_name)
+            txt = ti['decl']
         return txt
+
+    def color_str(self,s):
+        ss = s.split(' ')
+        sh = ''
+        userDefinedType = ''
+        for i,w in enumerate(ss):
+            if i == len(ss)-1:
+                if '[' in w:
+                    sh += re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w)
+                else:
+                    sh+=w
+            elif w in ['input', 'output', 'inout']:
+                sh+='<span class="support">{0}</span> '.format(w)
+            elif w in ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union']:
+                sh+='<span class="keyword">{0}</span> '.format(w)
+            elif w in ['wire', 'reg', 'logic', 'int', 'signed', 'unsigned', 'real', 'bit']:
+                sh+='<span class="storage">{0}</span> '.format(w)
+            elif '::' in w:
+                ws = w.split('::')
+                sh+='<span class="support">{0}</span><span class="operator">::</span><span class="storage">{1}</span> '.format(ws[0],ws[1])
+                userDefinedType = ws[1]
+            elif '.' in w:
+                ws = w.split('.')
+                sh+='<span class="storage">{0}</span>.<span class="support">{1}</span> '.format(ws[0],ws[1])
+                userDefinedType = ws[0]
+            elif '[' in w:
+                sh+= re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w) + ' '
+            elif (i == len(ss)-2) or (i == len(ss)-3 and '[' in ss[-2]):
+                sh+='<span class="storage">{0}</span> '.format(w)
+                userDefinedType = w
+            else:
+                sh += w + ' '
+        #print (sh)
+        return sh,userDefinedType
 
 ###################################################################
 # Move cursor to the declaration of the signal currently selected #

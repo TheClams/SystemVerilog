@@ -11,7 +11,7 @@ Description
 
 ####Code Navigation:
 
- * Show signal declaration in status bar
+ * Show signal declaration in tooltip or status bar
  * Goto declaration : move cursor to the declaration of the selected signal
  * Goto driver : select a signal a go to the driver (port, assignement, connection)
  * Find Instances: find all instance of a module inside a project
