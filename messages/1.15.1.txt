@@ -1,0 +1,4 @@
+SystemVerilog 1.15.1 Changelog:
+
+## Improvement ##
+ - The show information tooltip now includes link to user-defined structure/interface/enum

@@ -100,31 +100,29 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
-                s,udt = self.color_str(s)
-                if udt:
-                    mi = verilog_module.lookup_type(self.view,udt)
-                    if mi:
-                        #print(mi)
-                        if mi['tag'] == 'enum':
-                            m = re.search(r'\{(.*)\}', mi['decl'])
-                            if m:
-                                s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[0])
-                        elif mi['tag'] == 'struct':
-                            m = re.search(r'\{(.*)\}', mi['decl'])
-                            if m:
-                                fti = verilogutil.get_all_type_info(m.groups()[0])
-                                if fti:
-                                    for ti in fti:
-                                        s += '<br>{0}{1}'.format('&nbsp;'*4,self.color_str(ti['decl'])[0])
-                        elif 'interface' in mi['decl']:
-                            mi = verilog_module.lookup_module(self.view,mi['name'])
-                            if mi :
-                                #TODO: use modport info if it exists
-                                for x in mi['signal']:
-                                    if x['tag']=='decl':
-                                        s+='<br>{0}{1}'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                s,ti = self.color_str(s=s, addLink=True)
+                if ti:
+                    #print(ti)
+                    if ti['tag'] == 'enum':
+                        m = re.search(r'\{(.*)\}', ti['decl'])
+                        if m:
+                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[0])
+                    elif ti['tag'] == 'struct':
+                        m = re.search(r'\{(.*)\}', ti['decl'])
+                        if m:
+                            fti = verilogutil.get_all_type_info(m.groups()[0])
+                            if fti:
+                                for ti in fti:
+                                    s += '<br>{0}{1}'.format('&nbsp;'*4,self.color_str(ti['decl'])[0])
+                    elif 'interface' in ti['decl']:
+                        mi = verilog_module.lookup_module(self.view,ti['name'])
+                        if mi :
+                            #TODO: use modport info if it exists
+                            for x in mi['signal']:
+                                if x['tag']=='decl':
+                                    s+='<br>{0}{1}'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
-                self.view.show_popup(s,location=-1, max_width=500)
+                self.view.show_popup(s,location=-1, max_width=500, on_navigate=self.on_navigate)
             else :
                 # fix hard limit to signal declaration to 128 to ensure it can be displayed
                 if s and len(s) > 128:
@@ -157,10 +155,10 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             txt = ti['decl']
         return txt
 
-    def color_str(self,s):
+    def color_str(self,s, addLink=False):
         ss = s.split(' ')
         sh = ''
-        userDefinedType = ''
+        ti = None
         for i,w in enumerate(ss):
             if i == len(ss)-1:
                 if '[' in w:
@@ -175,21 +173,49 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 sh+='<span class="storage">{0}</span> '.format(w)
             elif '::' in w:
                 ws = w.split('::')
-                sh+='<span class="support">{0}</span><span class="operator">::</span><span class="storage">{1}</span> '.format(ws[0],ws[1])
-                userDefinedType = ws[1]
+                sh+='<span class="support">{0}</span><span class="operator">::</span>'.format(ws[0])
+                if addLink:
+                    ti = verilog_module.lookup_type(self.view,ws[1])
+                if ti and 'fname' in ti:
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(ti['fname'],ws[1])
+                else:
+                    sh+='<span class="storage">{0}</span> '.format(ws[1])
             elif '.' in w:
                 ws = w.split('.')
-                sh+='<span class="storage">{0}</span>.<span class="support">{1}</span> '.format(ws[0],ws[1])
-                userDefinedType = ws[0]
+                if addLink:
+                    ti = verilog_module.lookup_type(self.view,ws[0])
+                if ti and 'fname' in ti:
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(ti['fname'],ws[0])
+                else:
+                    sh+='<span class="storage">{0}</span>'.format(ws[0])
+                sh+='.<span class="support">{0}</span> '.format(ws[1])
             elif '[' in w:
                 sh+= re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w) + ' '
             elif (i == len(ss)-2) or (i == len(ss)-3 and '[' in ss[-2]):
-                sh+='<span class="storage">{0}</span> '.format(w)
-                userDefinedType = w
+                if addLink:
+                    ti = verilog_module.lookup_type(self.view,w)
+                if ti and 'fname' in ti:
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(ti['fname'],w)
+                else:
+                    sh+='<span class="storage">{0}</span> '.format(w)
             else:
                 sh += w + ' '
         #print (sh)
-        return sh,userDefinedType
+        return sh,ti
+
+    def on_navigate(self, href):
+        href_s = href.split('@')
+        pos = sublime.Region(0,0)
+        v = self.view.window().open_file(fname=href_s[1])
+        # print('Looking for symbol {0} in {1}'.format(href_s,v.symbols()))
+        for s in v.symbols():
+            if s[1]==href_s[0]:
+                pos = s[0]
+        #r = sublime.Region(pos[0],pos[1])
+        v.sel().clear()
+        v.sel().add(sublime.Region(pos.a,pos.a))
+        v.show(pos)
+
 
 ###################################################################
 # Move cursor to the declaration of the signal currently selected #

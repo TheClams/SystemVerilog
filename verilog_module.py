@@ -20,6 +20,7 @@ def lookup_module(view,mname):
             fname = sublimeutil.normalize_fname(f[0])
             mi = verilogutil.parse_module_file(fname,mname)
             if mi:
+                mi['fname'] = fname
                 break
     return mi
 
@@ -31,11 +32,12 @@ def lookup_type(view, t):
             fname = sublimeutil.normalize_fname(f[0])
             # Parse only systemVerilog file. Check might be a bit too restrictive ...
             if fname.lower().endswith(('sv','svh')):
-                # print(w + ' of type ' + t + ' defined in ' + str(fname))
+                # print(t + ' defined in ' + str(fname))
                 with open(fname, 'r') as f:
                     flines = str(f.read())
                 ti = verilogutil.get_type_info(flines,t)
                 if ti['type']:
+                    ti['fname'] = fname
                     break
     return ti
 
