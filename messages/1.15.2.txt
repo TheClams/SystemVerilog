@@ -1,0 +1,8 @@
+SystemVerilog 1.15.2 Changelog:
+
+## Improvement ##
+ - Tooltip: better handling of enum and highlight operator : and #
+
+## Bug Fix ##
+ - Tooltip: Fix navigation (cursor was not always set to symbol position due to async process)
+

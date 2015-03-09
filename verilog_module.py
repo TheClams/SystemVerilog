@@ -29,7 +29,8 @@ def lookup_type(view, t):
     filelist = view.window().lookup_symbol_in_index(t)
     if filelist:
         for f in filelist:
-            fname = sublimeutil.normalize_fname(f[0])
+            fname, display_fname, rowcol = f
+            fname = sublimeutil.normalize_fname(fname)
             # Parse only systemVerilog file. Check might be a bit too restrictive ...
             if fname.lower().endswith(('sv','svh')):
                 # print(t + ' defined in ' + str(fname))
@@ -37,7 +38,7 @@ def lookup_type(view, t):
                     flines = str(f.read())
                 ti = verilogutil.get_type_info(flines,t)
                 if ti['type']:
-                    ti['fname'] = fname
+                    ti['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
                     break
     return ti
 
