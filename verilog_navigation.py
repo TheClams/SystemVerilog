@@ -96,15 +96,20 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         v = self.view.substr(region)
         if re.match(r'^\w+$',v): # Check this is valid a valid word
             s,ti = self.get_type(v,region)
-            if s is None:
+            if not s:
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
-                if ti and ti['tag'] == 'enum':
+                if ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
                     m = re.search(r'^(.*)\{(.*)\}', ti['decl'])
-                    s,ti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
-                    if m:
+                    s,tti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
+                    if ti['tag'] == 'enum':
                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
+                    else :
+                        fti = verilogutil.get_all_type_info(m.groups()[1])
+                        if fti:
+                            for ti in fti:
+                                s += '<br>{0}{1}'.format('&nbsp;'*4,self.color_str(ti['decl'])[0])
                 else :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
@@ -140,6 +145,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
     def get_type(self,var_name,region):
         scope = self.view.scope_name(region.a)
         ti = None
+        txt = ''
         # Extract type info from module if we are on port connection
         if 'support.function.port' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
@@ -147,12 +153,14 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             mname = re.search(r'\w+',txt).group(0)
             #print('Find module with name {0}'.format(mname))
             mi = verilog_module.lookup_module(self.view,mname)
-            txt = ''
             if mi:
                 for p in mi['port']:
                     if p['name']==var_name:
                         txt = p['decl']
                         break
+        elif 'storage.type.userdefined' in scope:
+            ti = verilog_module.lookup_type(self.view,var_name)
+            txt = ti['decl']
         # Simply lookup in the file before the use of the variable
         else :
             # select whole file until end of current line
@@ -160,8 +168,12 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             txt = self.view.substr(sublime.Region(0, region.b))
             # Extract type
             ti = verilogutil.get_type_info(txt,var_name)
+            print (ti)
             txt = ti['decl']
         return txt,ti
+
+    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum',
+                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function']
 
     def color_str(self,s, addLink=False):
         ss = s.split(' ')
@@ -177,7 +189,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     sh+=w
             elif w in ['input', 'output', 'inout']:
                 sh+='<span class="support">{0}</span> '.format(w)
-            elif w in ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'local', 'static', 'const']:
+            elif w in self.keywords:
                 sh+='<span class="keyword">{0}</span> '.format(w)
             elif w in ['wire', 'reg', 'logic', 'int', 'signed', 'unsigned', 'real', 'bit', 'rand']:
                 sh+='<span class="storage">{0}</span> '.format(w)
@@ -211,7 +223,6 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     sh+='<span class="storage">{0}</span> '.format(w)
             else:
                 sh += w + ' '
-        #print (sh)
         return sh,ti
 
     def on_navigate(self, href):
