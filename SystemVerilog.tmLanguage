@@ -263,7 +263,7 @@
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\s*(parameter)</string>
+						<string>\s*(parameter)(?=.+)</string>
 						<key>name</key>
 						<string>keyword.other.systemverilog</string>
 					</dict>
@@ -1241,7 +1241,7 @@
 				<key>patterns</key>
 				<array>
 					<dict>
-						<!-- Match ports with array declarations -->
+						<!-- Match ports with size declarations -->
 						<key>match</key>
 						<string>\s*\b(output|input|inout|ref)\s+(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)?\s+(?=\[[a-zA-Z0-9_\-\+]*:[a-zA-Z0-9_\-\+]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)</string>
 						<key>captures</key>
@@ -1268,7 +1268,7 @@
 							</dict>
 						</dict>
 					</dict>
-					<!-- Match ports without array declarations -->
+					<!-- Match ports without size declarations -->
 					<dict>
 						<key>match</key>
 						<string>\s*\b(output|input|inout|ref)\s+(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)?\s+(?=[a-zA-Z_][a-zA-Z0-9_\s]*)</string>
