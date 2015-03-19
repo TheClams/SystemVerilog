@@ -67,6 +67,7 @@ parameter
 localparam mytype myvar = mytype'(MY_INIT/4+8);
 localparam myvar1 = MY_INIT1;
 localparam logic [1:0] myvar2 = MY_INIT2;
+typedef struct {logic a; int b; bit [3:0] c;} mystruct;
 protected const mystruct c_var = '{a:0,b:1,c:4'hD};
 
 function void my_func(ref logic d, input int din,
@@ -101,3 +102,6 @@ always_ff @(posedge clk or negedge rst_n) begin : proc_
     else if (en)
         a <= a + b;
 end
+
+        function automatic integer CLOGB2;
+        endfunction
