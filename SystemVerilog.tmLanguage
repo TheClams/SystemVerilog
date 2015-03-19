@@ -263,7 +263,7 @@
 					</dict>
 					<dict>
 						<key>match</key>
-						<string>\s*(parameter)(?=.+)</string>
+						<string>\s*(parameter)</string>
 						<key>name</key>
 						<string>keyword.other.systemverilog</string>
 					</dict>
