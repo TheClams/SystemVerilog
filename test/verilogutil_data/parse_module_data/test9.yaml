@@ -1,0 +1,12 @@
+{'inst': [],
+ 'name': 'arithm_op_port',
+ 'param': [{'decl': '', 'name': 'pq_symbols', 'value': '4'}],
+ 'port': [{'array': ''},
+          'bw': '[pq_symbols*4-1:0]',
+          'decl': 'output logic [pq_symbols*4-1:0] name'
+          'name': 'name',
+          'tag': 'decl',
+          'type': 'logic'}],
+ 'signal': [],
+ 'type': 'module'
+}
