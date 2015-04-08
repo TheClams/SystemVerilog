@@ -1,7 +1,6 @@
 import shutil
 import os
 import platform
-import logger
 
 def deployment(action='install'):
     my_sys = platform.system()
