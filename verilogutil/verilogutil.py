@@ -8,7 +8,7 @@ import pprint
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-\+`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*\w+)?,\s*)*)\b'
+re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\*\(\)\/><\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*\w+)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -133,9 +133,9 @@ def get_all_type_info(txt):
             ti_index = ti_dict[x['name']][1]
             # print('[get_all_type_info] Duplicate found for %s => %s and %s' %(x['name'],ti_dict[x['name']],x))
             if ti[ti_index]['type'].split()[0] in ['input', 'output', 'inout']:
-               ti[ti_index]['decl'] = ti[ti_index]['decl'].replace(ti[ti_index]['type'],ti[ti_index]['type'].split()[0] + ' ' + x['type'])
-               ti[ti_index]['type'] = x['type']
-               pop_list.append(i)
+                ti[ti_index]['decl'] = ti[ti_index]['decl'].replace(ti[ti_index]['type'],ti[ti_index]['type'].split()[0] + ' ' + x['type'])
+                ti[ti_index]['type'] = x['type']
+                pop_list.append(i)
         else :
             ti_dict[x['name']] = (x,i)
     for i in sorted(pop_list,reverse=True):

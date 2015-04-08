@@ -175,7 +175,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     else:
                         pmp['value']=p['value']
                     break
-        # print('[VerilogDoModuleInstCommand] pm = '+ str(pm))
+        print('[VerilogDoModuleInstCommand] pm = '+ str(pm))
         decl = ''
         ac = {}
         wc = {}
