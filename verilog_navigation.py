@@ -101,7 +101,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
                 if ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
-                    m = re.search(r'^(.*)\{(.*)\}', ti['decl'])
+                    m = re.search(r'(?s)^(.*)\{(.*)\}', ti['decl'])
+                    print(ti)
                     s,tti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
                     if ti['tag'] == 'enum':
                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
@@ -168,12 +169,12 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             txt = self.view.substr(sublime.Region(0, region.b))
             # Extract type
             ti = verilogutil.get_type_info(txt,var_name)
-            print (ti)
+            # print (ti)
             txt = ti['decl']
         return txt,ti
 
-    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum',
-                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function']
+    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'packed',
+                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'var']
 
     def color_str(self,s, addLink=False):
         ss = s.split(' ')
@@ -391,32 +392,40 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
             mname = m.group('name')
         else:
             mname = self.view.substr(self.view.sel()[0])
+        sublime.set_timeout_async(lambda x=mname: self.findInstance(x))
+
+    def findInstance(self, mname):
         projname = sublime.active_window().project_file_name()
-        # TODO: make this async
         if projname not in verilog_module.list_module_files:
             verilog_module.VerilogModuleInstCommand.get_list_file(None,projname,None)
         inst_dict = {}
         cnt = 0
+        re_str = r'^(\s*'+mname+r'\s+(#\s*\(.*\)\s*)?(\w+).*$)'
+        p = re.compile(re_str,re.MULTILINE)
         for fn in verilog_module.list_module_files[projname]:
-            f = open(fn)
-            if os.stat(fn).st_size:
-                txt = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                re_str = r'^(\s*'+mname+r'\s+(#\s*\(.*\)\s*)?(\w+).*$)'
-                il = re.findall(str.encode(re_str),txt,re.MULTILINE)
-                if il:
-                    cnt += len(il)
-                    inst_dict[fn] = il
+            with open(fn) as f:
+                txt = f.read()
+                if mname in txt:
+                    for m in re.finditer(p,txt):
+                        cnt+=1
+                        lineno = txt.count("\n",0,m.start()+1)+1
+                        res = (m.groups()[2].strip(),lineno)
+                        if fn not in inst_dict:
+                            inst_dict[fn] = [res]
+                        else:
+                            inst_dict[fn].append(res)
         if inst_dict:
             v = sublime.active_window().new_file()
-            # v.set_name('Find Results')
             v.set_name(mname + ' Instances')
             v.set_syntax_file('Packages/SystemVerilog/Find Results SV.hidden-tmLanguage')
+            v.settings().set("result_file_regex", r"^(.+):$")
+            v.settings().set("result_line_regex", r"\(line: (\d+)\)$")
             v.set_scratch(True)
             txt = mname + ': %0d instances.\n\n' %(cnt)
             for (name,il) in inst_dict.items():
                 txt += name + ':\n'
                 for i in il:
-                    txt += '    - ' + str(i[2].decode().strip()) + '\n'
+                    txt += '    - {0} (line: {1})\n'.format(i[0].strip(),i[1])
                 txt += '\n'
             v.run_command('insert_snippet',{'contents':str(txt)})
 

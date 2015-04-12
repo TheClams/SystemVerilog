@@ -10,7 +10,7 @@ import pprint
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-\+`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\*\(\)\/><\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*\w+)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_union = r'^\s*(typedef\s+)?(struct|union)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
+re_union = r'^\s*(typedef\s+)?(struct|union|`\w+)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
 re_inst  = r'^\s*(virtual)?(\s*)()(\w+)\s*(#\s*\([^;]+\))?\s*()\b'
 re_param = r'^\s*parameter\b((?:\s*(?:\w+\s+)?(?:[A-Za-z_]\w+)\s*=\s*(?:[^,;]*)\s*,)*)(\s*(\w+\s+)?([A-Za-z_]\w+)\s*=\s*([^,;]*)\s*;)'
@@ -159,7 +159,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
             t = str.rstrip(m.groups()[2]) + ' ' + t
         elif m.groups()[1] is not None:
             t = str.rstrip(m.groups()[1]) + ' ' + t
-        elif m.groups()[0] is not None:
+        elif m.groups()[0] is not None and not m.groups()[0].startswith('end'):
             t = str.rstrip(m.groups()[0]) + ' ' + t
     elif t=="const": # identifying a variable as simply const is typical of a struct/union : look for it
         m = re.search( re_union+var_name+r'.*$', txt, flags=re.MULTILINE)
@@ -168,7 +168,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin','end','else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign']:
+    if t in ['begin', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign']:
         return [ti_not_found]
     # print("[get_type_info] Group => " + str(m.groups()))
     ft = ''
@@ -197,7 +197,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
                 tmp = re.sub(r'\s+','',tmp,flags=re.MULTILINE)
                 bw = tmp
             # regex can catch more than wanted, so filter based on a list
-            if tmp not in ['end']:
+            if not tmp.startswith('end'):
                 ft += tmp + ' '
     ti = []
     for signal in signal_list :

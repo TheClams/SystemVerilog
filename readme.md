@@ -9,6 +9,9 @@ Description
  * SystemVerilog / Verilog
  * UCF (Xilinx Constraint file)
 
+Note: the default color scheme (Monokai) is missing a lot of scope, and might not give the best results.
+You can try my personal variation of Sunburst : https://bitbucket.org/Clams/sublimesystemverilog/downloads/Sunburst2.tmTheme
+
 ####Code Navigation:
 
  * Show signal declaration in tooltip or status bar

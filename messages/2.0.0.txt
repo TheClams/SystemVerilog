@@ -1,0 +1,15 @@
+SystemVerilog 2.0.0 Changelog:
+
+## Improvement ##
+ - Alignement:
+  * Most alignement function move to a standalone python module to allow reuse outside of SublimeText
+  * complete rewriting of basic parser => should now handle a lot more indentation cases
+ - Start using new sublime syntax format (need version 3084):
+  * now highlight trailing unmatched ) or ] as error
+  * Update the typedef highlight using new mechanism => allow better highlighting, especially when there is some line return in the middle of the definition (or comments)
+ - Find instance is now asynchonous and allows to navogate to the file using double click (just like Find in files)
+
+## Bug Fix ##
+ - Parsing of port module with arithemetic operation (fix from mgolokhov)
+ - Highlight of typedef of array with arithemetic operation (fix from kelvin_green)
+
