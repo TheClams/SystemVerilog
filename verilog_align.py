@@ -58,7 +58,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
                 region.a += 1;
             txt = self.view.substr(region)
-            txt = beautifier.beautifyText(self.view.substr(region))
+            txt = beautifier.beautifyText(txt)
         if txt:
             self.view.replace(edit,region,txt)
             sublimeutil.move_cursor(self.view,region_start.a)

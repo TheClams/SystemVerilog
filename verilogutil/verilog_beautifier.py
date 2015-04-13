@@ -41,7 +41,7 @@ class VerilogBeautifier():
             self.state = self.states[-1]
 
     def isStateEnd(self,w):
-        return (self.state=='begin' and w=='end') or (self.state=='{' and w=='}') or (self.state=='(' and w==')') or (self.state and w=='end' + self.state)
+        return (self.state=='begin' and w=='end') or (self.state=='covergroup' and w=='endgroup') or (self.state=='fork' and w.startswith('join')) or (self.state=='{' and w=='}') or (self.state=='(' and w==')') or (self.state and w=='end' + self.state)
 
     def beautifyFile(self,fnameIn,fnameOut=''):
         if not fnameOut:
@@ -53,7 +53,7 @@ class VerilogBeautifier():
             f.write(txt)
 
     def beautifyText(self,txt):
-        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'begin', '{', '(']
+        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(']
         # Variables
         self.states = [] # block indent list
         w_d = ['','\n'] # previous word
@@ -102,7 +102,8 @@ class VerilogBeautifier():
                 # print(block+line)
                 if split_assign==0 and self.state not in ['comment_block','{'] and block_state not in ['module','instance','struct']:
                     if self.state == 'comment_line' and len(self.states)>1 and self.states[-2] == '{':
-                        # print('Inside a block {} => ignore for split !')
+                        tmp = None
+                    elif self.state == '(' and len(self.states)>1 and self.states[-2] == 'function':
                         tmp = None
                     else :
                         tmp = verilogutil.clean_comment(line).strip()
@@ -133,10 +134,11 @@ class VerilogBeautifier():
             elif not w_d[-1]=='\n' or w.strip():
                 line += w
                 if self.state not in ['comment_line','comment_block']:
+                    # print('State={0}.{1} -- Testing {2}'.format(self.state,block_state,block+line))
                     if w in kw_block:
                         ilvl+=1
                         self.stateUpdate(w)
-                        if w in ['module','package', 'generate']:
+                        if w in ['module','package', 'generate', 'function', 'task']:
                             block_state = w
                             txt_new += block
                             block = line
@@ -153,7 +155,6 @@ class VerilogBeautifier():
                             # print('Start of text block with "{0}"'.format(w))
                             block_state = 'text'
                     elif block_state=='text':
-                        print('Testing {0}'.format(block+line))
                         tmp = verilogutil.clean_comment(block + line).strip()
                         m = self.re_inst.match(tmp)
                         if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
@@ -161,7 +162,7 @@ class VerilogBeautifier():
                         elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
                             block_state = 'struct'
                         elif re.match(r"(?s)^.*=\s*'\{",tmp, flags=re.MULTILINE):
-                            # print('Matching strict assign on "{0}"'.format(block+line))
+                            # print('Matching struct assign on "{0}"'.format(block+line))
                             block_state = 'struct_assign'
                         # print('Test "{0}" => {1}.{2}'.format((block+line).strip(),self.state,block_state))
             # Handle the block_state and call appropriate alignement function
@@ -216,7 +217,7 @@ class VerilogBeautifier():
                                 inst_ilvl = self.getIndentLevel(inst_block)
                                 inst_block_aligned = self.alignInstance(inst_block,inst_ilvl)
                                 block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
-                                print('[Beautify] Align block inst in generate : ilvl={0}'.format(inst_ilvl))
+                                # print('[Beautify] Align block inst in generate : ilvl={0}'.format(inst_ilvl))
                     block = block_tmp
                 if w_d[-1]!='\n':
                     self.stateUpdate()
@@ -299,13 +300,15 @@ class VerilogBeautifier():
         # Check that there is no reminding stuff todo:
         block = block+line
         # print('[Beautify] state={block_state}.{state}\n{block} '.format(state=self.state, block_state=block_state, block=block))
-        if block_state in ['module','instance','text','package','decl'] or (block_state in ['struct','struct_assign'] and self.state!='{'):
+        if block_state in ['module','instance','text','package','decl', 'assign'] or (block_state in ['struct','struct_assign'] and self.state!='{'):
             if block_state=='module':
                 block_tmp = self.alignModulePort(block,ilvl-1)
             elif block_state=='instance':
                 block_tmp = self.alignInstance(block,ilvl)
             elif block_state=='struct':
                 block_tmp = self.alignDecl(block)
+            elif block_state=='assign':
+                block_tmp = self.alignAssign(block,2)
             elif block_state=='struct_assign':
                 block_tmp = self.alignAssign(block,1)
             elif block_state=='decl':
@@ -330,7 +333,7 @@ class VerilogBeautifier():
         if m.group('params'):
             m.group('params').strip()
             param_txt = re.sub(r'(^|,)\s*parameter','',m.group('params').strip()) # remove multiple parameter declaration
-            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
+            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
             decl = re.findall(re_str,param_txt,flags=re.MULTILINE)
             len_type  = max([len(x[0]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[1]) for x in decl])
