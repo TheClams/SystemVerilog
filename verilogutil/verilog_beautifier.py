@@ -15,6 +15,7 @@ class VerilogBeautifier():
         self.states = []
         self.state = ''
         self.re_decl = re.compile(r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[([\w\:\-\+></` \t]+)\])?[ \t]*([A-Za-z_][\w\[\]]*)[ \t]*(\[([\w\:\-\+></\$` \t]+)\])?[ \t]*(,[\w, \t]*)?;[ \t]*(.*)')
+        self.re_inst = re.compile(r'(?s)^\s*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
 
     def getIndentLevel(self,txt):
         line = txt[:txt.find('\n')]
@@ -72,7 +73,6 @@ class VerilogBeautifier():
         # Split all text in word, special character, space and line return
         words = re.findall(r"\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
         for w in words:
-            # print('[Beautify] state={state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{word}" => "{line}"'.format(line_cnt=line_cnt, word=w, state=self.state, ilvl=ilvl, line=block))
             state_end = self.isStateEnd(w)
             # Start of line ?
             if w_d[-1]=='\n':
@@ -98,9 +98,11 @@ class VerilogBeautifier():
                         ilvl_tmp += split_assign # todo align on = position in some case ?
                     line = ilvl_tmp * self.indent
             if w=='\n':
+                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state}.{block_state}'.format(line_cnt=line_cnt, state=self.state, block_state=block_state, ilvl=ilvl))
+                # print(block+line)
                 if split_assign==0 and self.state not in ['comment_block','{'] and block_state not in ['module','instance','struct']:
                     if self.state == 'comment_line' and len(self.states)>1 and self.states[-2] == '{':
-                        print('Inside a block {} => ignore for split !')
+                        # print('Inside a block {} => ignore for split !')
                         tmp = None
                     else :
                         tmp = verilogutil.clean_comment(line).strip()
@@ -116,8 +118,9 @@ class VerilogBeautifier():
                                     split_assign = 1
                                     # print('[Beautify] Split assign on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
                                 else :
-                                    split_cnt +=1
-                                    # print('[Beautify] Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=block_state, ilvl=ilvl))
+                                    if split_cnt==0 or self.state != '(':
+                                        split_cnt +=1
+                                        # print('[Beautify] Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=block_state, ilvl=ilvl))
                 if block_state == 'decl' and not self.re_decl.match(line):
                     txt_new += self.alignDecl(block)
                     block = ''
@@ -133,7 +136,7 @@ class VerilogBeautifier():
                     if w in kw_block:
                         ilvl+=1
                         self.stateUpdate(w)
-                        if w in ['module','package']:
+                        if w in ['module','package', 'generate']:
                             block_state = w
                             txt_new += block
                             block = line
@@ -150,9 +153,9 @@ class VerilogBeautifier():
                             # print('Start of text block with "{0}"'.format(w))
                             block_state = 'text'
                     elif block_state=='text':
-                        # print('Testing {0}'.format(block+line))
+                        print('Testing {0}'.format(block+line))
                         tmp = verilogutil.clean_comment(block + line).strip()
-                        m = re.match(r'(?s)^\s*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',tmp, flags=re.MULTILINE)
+                        m = self.re_inst.match(tmp)
                         if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
                             block_state = 'instance'
                         elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
@@ -162,7 +165,7 @@ class VerilogBeautifier():
                             block_state = 'struct_assign'
                         # print('Test "{0}" => {1}.{2}'.format((block+line).strip(),self.state,block_state))
             # Handle the block_state and call appropriate alignement function
-            if w==';' and self.state not in ['comment_line','comment_block']:
+            if w==';' and self.state not in ['comment_line','comment_block', '(']:
                 split_assign = 0;
                 if block_state in ['text','decl'] and self.re_decl.match(line):
                     block_state = 'decl'
@@ -200,6 +203,21 @@ class VerilogBeautifier():
             # Handle the end of self.state
             if state_end:
                 # Check if this was not already handled
+                # print('[Beautify] state ({0}.{1}) end on word {2}'.format(self.state,block_state,w))
+                if block_state == 'generate' and self.state in ['','module','interface'] :
+                    m = self.re_inst.search(block[9:])
+                    block_tmp = block
+                    for m in self.re_inst.finditer(block[9:]):
+                        if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
+                            inst_start = 9+m.start()
+                            inst_end = block.find(';',inst_start)+1;
+                            if(inst_end>inst_start):
+                                inst_block = block[inst_start:inst_end]
+                                inst_ilvl = self.getIndentLevel(inst_block)
+                                inst_block_aligned = self.alignInstance(inst_block,inst_ilvl)
+                                block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
+                                print('[Beautify] Align block inst in generate : ilvl={0}'.format(inst_ilvl))
+                    block = block_tmp
                 if w_d[-1]!='\n':
                     self.stateUpdate()
                     assert ilvl>0, '[Beautify] Block end with already no indentation ! Line {line_cnt:4}: "{line:<150}" => state={state:<16} '.format(line_cnt=line_cnt, line=line, state=self.state)
@@ -280,6 +298,7 @@ class VerilogBeautifier():
                 w_d[-1] = w
         # Check that there is no reminding stuff todo:
         block = block+line
+        # print('[Beautify] state={block_state}.{state}\n{block} '.format(state=self.state, block_state=block_state, block=block))
         if block_state in ['module','instance','text','package','decl'] or (block_state in ['struct','struct_assign'] and self.state!='{'):
             if block_state=='module':
                 block_tmp = self.alignModulePort(block,ilvl-1)
@@ -746,9 +765,9 @@ class VerilogBeautifier():
                     l += m.groups()[5].ljust(len_max[ilvl][5])
                     if len_max[ilvl][6]>1:
                         if m.groups()[7]:
-                            l += '[' + m.groups()[7].strip().rjust(len_max[ilvl][7]) + '] '
+                            l += '[' + m.groups()[7].strip().rjust(len_max[ilvl][7]) + ']'
                         else:
-                            l += ''.rjust(len_max[ilvl][7]+3)
+                            l += ''.rjust(len_max[ilvl][7]+2)
                 l += ';'
                 if m.groups()[9]:
                     l += ' ' + m.groups()[9].strip()

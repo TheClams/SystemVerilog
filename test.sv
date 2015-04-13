@@ -105,3 +105,13 @@ end
 
         function automatic integer CLOGB2;
         endfunction
+
+generate
+    for (int i = 0; i < count; i++) begin
+        some #(1,2,3) i (
+            .a(a),
+            b,
+            c
+        );
+    end
+endgenerate
