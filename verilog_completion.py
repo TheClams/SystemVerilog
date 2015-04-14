@@ -55,6 +55,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Provide completion for modport
             elif(prefix.startswith('m')):
                 completion = self.modport_completion()
+            # Provide completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface
+            elif(prefix.startswith('end')):
+                completion = self.end_completion(view,r,prefix)
         return (completion, flag)
 
     def uvm_completion(self):
@@ -563,6 +566,135 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             elif ti['type'] == 'class':
                 sublime.status_message('Autocompletion for class scope unsupported for the moment')
         return c
+
+    # Completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface with label
+    def end_completion(self,view,r,prefix):
+        re_str = None
+        kw = ''
+        if prefix == 'end':
+            # Extract line to get indentation. Start region one character to the righft to be sure we do not take previous line
+            l = self.view.substr(view.line(sublime.Region(r.a+1,r.b)))
+            m = re.match(r'(\s*)',l)
+            re_str = r'^' + m.groups()[0] + r'((\w+.*)?(begin)\s*(:\s*(\w+))?|(?:virtual\s+)?(function)\s+(?:automatic\s+)?(?:\w+\s+)?(\w+)\s*\(|(class)\s+(\w+)|(module)\s+(\w+)|(package)\s+(\w+)|(interface)\s+(\w+)|(?:virtual\s+)?(task)\s+(\w+)|(case)\s*\((.+)\)|(generate)|(covergroup)\s+(\w+))'
+        elif prefix.startswith('endf'):
+            re_str = r'function\s+(?:automatic\s+)?(?:\w+\s+)?(\w+)\s*\('
+            kw = 'endfunction'
+        elif prefix.startswith('endt'):
+            re_str = r'task\s+(\w+)'
+            kw = 'endtask'
+        elif prefix.startswith('endc'):
+            if prefix == 'endc' :
+                l = self.view.substr(view.line(sublime.Region(r.a+1,r.b)))
+                m = re.match(r'(\s*)',l)
+                re_str = r'^' + m.groups()[0] + r'((class)\s+(\w+)|(case)\s*\((.+)\))'
+                kw = 'endc?'
+            elif prefix.startswith('endcl'):
+                re_str = r'class\s+(\w+)'
+                kw = 'endclass'
+            elif prefix.startswith('endca'):
+                re_str = r'case\s*\((.+)\)'
+                kw = 'endcase'
+        elif prefix.startswith('endm'):
+            re_str = r'module\s+(\w+)'
+            kw = 'endmodule'
+        elif prefix.startswith('endp'):
+            re_str = r'package\s+(\w+)'
+            kw = 'endpackage'
+        elif prefix.startswith('endi'):
+            re_str = r'interface\s+(\w+)'
+            kw = 'endinterface'
+        elif prefix.startswith('endg'):
+            if prefix == 'endg':
+                l = self.view.substr(view.line(sublime.Region(r.a+1,r.b)))
+                m = re.match(r'(\s*)',l)
+                re_str = r'^' + m.groups()[0] + r'((generate)|(covergroup)\s+(\w+))'
+                kw = 'endg?'
+            elif prefix.startswith('endge'):
+                re_str = r'\bgenerate\b()?'
+                kw = 'endgenerate'
+            elif prefix.startswith('endgr'):
+                re_str = r'\bcovergroup\s+(\w+)?'
+                kw = 'endgroup'
+        # Unknown prefix => quit
+        if not re_str:
+            return []
+        # find closest block start
+        nl = []
+        ra = view.find_all(re_str,0,'$1',nl)
+        name = ''
+        if ra:
+            # print(nl)
+            for (rf,n) in zip(ra,nl):
+                if rf.a < r.a:
+                    name = n
+                else:
+                    break
+        # Process keyword if not properly defined yet
+        if kw == 'endc?' :
+            m = re.match(re_str[1:].strip(),name,flags=re.MULTILINE)
+            if m:
+                # print(m.groups())
+                if m.groups()[1] == 'class':
+                    kw = 'endclass'
+                    name = m.groups()[2]
+                elif m.groups()[3] == 'case':
+                    kw = 'endcase'
+                    name = m.groups()[4]
+        if kw == 'endg?' :
+            m = re.match(re_str[1:].strip(),name,flags=re.MULTILINE)
+            if m:
+                # print(m.groups())
+                if m.groups()[1] == 'generate':
+                    kw = 'endgenerate'
+                    name = ''
+                elif m.groups()[2] == 'covergroup':
+                    kw = 'endgroup'
+                    name = m.groups()[3]
+        elif not kw:
+            m = re.match(re_str[1:].strip(),name,flags=re.MULTILINE)
+            if m:
+                # print(m.groups())
+                if m.groups()[2] == 'begin':
+                    kw = 'end'
+                    name = m.groups()[4]
+                    if not name:
+                        name = m.groups()[1]
+                elif m.groups()[5] == 'function':
+                    kw = 'endfunction'
+                    name = m.groups()[6]
+                elif m.groups()[7] == 'class':
+                    kw = 'endclass'
+                    name = m.groups()[8]
+                elif m.groups()[9] == 'module':
+                    kw = 'endmodule'
+                    name = m.groups()[10]
+                elif m.groups()[11] == 'package':
+                    kw = 'endpackage'
+                    name = m.groups()[12]
+                elif m.groups()[13] == 'interface':
+                    kw = 'endinterface'
+                    name = m.groups()[14]
+                elif m.groups()[15] == 'task':
+                    kw = 'endtask'
+                    name = m.groups()[16]
+                elif m.groups()[17] == 'case':
+                    kw = 'endcase'
+                    name = m.groups()[18]
+                elif m.groups()[19] == 'generate':
+                    kw = 'endgenerate'
+                    name = ''
+                elif m.groups()[20] == 'covergroup':
+                    kw = 'endgroup'
+                    name = m.groups()[21]
+        # Provide completion with optional label
+        if name:
+            if kw in ['end', 'endcase', 'endmodule', 'endgroup']:
+                c_str = kw + ' // ' + name.strip()
+            else:
+                c_str = kw + ' : ' + name.strip()
+        else:
+            c_str = kw
+        return [[kw+'\t'+c_str,c_str]]
 
 
 ##############################################

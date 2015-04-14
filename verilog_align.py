@@ -14,15 +14,16 @@ class VerilogAlign(sublime_plugin.TextCommand):
         # Expand the selection to a complete scope supported by the one of the align function
         # Get sublime setting
         self.settings = self.view.settings()
-        self.tab_size = int(self.settings.get('tab_size', 4))
-        self.char_space = ' ' * self.tab_size
-        self.use_space = self.settings.get('translate_tabs_to_spaces')
-        self.oneBindPerLine = self.settings.get('sv.one_bind_per_line',True)
-        self.oneDeclPerLine = self.settings.get('sv.one_decl_per_line',True)
-        beautifier = verilog_beautifier.VerilogBeautifier(self.tab_size, not self.use_space, self.oneBindPerLine, self.oneDeclPerLine)
+        tab_size = int(self.settings.get('tab_size', 4))
+        char_space = ' ' * tab_size
+        use_space = self.settings.get('translate_tabs_to_spaces')
+        oneBindPerLine = self.settings.get('sv.one_bind_per_line',True)
+        oneDeclPerLine = self.settings.get('sv.one_decl_per_line',True)
+        paramOneLine = self.settings.get('sv.param_oneline',True)
+        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine)
         current_pos = self.view.viewport_position( )
-        if not self.use_space:
-            self.char_space = '\t'
+        if not use_space:
+            char_space = '\t'
         # region = self.view.extract_scope(self.view.line(self.view.sel()[0]).a)
         region = self.view.sel()[0]
         region_start = region

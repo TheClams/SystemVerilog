@@ -1,0 +1,11 @@
+SystemVerilog 2.1.0 Changelog:
+
+## Improvement ##
+ - Completion: provide autocomplete for end... with auto label/comment.
+ - Beautifier:
+  * now uses settings sv.param_oneline for parameter alignement
+  * handle more cases (alignement inside function, task, generate, fork, ...)
+
+## Bug Fix ##
+ - Highlight of typedef with signed or unsigned
+

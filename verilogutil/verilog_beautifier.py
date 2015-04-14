@@ -5,8 +5,12 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False):
-        self.settings = {'nbSpace': nbSpace, 'useTab':useTab, 'oneBindPerLine':oneBindPerLine, 'oneDeclPerLine':oneDeclPerLine}
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True):
+        self.settings = {'nbSpace': nbSpace, \
+                        'useTab':useTab, \
+                        'oneBindPerLine':oneBindPerLine, \
+                        'oneDeclPerLine':oneDeclPerLine,\
+                        'paramOneLine': paramOneLine}
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -205,7 +209,7 @@ class VerilogBeautifier():
             if state_end:
                 # Check if this was not already handled
                 # print('[Beautify] state ({0}.{1}) end on word {2}'.format(self.state,block_state,w))
-                if block_state == 'generate' and self.state in ['','module','interface'] :
+                if block_state == 'generate' :
                     m = self.re_inst.search(block[9:])
                     block_tmp = block
                     for m in self.re_inst.finditer(block[9:]):
@@ -219,6 +223,10 @@ class VerilogBeautifier():
                                 block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
                                 # print('[Beautify] Align block inst in generate : ilvl={0}'.format(inst_ilvl))
                     block = block_tmp
+                elif w in ['endtask', 'endfunction']:
+                    block = self.alignAssign(block+line,1)
+                    line = ''
+                    block_handled = True
                 if w_d[-1]!='\n':
                     self.stateUpdate()
                     assert ilvl>0, '[Beautify] Block end with already no indentation ! Line {line_cnt:4}: "{line:<150}" => state={state:<16} '.format(line_cnt=line_cnt, line=line, state=self.state)
@@ -608,7 +616,7 @@ class VerilogBeautifier():
         #Add parameter binding : if already on one line simply remove extra space, otherwise apply standard alignement
         if m.group('params'):
             txt_new += ' #('
-            if '\n' in m.group('params').strip() :
+            if ('\n' in m.group('params').strip()) or not self.settings['paramOneLine']:
                 txt_new += '\n'+self.alignInstanceBinding(m.group('params'),ilvl+1)+self.indent*(ilvl)
             else :
                 p = m.group('params').strip()
