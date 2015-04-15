@@ -3,6 +3,6 @@
 			a <= 0;
 		end
 
-	logic              rst;
+	logic        rst      ;
 	logic [23:0] cmi_count;
 	logic        marker_st;
