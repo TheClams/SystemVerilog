@@ -5,12 +5,13 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs'):
         self.settings = {'nbSpace': nbSpace, \
                         'useTab':useTab, \
                         'oneBindPerLine':oneBindPerLine, \
                         'oneDeclPerLine':oneDeclPerLine,\
-                        'paramOneLine': paramOneLine}
+                        'paramOneLine': paramOneLine,\
+                        'indentSyle' : indentSyle}
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -57,23 +58,21 @@ class VerilogBeautifier():
             f.write(txt)
 
     def beautifyText(self,txt):
-        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(']
         # Variables
         self.states = [] # block indent list
         w_d = ['','\n'] # previous word
         line = '' # current line
         block = '' # block of text to align
-        block_state = ''
+        self.block_state = ''
         block_handled = False
         txt_new = '' # complete text beautified
         ilvl = self.getIndentLevel(txt)
         ilvl_prev = ilvl
         has_indent = ilvl!=0
         line_cnt = 1
-        split_cnt = 0
+        split = {}
         split_always = 0
-        split_assign = 0
-        always_state = ''
+        self.always_state = ''
         # Split all text in word, special character, space and line return
         words = re.findall(r"\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
         for w in words:
@@ -82,134 +81,127 @@ class VerilogBeautifier():
             if w_d[-1]=='\n':
                 ilvl_prev = ilvl
                 if not w.strip():
-                    if w!='\n' and block_state in ['module']:
+                    if w!='\n' and self.block_state in ['module']:
                         block+=w
                     has_indent = w!='\n'
                 if state_end:
                     self.stateUpdate()
                     assert ilvl>0, '[Beautify] Block end with already no indentation ! Line {line_cnt:4}: "{line:<150}" => state={state:<16} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state)
                     ilvl-=1
-                # Handle end of block_state
-                if block_state=='assign' and w!='assign' and not re.match(r'[\t ]+',w):
+                # Handle end of self.block_state
+                if self.block_state=='assign' and w!='assign' and not re.match(r'[\t ]+',w):
                     txt_new += self.alignAssign(block,2)
                     block = ''
-                    block_state = ''
+                    self.block_state = ''
                 # Insert indentation except for comment_block without initial indentation and module declaration
-                if block_state not in ['module'] and (self.state!='comment_block' or has_indent) and w.strip():
-                    ilvl_tmp = ilvl+split_cnt
-                    if self.state!='(' : # TODO: align on ( position in some case ?
-                        ilvl_tmp += split_always
-                        ilvl_tmp += split_assign # todo align on = position in some case ?
+                if self.block_state not in ['module'] and (self.state!='comment_block' or has_indent) and w.strip():
+                    ilvl_tmp = ilvl+split_always
+                    for i,x in split.items() :
+                        ilvl_tmp += x[0]
+                    # print('split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl+split_sum,s=self.states, b=self.block_state))
                     line = ilvl_tmp * self.indent
+            # Handle end of split
+            if ilvl in split:
+                if self.state not in ['comment_line','comment_block'] and w in [';','end'] :
+                    # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                    split.pop(ilvl,0)
             if w=='\n':
-                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state}.{block_state}'.format(line_cnt=line_cnt, state=self.state, block_state=block_state, ilvl=ilvl))
-                # print(block+line)
-                if split_assign==0 and self.state not in ['comment_block','{'] and block_state not in ['module','instance','struct']:
+                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
+                # print(line)
+                # Search for split line requiring temporary increase of the indentation level
+                if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     if self.state == 'comment_line' and len(self.states)>1 and self.states[-2] == '{':
-                        tmp = None
-                    elif self.state == '(' and len(self.states)>1 and self.states[-2] == 'function':
                         tmp = None
                     else :
                         tmp = verilogutil.clean_comment(line).strip()
                     if tmp:
-                        m = re.search(r'(;|\{|\bend)$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^(`\w+)\b',tmp)
+                        m = re.search(r'(;|\{|\bend|\bendcase)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^(`\w+)\b',tmp)
+                        # print('[Beautify] Testing for split: "{0}" (ilvl={1} prev={2})'.format(tmp,ilvl,ilvl_prev))
                         if not m:
                             if tmp.startswith('always'):
                                 split_always = 1
-                                # print('[Beautify] Split always on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
-                            elif ilvl==ilvl_prev :
-                                m = re.match(r'^\s*(assign\s+)?\w+\s*(<?=)\s*(.*)',tmp)
-                                if m:
-                                    split_assign = 1
-                                    # print('[Beautify] Split assign on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
+                                # print('[Beautify] Always split on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' :
+                                if ilvl not in split:
+                                    # print('[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                                    split[ilvl] = [1,tmp]
                                 else :
-                                    if split_cnt==0 or self.state != '(':
-                                        split_cnt +=1
-                                        # print('[Beautify] Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=block_state, ilvl=ilvl))
-                if block_state == 'decl' and not self.re_decl.match(line):
+                                    m = re.match(r'^\s*(assign\s+)?\w+\s*(<?=)\s*(.*)',split[ilvl][1])
+                                    if not m:
+                                        # print('[Beautify] Incrementing split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                                        split[ilvl][0] += 1
+                if self.block_state == 'decl' and not self.re_decl.match(line.strip()):
                     txt_new += self.alignDecl(block)
                     block = ''
-                    block_state = ''
-                # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
+                    self.block_state = ''
+                # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
                 block += line.rstrip() + '\n'
                 line = ''
                 line_cnt+=1
             # else:
             elif not w_d[-1]=='\n' or w.strip():
+                if self.state not in ['comment_line','comment_block'] and self.settings['indentSyle']=='gnu':
+                    if w == 'begin' and line.strip()!='':
+                        ilvl_tmp = ilvl+split_always+1
+                        for i,x in split.items() :
+                            ilvl_tmp += x[0]
+                        if ilvl not in split:
+                            tmp = verilogutil.clean_comment(line).strip()
+                            # print('[Beautify] Adding split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                            split[ilvl] = [1,tmp]
+                        else:
+                            split[ilvl][0] += 1
+                        line += '\n' + ilvl_tmp * self.indent
+                    elif w == 'else' and w_d[-1]!='\n' and w_d[-2]=='end':
+                        ilvl_tmp = ilvl+split_always
+                        for i,x in split.items() :
+                            ilvl_tmp += x[0]
+                        line += '\n' + ilvl_tmp * self.indent
                 line += w
                 if self.state not in ['comment_line','comment_block']:
-                    # print('State={0}.{1} -- Testing {2}'.format(self.state,block_state,block+line))
-                    if w in kw_block:
+                    # print('State={0}.{1} -- Testing {2}'.format(self.state,self.block_state,block+line))
+                    action = self.processWord(w,w_d[-1], state_end, block + line)
+                    if action.startswith("incr_ilvl"):
                         ilvl+=1
-                        self.stateUpdate(w)
-                        if w in ['module','package', 'generate', 'function', 'task']:
-                            block_state = w
+                        if action == "incr_ilvl_flush":
                             txt_new += block
                             block = line
                             line = ''
-                    # Identify block_state
-                    elif not block_state:
-                        if w in ['assign']:
-                            block_state = w
-                        elif w.startswith('always'):
-                            block_state = 'always'
-                            always_state = ''
-                            # print('Start of always block')
-                        elif w_d[-1]=='\n' and w!= '/' and not state_end:
-                            # print('Start of text block with "{0}"'.format(w))
-                            block_state = 'text'
-                    elif block_state=='text':
-                        tmp = verilogutil.clean_comment(block + line).strip()
-                        m = self.re_inst.match(tmp)
-                        if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
-                            block_state = 'instance'
-                        elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
-                            block_state = 'struct'
-                        elif re.match(r"(?s)^.*=\s*'\{",tmp, flags=re.MULTILINE):
-                            # print('Matching struct assign on "{0}"'.format(block+line))
-                            block_state = 'struct_assign'
-                        # print('Test "{0}" => {1}.{2}'.format((block+line).strip(),self.state,block_state))
-            # Handle the block_state and call appropriate alignement function
+            # Handle the self.block_state and call appropriate alignement function
             if w==';' and self.state not in ['comment_line','comment_block', '(']:
-                split_assign = 0;
-                if block_state in ['text','decl'] and self.re_decl.match(line):
-                    block_state = 'decl'
-                    # print('Setting Block state to decl')
-                elif block_state in ['module','instance','text','package','decl'] or (block_state in ['struct','struct_assign'] and self.state!='{'):
-                    # print('Aligning block {0}'.format(block_state))
-                    if block_state=='module':
+                if self.block_state in ['text','decl'] and self.re_decl.match(line.strip()):
+                    self.block_state = 'decl'
+                    # print('Setting Block state to decl on line "{0}"'.format(line))
+                elif self.block_state in ['module','instance','text','package','decl'] or (self.block_state in ['struct','struct_assign'] and self.state!='{'):
+                    # print('Aligning block {0}'.format(self.block_state))
+                    if self.block_state=='module':
                         block_tmp = self.alignModulePort(block+line,ilvl-1)
                         line = ''
-                    elif block_state=='instance':
+                    elif self.block_state=='instance':
                         block_tmp = self.alignInstance(block+line,ilvl)
                         line = ''
-                    elif block_state=='struct':
+                    elif self.block_state=='struct':
                         block_tmp = self.alignDecl(block+line)
                         line = ''
-                    elif block_state=='struct_assign':
+                    elif self.block_state=='struct_assign':
                         block_tmp = self.alignAssign(block+line,1)
                         line = ''
-                    elif block_state=='decl':
+                    elif self.block_state=='decl':
                         block_tmp = self.alignDecl(block)
                     else:
                         block_tmp = block + line
                         line = ''
                     if not block_tmp:
-                        print('[Beautify: ERROR] Unable to extract a {0} from "{1}"'.format(block_state,block))
+                        print('[Beautify: ERROR] Unable to extract a {0} from "{1}"'.format(self.block_state,block))
                     else:
                         block = block_tmp
-                    block_state = ''
+                    self.block_state = ''
                     block_handled = True
-            # Handle end of split
-            if split_cnt>0:
-                if self.state not in ['comment_line','comment_block'] and w==';' :
-                    # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
-                    split_cnt = 0
             # Handle the end of self.state
             if state_end:
                 # Check if this was not already handled
-                # print('[Beautify] state ({0}.{1}) end on word {2}'.format(self.state,block_state,w))
-                if block_state == 'generate' :
+                # print('[Beautify] state {0}.{1} end on word {2}'.format(self.states,self.block_state,w))
+                if self.block_state == 'generate' :
                     m = self.re_inst.search(block[9:])
                     block_tmp = block
                     for m in self.re_inst.finditer(block[9:]):
@@ -235,14 +227,14 @@ class VerilogBeautifier():
             elif self.state=='comment_line':
                 if w=='\n':
                     self.stateUpdate()
-                    if not block_state:
+                    if not self.block_state:
                         block_handled = True
             elif self.state=='comment_block':
                 if w_d[-1]=='*' and w=='/':
                     self.stateUpdate()
                     block += line
                     line = ''
-                    if not block_state:
+                    if not self.block_state:
                         block_handled = True
             #
             else :
@@ -253,23 +245,23 @@ class VerilogBeautifier():
                         self.stateUpdate('comment_block')
                     if line.strip() in ["//", "/*"] and not has_indent:
                         line = line.strip()
-                    # print('[Beautify] state={block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=block_state, ilvl=ilvl))
-            if block_state == 'always' and (not self.state or self.state in ['module','interface']):
+                    # print('[Beautify] state={self.block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+            if self.block_state == 'always' and (not self.state or self.state in ['module','interface']):
                 tmp = verilogutil.clean_comment(block + line).strip()
                 m = re.match(r'(?s)^\s*always\w*\s+(@\s*(\*|\([^\)]*\)))?\s*begin',tmp, flags=re.MULTILINE)
-                if (m and w=='end') or (always_state in ['else',''] and w in ['end',';']):
+                if (m and w=='end') or (self.always_state in ['else',''] and w in ['end',';']):
                     block = self.alignAssign(block+line,7)
                     line = ''
                     block_handled = True
-                    always_state = ''
+                    self.always_state = ''
                     split_always = 0
                     # print('[Beautify] End of always block at line {0}: \n{1}'.format(line_cnt,block))
                 elif not m :
                     if w == 'else':
                         # print('[Beautify] Inside else part of always at line {0}'.format(line_cnt))
-                        always_state = 'else'
+                        self.always_state = 'else'
                     # handle case of always if() ...; without else
-                    elif always_state == 'expect_else' and w.strip() and w != '/':
+                    elif self.always_state == 'expect_else' and w.strip() and w != '/':
                         block = (block + line)
                         last_sc = block.rfind(';') + 1
                         last_end = block.rfind('end') + 3
@@ -279,27 +271,36 @@ class VerilogBeautifier():
                         block = block[:last_end]
                         # remove extra indent when the always end block is discovered too late
                         if split_always == 1:
-                            line = re.sub(r'^'+self.indentSpace,'',line,flags=re.MULTILINE)
+
+                            line = re.sub(r'^'+self.indent,'',line,flags=re.MULTILINE)
                             # print('[Beautify] End of always block at line {0}, extracting {1}'.format(line_cnt,line))
+                            self.block_state = ''
+                            action = self.processWord(w,w_d[-1],state_end, line)
+                            if action.startswith("incr_ilvl"):
+                                ilvl+=1
+                                if action == "incr_ilvl_flush":
+                                    txt_new += block
+                                    block = line
+                                    line = ''
                         block = self.alignAssign(block,7)
                         # print('[Beautify] End of always block at line {0} with word {1}: \n{2}'.format(line_cnt,w,block))
                         if not w.startswith('always'):
-                            always_state = ''
+                            self.always_state = ''
                         txt_new += block
                         block = ''
                         split_always = 0
                     elif w == 'if':
-                        always_state = 'if'
+                        self.always_state = 'if'
                         # print('[Beautify] Inside if part of always at line {0}'.format(line_cnt))
-                    elif always_state == 'if' and w in ['end',';']:
+                    elif self.always_state == 'if' and w in ['end',';']:
                         # print('[Beautify] End of if part=> next word has to be an else'.format(line_cnt))
-                        always_state = 'expect_else'
+                        self.always_state = 'expect_else'
             # Add block to the text
             if block_handled:
-                # print('[Beautify] state={block_state}.{state} Block handled:\n"{block}" '.format(state=self.state, block_state=block_state, block=block))
+                # print('[Beautify] state={block_state}.{state} Block handled:\n"{block}" '.format(state=self.state, block_state=self.block_state, block=block))
                 txt_new += block
                 block = ''
-                block_state = ''
+                self.block_state = ''
                 block_handled = False
             # Keep previous words
             if w.strip() or w_d[-1]!='\n':
@@ -307,28 +308,61 @@ class VerilogBeautifier():
                 w_d[-1] = w
         # Check that there is no reminding stuff todo:
         block = block+line
-        # print('[Beautify] state={block_state}.{state}\n{block} '.format(state=self.state, block_state=block_state, block=block))
-        if block_state in ['module','instance','text','package','decl', 'assign'] or (block_state in ['struct','struct_assign'] and self.state!='{'):
-            if block_state=='module':
+        # print('[Beautify] state={block_state}.{state}\n{block} '.format(state=self.state, block_state=self.block_state, block=block))
+        if self.block_state in ['module','instance','text','package','decl', 'assign'] or (self.block_state in ['struct','struct_assign'] and self.state!='{'):
+            if self.block_state=='module':
                 block_tmp = self.alignModulePort(block,ilvl-1)
-            elif block_state=='instance':
+            elif self.block_state=='instance':
                 block_tmp = self.alignInstance(block,ilvl)
-            elif block_state=='struct':
+            elif self.block_state=='struct':
                 block_tmp = self.alignDecl(block)
-            elif block_state=='assign':
+            elif self.block_state=='assign':
                 block_tmp = self.alignAssign(block,2)
-            elif block_state=='struct_assign':
+            elif self.block_state=='struct_assign':
                 block_tmp = self.alignAssign(block,1)
-            elif block_state=='decl':
+            elif self.block_state=='decl':
                 block_tmp = self.alignDecl(block)
             else:
                 block_tmp = block
             if not block_tmp:
-                print('[Beautify: ERROR] Unable to extract a {0} from "{1}"'.format(block_state,block))
+                print('[Beautify: ERROR] Unable to extract a {0} from "{1}"'.format(self.block_state,block))
             else:
                 block = block_tmp
         txt_new += block
         return txt_new
+
+    def processWord(self,w, w_prev, state_end, txt):
+        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(']
+        if w in kw_block:
+            self.stateUpdate(w)
+            if w in ['module','package', 'generate', 'function', 'task']:
+                self.block_state = w
+                return "incr_ilvl_flush"
+            else:
+                return "incr_ilvl"
+        # Identify self.block_state
+        if not self.block_state:
+            if w in ['assign']:
+                self.block_state = w
+            elif w.startswith('always'):
+                self.block_state = 'always'
+                self.always_state = ''
+                # print('Start of always block')
+            elif w_prev=='\n' and w!= '/' and not state_end:
+                # print('Start of text block with "{0}"'.format(w))
+                self.block_state = 'text'
+        elif self.block_state=='text':
+            tmp = verilogutil.clean_comment(txt).strip()
+            m = self.re_inst.match(tmp)
+            if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
+                self.block_state = 'instance'
+            elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
+                self.block_state = 'struct'
+            elif re.match(r"(?s)^.*=\s*'\{",tmp, flags=re.MULTILINE):
+                # print('Matching struct assign on "{0}"'.format(txt))
+                self.block_state = 'struct_assign'
+        # print('Test "{0}" => {1}.{2}.{3}'.format((txt).strip(),self.states,self.block_state,self.always_state))
+        return ""
 
     # Align ANSI style port declaration of a module
     def alignModulePort(self,txt, ilvl):
@@ -395,6 +429,9 @@ class VerilogBeautifier():
                     txt_new += '\n' + self.indent*(ilvl)
             txt_new += ')'
             #
+        # Handle special case of no ports
+        if not m.group('ports'):
+            return txt_new + '();'
         # Add port list declaration
         txt_new += ' (\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
@@ -633,15 +670,15 @@ class VerilogBeautifier():
                 txt_new += '\n'
             if '\n' in m.group('ports').strip() :
                 txt_new += self.alignInstanceBinding(m.group('ports'),ilvl+1)
-                txt_new += self.indent*(ilvl) + '); '
+                txt_new += self.indent*(ilvl) + ');'
             else:
                 p = m.group('ports').strip()
                 p = re.sub(r'\s+','',p)
                 p = re.sub(r'\),',r'), ',p)
-                txt_new += p +'); '
+                txt_new += p +');'
         # Add end
         if m.group('comment'):
-            txt_new += m.group('comment')
+            txt_new += ' ' + m.group('comment')
         return txt_new
 
     def alignInstanceBinding(self,txt,ilvl):
@@ -687,11 +724,11 @@ class VerilogBeautifier():
                     if not is_split:
                         txt_new += ')'
                         if i!=(len(lines)-1): # Add comma for all lines except last
-                            txt_new += ', '
-                        else:
-                            txt_new += '  '
+                            txt_new += ','
                     if m.group('comment'):
-                        txt_new += m.group('comment')
+                        if txt_new[-1] != ',':
+                            txt_new += ' '
+                        txt_new += ' ' + m.group('comment')
                 else : # No port binding ? recopy line with just the basic indentation level
                     txt_new += self.indent*ilvl
                     # Handle case of binding split on multiple line : try to align the end of the binding

@@ -1,0 +1,8 @@
+SystemVerilog 2.1.1 Changelog:
+
+## Improvement ##
+ - Beautifier:
+  * continue update to handle more cases (mainly around split statement)
+  * Can now enforce the GNU style indenting (begin/end always on separate line)
+ - Code completion: always statement can now be configure to use GNU style indenting
+

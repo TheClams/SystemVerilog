@@ -1,10 +1,13 @@
 import sublime, sublime_plugin
-import re, string, os, sys
+import re, string, os, sys, imp
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
-import verilogutil
 import sublimeutil
 import verilog_beautifier
+
+def plugin_loaded():
+    imp.reload(verilog_beautifier)
+    imp.reload(sublimeutil)
 
 class VerilogAlign(sublime_plugin.TextCommand):
 
@@ -20,7 +23,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         oneBindPerLine = self.settings.get('sv.one_bind_per_line',True)
         oneDeclPerLine = self.settings.get('sv.one_decl_per_line',True)
         paramOneLine = self.settings.get('sv.param_oneline',True)
-        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine)
+        indentStyle = self.settings.get('sv.indent_style',True)
+        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle)
         current_pos = self.view.viewport_position( )
         if not use_space:
             char_space = '\t'

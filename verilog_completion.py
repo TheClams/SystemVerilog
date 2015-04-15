@@ -1,10 +1,16 @@
 import sublime, sublime_plugin
-import re, string, os, sys
+import re, string, os, sys, imp
 import collections
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
 import verilogutil
+import verilog_beautifier
 import sublimeutil
+
+def plugin_loaded():
+    imp.reload(verilogutil)
+    imp.reload(verilog_beautifier)
+    imp.reload(sublimeutil)
 
 class VerilogAutoComplete(sublime_plugin.EventListener):
 
@@ -710,6 +716,8 @@ class VerilogHelper():
         always_name_auto = settings.get('sv.always_name_auto',True)
         always_ce_auto   = settings.get('sv.always_ce_auto',True)
         always_label     = settings.get('sv.always_label',True)
+        indent_style     = settings.get('sv.indent_style','1tbs')
+        beautifier = verilog_beautifier.VerilogBeautifier(useTab=True, indentSyle=indent_style)
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
         if always_name_auto :
             pl = [] # posedge list
@@ -758,6 +766,9 @@ class VerilogHelper():
         if clk_en_name != '':
             a_nr += 'if(' + clk_en_name + ')'
         a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'
+        a_l = beautifier.beautifyText(a_l)
+        a_h = beautifier.beautifyText(a_l)
+        a_nr = beautifier.beautifyText(a_l)
         return (a_l,a_h,a_nr)
 
     def get_case_template(view, sig_name, ti=None):
