@@ -28,10 +28,12 @@ class VerilogAlign(sublime_plugin.TextCommand):
         current_pos = self.view.viewport_position( )
         if not use_space:
             char_space = '\t'
-        # region = self.view.extract_scope(self.view.line(self.view.sel()[0]).a)
         region = self.view.sel()[0]
         region_start = region
         scope = self.view.scope_name(region.a)
+        if region.b > region.a :
+            if self.view.scope_name(region.b) != scope :
+                scope = ''
         txt = ''
         if cmd == 'reindent':
             # Select whole text if nothing is selected
