@@ -66,3 +66,11 @@ class Tests(unittest.TestCase):
     def test_beautifyText4(self):
         cfg = BeautifyConfig(nbSpace=2)
         self.runBeautifyTest(self.path_test+"test4.sv", self.path_test+"test4_expected.sv", cfg)
+
+    def test_beautifyText5(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"test5.sv", self.path_test+"test5_expected.sv", cfg)
+
+    def test_beautifyText6(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"test6.sv", self.path_test+"test6_expected.sv", cfg)
