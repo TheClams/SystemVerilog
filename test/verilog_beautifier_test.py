@@ -43,7 +43,7 @@ class Tests(unittest.TestCase):
                                                  oneDeclPerLine=False,
                                                  paramOneLine=False)
         print(os.getcwd())
-        with open("verilogutil_data/verilog_beautifier/test0.sv") as f:
+        with open("verilogutil_data/verilog_beautifier/test1.sv") as f:
             txt = f.read()
         with open("verilogutil_data/verilog_beautifier/test1_expected.sv") as f:
             expected = f.read()
@@ -51,4 +51,18 @@ class Tests(unittest.TestCase):
         actual = b.beautifyText(txt)
         self.assertEqual(actual, expected, msg=self.show_repr(actual, expected))
 
+    def test_beautifyText2(self):
+        b = verilog_beautifier.VerilogBeautifier(nbSpace=4,
+                                                 useTab=False,
+                                                 oneBindPerLine=True,
+                                                 oneDeclPerLine=False,
+                                                 paramOneLine=False)
+        print(os.getcwd())
+        with open("verilogutil_data/verilog_beautifier/test2.sv") as f:
+            txt = f.read()
+        with open("verilogutil_data/verilog_beautifier/test2_expected.sv") as f:
+            expected = f.read()
+
+        actual = b.beautifyText(txt)
+        self.assertEqual(actual, expected, msg=self.show_repr(actual, expected))
 
