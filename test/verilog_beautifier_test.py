@@ -78,3 +78,7 @@ class Tests(unittest.TestCase):
     def test_beautifyText7(self):
         cfg = BeautifyConfig(oneDeclPerLine=True, paramOneLine=False)
         self.runBeautifyTest(self.path_test+"test7.sv", self.path_test+"test7_expected.sv", cfg)
+
+    def test_beautifyText8(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"test8.sv", self.path_test+"test8_expected.sv", cfg)
