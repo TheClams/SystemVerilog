@@ -249,7 +249,7 @@ def parse_module_file(fname,mname=r'\w+'):
 
 def parse_module(flines,mname=r'\w+'):
     # print("Parsing for module " + mname + ' in \n' + flines)
-    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(?P<param>#\s*\(.*?\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
+    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')

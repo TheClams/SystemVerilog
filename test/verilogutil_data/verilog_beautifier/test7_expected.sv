@@ -1,7 +1,7 @@
 module test #(
-    p=10
+    p = 10
 ) (
-    input a,
+    input  a,
     output b
 );
 endmodule

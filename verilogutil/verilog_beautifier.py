@@ -65,6 +65,7 @@ class VerilogBeautifier():
         block = '' # block of text to align
         self.block_state = ''
         block_handled = False
+        block_ended = False
         txt_new = '' # complete text beautified
         ilvl = self.getIndentLevel(txt)
         ilvl_prev = ilvl
@@ -106,6 +107,7 @@ class VerilogBeautifier():
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     split.pop(ilvl,0)
             if w=='\n':
+                block_ended = False
                 # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
                 # print(line)
                 # Search for split line requiring temporary increase of the indentation level
@@ -157,6 +159,10 @@ class VerilogBeautifier():
                         for i,x in split.items() :
                             ilvl_tmp += x[0]
                         line += '\n' + ilvl_tmp * self.indent
+                # Insert line return after a block ended if this is no a comment
+                if block_ended and w.strip() and (w != '/' or w_d[-1] != '/'):
+                    line = line.rstrip() + '\n'
+                    block_ended = False
                 line += w
                 if self.state not in ['comment_line','comment_block']:
                     # print('State={0}.{1} -- Testing {2}'.format(self.state,self.block_state,block+line))
@@ -177,6 +183,7 @@ class VerilogBeautifier():
                     if self.block_state=='module':
                         block_tmp = self.alignModulePort(block+line,ilvl-1)
                         line = ''
+                        block_ended = True
                     elif self.block_state=='instance':
                         block_tmp = self.alignInstance(block+line,ilvl)
                         line = ''
@@ -241,8 +248,10 @@ class VerilogBeautifier():
                 if w_d[-1]=='/':
                     if w=='/':
                         self.stateUpdate('comment_line')
+                        block_ended = False
                     elif w=='*':
                         self.stateUpdate('comment_block')
+                        block_ended = False
                     if line.strip() in ["//", "/*"] and not has_indent:
                         line = line.strip()
                     # print('[Beautify] state={self.block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
@@ -393,7 +402,7 @@ class VerilogBeautifier():
             if has_param and not has_param_all:
                 txt_new += 'parameter'
             # If not on one line align parameter together, otherwise keep as is
-            if '\n' in param_txt:
+            if '\n' in param_txt or not self.settings['paramOneLine']:
                 txt_new += '\n'
                 lines = param_txt.splitlines()
                 for i,line in enumerate(lines):
@@ -439,7 +448,9 @@ class VerilogBeautifier():
                             txt_new += ' ' + m_param.group('comment')
                     txt_new += '\n' + self.indent*(ilvl)
             else :
-                txt_new += ' ' + param_txt
+                if has_param and not has_param_all:
+                    txt_new += ' '
+                txt_new += param_txt
                 # print('len Comment = ' + str(len_comment)+ ': ' + str([x[9] for x in decl])+ '"')
                 if len_comment > 0 :
                     txt_new += '\n' + self.indent*(ilvl)
@@ -452,7 +463,9 @@ class VerilogBeautifier():
         txt_new += ' (\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
         re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t]*)[ \t]*(?P<comment>.*)'
-        decl = re.findall(re_str,m.group('ports'),flags=re.MULTILINE)
+        # handle case of multiple input/output declared on same line
+        txt_port = re.sub(r'\s*,\s*(input|output|inout)\b\s+',r',\n\1 ',m.group('ports'))
+        decl = re.findall(re_str,txt_port,flags=re.MULTILINE)
         # Extract max length of the different field for vertical alignement
         port_dir_l = [x[0] for x in decl if x[0] in verilogutil.port_dir]
         port_if_l  = [x[0] for x in decl if x[0] not in verilogutil.port_dir]
@@ -514,7 +527,7 @@ class VerilogBeautifier():
             len_type_user = max_len
         # print('Len:  dir=' + str(len_dir) + ' if=' + str(len_if) + ' type=' + str(len_type) + ' sign=' + str(len_sign) + ' bw=' + str(len_bw) + ' type_user=' + str(len_type_user) + ' port=' + str(max_port_len) + ' max_len=' + str(max_len) + ' len_type_full=' + str(len_type_full))
         # Rewrite block line by line with padding for alignment
-        lines = m.group('ports').splitlines()
+        lines = txt_port.splitlines()
 
         for i,line in enumerate(lines):
             # Remove leading and trailing space.
@@ -571,7 +584,7 @@ class VerilogBeautifier():
                     else :
                         txt_new += m_port.group('dir').ljust(len_if)
                     # Add port list: space every port in the list by just on space
-                    s = re.sub(r',',', ',re.sub(r'\s*','',m_port.group('ports')))
+                    s = re.sub(r'\s*,\s*',', ',m_port.group('ports'))
                     txt_new += ' '
                     if s.endswith(', '):
                         txt_new += s[:-2].ljust(max_port_len)
