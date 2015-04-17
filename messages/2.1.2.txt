@@ -1,0 +1,9 @@
+SystemVerilog 2.1.2 Changelog:
+
+## Bug Fix ##
+ - Beautifier: alignement for module declaration with parameter support more style (no parameter keyword, repetition of the keyword, ...)
+ - Completion:
+  * signal extraction of package should now catch a lot more stuff
+  * Fix issue where typedef symbol where not indexed
+
+

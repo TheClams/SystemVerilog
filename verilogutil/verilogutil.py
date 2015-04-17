@@ -8,7 +8,7 @@ import pprint
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\:\-\+`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\*\(\)\/><\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*\w+)?,\s*)*)\b'
+re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\[[\w\*\(\)\/><\:\-`\s]+\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\[[\w\:\-`\s]+\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union|`\w+)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -111,8 +111,10 @@ def get_all_type_info(txt):
         # remove modports before looking for I/O and field to avoid duplication of signals
         txt = r.sub('',txt)
     # Look for signal declaration
-    # print('Look for signal declaration')
-    r = re.compile(re_decl+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*(?=;|,|\)\s*;)',flags=re.MULTILINE)
+    print('Look for signal declaration')
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*(?:\=\s*[\w\.\:]+\s*)?(?=;|,|\)\s*;)'
+    r = re.compile(re_str,flags=re.MULTILINE)
+    print('[get_all_type_info] decl re="{0}'.format(re_str))
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
@@ -311,32 +313,8 @@ def parse_package(flines,pname=r'\w+'):
     if m is None:
         return None
     txt = clean_comment(m.group('content'))
-    ti = []
-    # Look for enum declaration
-    # print('Look for enum declaration')
-    r = re.compile(re_enum+r'(\w+)\b\s*;',flags=re.MULTILINE)
-    for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,5,'enum')
-        ti += [x for x in ti_tmp if x['type']]
-    # Look for struct declaration
-    # print('Look for struct declaration')
-    r = re.compile(re_union+r'(\w+)\b\s*;',flags=re.MULTILINE)
-    for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,5,'struct')
-        ti += [x for x in ti_tmp if x['type']]
-    # remove struct declaration since the content could be interpreted as signal declaration
-    txt = r.sub('',txt)
-    # Look for typedef of parameterized type
-    r = re.compile(re_tdp+r'(\w+)\b\s*;.*$',flags=re.MULTILINE)
-    for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,3,'typedef')
-        ti += [x for x in ti_tmp if x['type']]
-    # Look for variable declaration
-    # print('Look for signal declaration')
-    r = re.compile(re_var+r'(\w+(\[[^=\^\&\|]*?\]\s*)?)\b.*?;',flags=re.MULTILINE)
-    for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,3,4,5,'var')
-        ti += [x for x in ti_tmp if x['type']]
+    ti = get_all_type_info(txt)
+    # print(ti)
     return ti
 
 # Fill all entry of a case for enum or vector (limited to 8b)

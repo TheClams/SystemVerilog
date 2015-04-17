@@ -1,9 +1,13 @@
 import sublime, sublime_plugin
 import re, string, os, sys, imp
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
-import sublimeutil
-import verilog_beautifier
+try:
+    from SystemVerilog.verilogutil import verilog_beautifier
+    from SystemVerilog.verilogutil import sublimeutil
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
+    import sublimeutil
+    import verilog_beautifier
 
 def plugin_loaded():
     imp.reload(verilog_beautifier)

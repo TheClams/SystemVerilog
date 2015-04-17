@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap
+import re, string, os, sys, functools, mmap, imp
 
 try:
     from SystemVerilog.verilogutil import verilogutil
@@ -9,9 +9,14 @@ except ImportError:
     import verilogutil
     import sublimeutil
 
+def plugin_loaded():
+    imp.reload(verilogutil)
+    imp.reload(sublimeutil)
+
 list_module_files = {}
 lmf_update_ongoing = False
 
+########################################
 def lookup_module(view,mname):
     mi = None
     filelist = view.window().lookup_symbol_in_index(mname)

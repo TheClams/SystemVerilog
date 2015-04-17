@@ -367,60 +367,76 @@ class VerilogBeautifier():
     # Align ANSI style port declaration of a module
     def alignModulePort(self,txt, ilvl):
         # Extract parameter and ports
-        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)\s*(?P<paramsfull>#\s*\(\s*parameter\s+(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         txt_new = self.indent*(ilvl) + 'module ' + m.group('mname').strip()
         # Add optional parameter declaration
         if m.group('params'):
-            m.group('params').strip()
-            param_txt = re.sub(r'(^|,)\s*parameter','',m.group('params').strip()) # remove multiple parameter declaration
-            re_str = r'^[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
-            decl = re.findall(re_str,param_txt,flags=re.MULTILINE)
-            len_type  = max([len(x[0]) for x in decl if x not in ['signed','unsigned']])
-            len_sign  = max([len(x[1]) for x in decl])
-            len_bw    = max([len(x[3]) for x in decl])
-            len_param = max([len(x[4]) for x in decl])
-            len_value = max([len(x[5]) for x in decl])
-            len_comment = max([len(x[9]) for x in decl])
-            # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment)))
-            txt_new += ' #(parameter'
+            param_txt = m.group('params').strip()
+            # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
+            re_param = re.compile(r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>[\w\:\-` \t]+)\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)',flags=re.MULTILINE)
+            decl = re_param.findall(param_txt)
+            # print(decl)
+            len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
+            len_sign  = max([len(x[2]) for x in decl])
+            len_bw    = max([len(x[4]) for x in decl])
+            len_param = max([len(x[5]) for x in decl])
+            len_value = max([len(x[6]) for x in decl])
+            len_comment = max([len(x[10]) for x in decl])
+            has_param_list = ['' for x in decl if x[0] != '']
+            has_param_all = len(has_param_list)==len(decl)
+            has_param = len(has_param_list)>0
+            # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param)))
+            txt_new += ' #('
+            # add only one parameter statement if there is at least one but not on all line
+            if has_param and not has_param_all:
+                txt_new += 'parameter'
             # If not on one line align parameter together, otherwise keep as is
             if '\n' in param_txt:
                 txt_new += '\n'
                 lines = param_txt.splitlines()
                 for i,line in enumerate(lines):
+                    # ignore the first line with parameter keyword only since it has already been added
+                    if i==0 and line.strip()=='parameter':
+                        continue
                     txt_new += self.indent*(ilvl+1)
-                    m_param = re.search(re_str,line.strip())
-                    if len_type>0:
-                        if m_param.group('type'):
-                            if m_param.group('type') not in ['signed','unsigned']:
-                                txt_new += m_param.group('type').ljust(len_type+1)
-                            else:
-                                txt_new += ''.ljust(len_type+2) + m_param.group('type').ljust(len_sign+1)
-                        else:
-                            txt_new += ''.ljust(len_type+2)
-                    if len_sign>0:
-                        if m_param.group('sign'):
-                            txt_new += m_param.group('sign').ljust(len_sign)
-                        else:
-                            txt_new += ''.ljust(len_sign+1)
-                    if len_bw>0:
-                        if m_param.group('bw'):
-                            txt_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
-                        else:
-                            txt_new += ''.ljust(len_bw+3)
-                    txt_new += m_param.group('param').ljust(len_param)
-                    txt_new += ' = ' + m_param.group('value').ljust(len_value)
-                    if m_param.group('sep') and i!=(len(lines)-1):
-                        txt_new += m_param.group('sep') + ' '
+                    m_param = re_param.search(line.strip())
+                    if not m_param :
+                        # print('Line {0} is not a parameter definition'.format(line.strip()))
+                        txt_new += line.strip()
                     else:
-                        txt_new += '  '
-                    #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
-                    if m_param.group('list'):
-                        txt_new += m_param.group('list') + ' '
-                    if m_param.group('comment'):
-                        txt_new += m_param.group('comment') + ' '
+                        if has_param_all:
+                            txt_new += 'parameter '
+                        if len_type>0:
+                            if m_param.group('type'):
+                                if m_param.group('type') not in ['signed','unsigned']:
+                                    txt_new += m_param.group('type').ljust(len_type+1)
+                                else:
+                                    txt_new += ''.ljust(len_type+2) + m_param.group('type').ljust(len_sign+1)
+                            else:
+                                txt_new += ''.ljust(len_type+2)
+                        if len_sign>0:
+                            if m_param.group('sign'):
+                                txt_new += m_param.group('sign').ljust(len_sign)
+                            else:
+                                txt_new += ''.ljust(len_sign+1)
+                        if len_bw>0:
+                            if m_param.group('bw'):
+                                txt_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
+                            else:
+                                txt_new += ''.ljust(len_bw+3)
+                        txt_new += m_param.group('param').ljust(len_param)
+                        txt_new += ' = ' + m_param.group('value').ljust(len_value)
+                        if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
+                            txt_new += m_param.group('sep')
+                        #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
+                        if m_param.group('list'):
+                            txt_new += ' ' + m_param.group('list')
+                        if i==(len(lines)-1) and m_param.group('comment'):
+                            txt_new += ' '
+                        if m_param.group('comment'):
+                            txt_new += ' ' + m_param.group('comment')
                     txt_new += '\n' + self.indent*(ilvl)
             else :
                 txt_new += ' ' + param_txt
@@ -549,7 +565,7 @@ class VerilogBeautifier():
                                 txt_new += ''.ljust(max_len-len_type_full)
                         elif m_port.group('type') :
                             txt_new += ' ' + m_port.group('type').ljust(len_type_user)
-                        else :
+                        elif len_type_user>0 :
                             txt_new += ' '.ljust(len_type_user+1)
                     # For interface
                     else :

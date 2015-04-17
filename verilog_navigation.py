@@ -1,14 +1,27 @@
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap, pprint
+import re, string, os, sys, functools, mmap, pprint, imp
 from collections import Counter
 from plistlib import readPlistFromBytes
 
-sys.path.append(os.path.dirname(__file__))
-import verilog_module
+try:
+    from SystemVerilog import verilog_module
+    import verilog_module
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    import verilog_module
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
-import verilogutil
-import sublimeutil
+try:
+    from SystemVerilog.verilogutil import verilogutil
+    from SystemVerilog.verilogutil import sublimeutil
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
+    import verilogutil
+    import sublimeutil
+
+def plugin_loaded():
+    imp.reload(verilogutil)
+    imp.reload(sublimeutil)
+    imp.reload(verilog_module)
 
 
 ############################################################################
