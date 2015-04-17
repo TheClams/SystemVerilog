@@ -111,10 +111,10 @@ def get_all_type_info(txt):
         # remove modports before looking for I/O and field to avoid duplication of signals
         txt = r.sub('',txt)
     # Look for signal declaration
-    print('Look for signal declaration')
+    # print('Look for signal declaration')
     re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|]*?\]\s*)?)\s*(?:\=\s*[\w\.\:]+\s*)?(?=;|,|\)\s*;)'
     r = re.compile(re_str,flags=re.MULTILINE)
-    print('[get_all_type_info] decl re="{0}'.format(re_str))
+    # print('[get_all_type_info] decl re="{0}'.format(re_str))
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
