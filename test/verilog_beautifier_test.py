@@ -8,13 +8,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 import verilog_beautifier
 class BeautifyConfig():
 
-    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs'):
+    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False):
         self.nbSpace        = nbSpace
         self.useTab         = useTab
         self.oneBindPerLine = oneBindPerLine
         self.oneDeclPerLine = oneDeclPerLine
         self.paramOneLine   = paramOneLine
         self.indentSyle     = indentSyle
+        self.reindentOnly     = reindentOnly
 
 class Tests(unittest.TestCase):
 
@@ -36,7 +37,8 @@ class Tests(unittest.TestCase):
                                                  useTab=cfg.useTab,
                                                  oneBindPerLine=cfg.oneBindPerLine,
                                                  oneDeclPerLine=cfg.oneDeclPerLine,
-                                                 paramOneLine=cfg.paramOneLine)
+                                                 paramOneLine=cfg.paramOneLine,
+                                                 reindentOnly=cfg.reindentOnly)
         with open(fname_in) as f:
             txt = f.read()
         with open(fname_exp) as f:
@@ -62,6 +64,10 @@ class Tests(unittest.TestCase):
     def test_beautifyText3(self):
         cfg = BeautifyConfig(nbSpace=3)
         self.runBeautifyTest(self.path_test+"test3.sv", self.path_test+"test3_expected.sv", cfg)
+
+    def test_beautifyText3Indent(self):
+        cfg = BeautifyConfig(nbSpace=2, reindentOnly=True)
+        self.runBeautifyTest(self.path_test+"test3.sv", self.path_test+"test3_indent_expected.sv", cfg)
 
     def test_beautifyText4(self):
         cfg = BeautifyConfig(nbSpace=2)

@@ -547,6 +547,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             return
         settings = self.view.settings()
         mpl = [x['name'] for x in mi['port']]
+        mpal = [x['name'] for x in mi['param']]
         ipl = [x[0] for x in bl]
         # Check for added port
         apl = [x for x in mpl if x not in ipl]
@@ -566,7 +567,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             # Add binding at the end of the instantiation
             self.view.insert(edit,r.b-2,b)
         # Check for deleted port
-        dpl = [x for x in ipl if x not in mpl]
+        dpl = [x for x in ipl if x not in mpl and x not in mpal]
         for p in dpl:
             r_tmp = self.view.find(r'\.'+p+r'\s*\(.*?\)\s*(,)?',r.a)
             if r.contains(r_tmp):

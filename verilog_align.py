@@ -2,14 +2,17 @@ import sublime, sublime_plugin
 import re, string, os, sys, imp
 
 try:
+    from SystemVerilog.verilogutil import verilogutil
     from SystemVerilog.verilogutil import verilog_beautifier
     from SystemVerilog.verilogutil import sublimeutil
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
+    import verilogutil
     import sublimeutil
     import verilog_beautifier
 
 def plugin_loaded():
+    imp.reload(verilogutil)
     imp.reload(verilog_beautifier)
     imp.reload(sublimeutil)
 
@@ -46,6 +49,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 region = sublime.Region(0,self.view.size())
             else :
                 region = self.view.line(self.view.sel()[0])
+            beautifier.settings['reindentOnly'] = True
             txt = beautifier.beautifyText(self.view.substr(region))
         elif 'meta.module.inst' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)

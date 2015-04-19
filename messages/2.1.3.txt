@@ -1,0 +1,8 @@
+SystemVerilog 2.1.3 Changelog:
+
+## Bug Fix ##
+ - Beautifier:
+  * Add back support for ReindentOnly mode
+  * Fix alignment for case list
+ - Module : fix reconnection for parameterized module
+
