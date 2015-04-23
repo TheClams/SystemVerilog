@@ -18,11 +18,6 @@ except ImportError:
     import verilogutil
     import sublimeutil
 
-def plugin_loaded():
-    imp.reload(verilogutil)
-    imp.reload(sublimeutil)
-    imp.reload(verilog_module)
-
 
 ############################################################################
 # Init
@@ -33,6 +28,9 @@ sv_settings = None
 tooltip_css = ''
 
 def plugin_loaded():
+    imp.reload(verilogutil)
+    imp.reload(sublimeutil)
+    imp.reload(verilog_module)
     global sv_settings
     global pref_settings
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
