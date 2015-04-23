@@ -337,40 +337,73 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         sublime.status_message("Could not find driver of " + v)
 
 
+############################################################################
+# Helper function to retrieve current module name based on cursor position #
+
+def getModuleName(view):
+    r = view.sel()[0]
+    # Empty selection ? get current module name
+    if r.empty():
+        p = r'(?s)^[ \t]*(module|interface)\s+(\w+\b)'
+        mnameList = []
+        rList = view.find_all(p,0,r'\2',mnameList)
+        mname = ''
+        # print(rList)
+        # print(mnameList)
+        if rList:
+            # print(nl)
+            for (rf,n) in zip(rList,mnameList):
+                if rf.a < r.a:
+                    mname = n
+                else:
+                    break
+    else:
+        mname = view.substr(r)
+    # print(mname)
+    return mname
+
 ######################################################################################
 # Create a new buffer showing the hierarchy (sub-module instances) of current module #
 class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
+        mname = getModuleName(self.view)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
         txt = verilogutil.clean_comment(txt)
-        mi = verilogutil.parse_module(txt,r'\b\w+\b')
+        mi = verilogutil.parse_module(txt,mname)
         if not mi:
             print('[VerilogShowHierarchyCommand] Not inside a module !')
             return
+        sublime.status_message("Show Hierarchy can take some time, please wait ...")
+        sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showHierarchy(mi,w,txt))
+
+    def showHierarchy(self,mi,w,txt):
         # Create Dictionnary where each type is associated with a list of tuple (instance type, instance name)
         self.d = {}
         top_level = mi['name']
         self.d[mi['name']] = [(x['type'],x['name']) for x in mi['inst']]
         li = [x['type'] for x in mi['inst']]
-        while li:
-            # print('Looping on list ' + str(li))
+        while li :
+            # print('Loop on list with {1} elements : {2}'.format(len(li),li))
             li_next = []
             for i in li:
                 if i not in self.d.keys():
-                    filelist = self.view.window().lookup_symbol_in_index(i)
+                    filelist = w.lookup_symbol_in_index(i)
                     if filelist:
                         for f in filelist:
                             fname = sublimeutil.normalize_fname(f[0])
                             mi = verilogutil.parse_module_file(fname,i)
                             if mi:
                                 break
-                        if mi:
-                            li_next += [x['type'] for x in mi['inst']]
-                            self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
-            li = li_next
+                    # Not in project ? try in current file
+                    else :
+                        mi = verilogutil.parse_module(txt,i)
+                    if mi:
+                        li_next += [x['type'] for x in mi['inst']]
+                        self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
+            li = list(set(li_next))
         txt = top_level + '\n'
-        txt += self.print_submodule(top_level,1)
+        txt += self.printSubmodule(top_level,1)
 
         v = sublime.active_window().new_file()
         v.set_name(top_level + ' Hierarchy')
@@ -378,14 +411,14 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
         v.set_scratch(True)
         v.run_command('insert_snippet',{'contents':str(txt)})
 
-    def print_submodule(self,name,lvl):
+    def printSubmodule(self,name,lvl):
         txt = ''
         if name in self.d:
-            # print('print_submodule ' + str(self.d[name]))
+            # print('printSubmodule ' + str(self.d[name]))
             for x in self.d[name]:
                 txt += '    '*lvl+'+ '+x[1]+'    ('+x[0]+')\n'
                 # txt += '    '*lvl+'+ '+x[0]+' '+x[1]+'\n'
-                txt += self.print_submodule(x[0],lvl+1)
+                txt += self.printSubmodule(x[0],lvl+1)
         return txt
 
 ###########################################################
@@ -393,16 +426,8 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
 class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
-        # Empty selection ? get current module name. might get funky in multi-module file ...
-        if self.view.sel()[0].empty():
-            txt = self.view.substr(sublime.Region(0, self.view.size()))
-            txt = verilogutil.clean_comment(txt)
-            m = re.search(r"(?s)^\s*(?P<type>module|interface)\s+(?P<name>\w+\b)",txt, re.MULTILINE)
-            if not m:
-                return
-            mname = m.group('name')
-        else:
-            mname = self.view.substr(self.view.sel()[0])
+        mname = getModuleName(self.view)
+        sublime.status_message("Find Instance can take some time, please wait ...")
         sublime.set_timeout_async(lambda x=mname: self.findInstance(x))
 
     def findInstance(self, mname):
@@ -439,6 +464,8 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
                     txt += '    - {0} (line: {1})\n'.format(i[0].strip(),i[1])
                 txt += '\n'
             v.run_command('insert_snippet',{'contents':str(txt)})
+        else :
+            sublime.status_message("No instance found !")
 
 #############################################
 # Find all unused signals in current module #

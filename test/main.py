@@ -11,7 +11,7 @@ parser.add_argument("pattern", nargs='?', default="", help="run tests by name, c
 args = parser.parse_args()
 
 
-skipped_tests = ()
+skipped_tests = ('test_beautifyText10')
 
 
 test_modules = (os.path.splitext(afile)[0] for afile in os.listdir(".") if afile.endswith("_test.py"))
