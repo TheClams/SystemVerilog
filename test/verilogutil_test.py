@@ -36,7 +36,8 @@ def _parse_module(test_file, expected_file):
         with open(test_file) as af, open(expected_file) as ef:
             actual = parse_module(af.read())
             # ignore signal
-            actual['signal'] = []
+            if actual:
+                actual['signal'] = []
             # pprint.pprint(actual)
             # print(yaml.dump(actual, default_flow_style=False))
             expected = yaml.load(ef)

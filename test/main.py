@@ -18,6 +18,7 @@ test_modules = (os.path.splitext(afile)[0] for afile in os.listdir(".") if afile
 all_test_classes = (importlib.import_module(i).Tests for i in test_modules)
 
 
+
 suite = unittest.TestSuite()
 for aclass in all_test_classes:
     for method_name in dir(aclass()):
