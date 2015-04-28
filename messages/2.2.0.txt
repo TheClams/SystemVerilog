@@ -1,0 +1,6 @@
+SystemVerilog 2.2.0 Changelog:
+
+## Improvement ##
+ - Module reconnect now handles connection by position and transform it in connection by name
+ - Tooltip on a module name now display its port
+

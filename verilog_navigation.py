@@ -103,17 +103,35 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         if len(self.view.sel())==0 : return;
         region = self.view.sel()[0]
         # If nothing is selected expand selection to word
-        if region.empty() : region = self.view.word(region);
+        if region.empty() :
+            region = self.view.word(region)
+        # Make sure a whole word is selected
+        elif (self.view.classify(region.a) & sublime.CLASS_WORD_START)==0 or (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
+            if (self.view.classify(region.a) & sublime.CLASS_WORD_START)==0:
+                region.a = self.view.find_by_class(region.a,False,sublime.CLASS_WORD_START)
+            if (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
+                region.b = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
         v = self.view.substr(region)
+        # print(v)
         if re.match(r'^\w+$',v): # Check this is valid a valid word
             s,ti = self.get_type(v,region)
             if not s:
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
-                if ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
+                if ti and (ti['type'] == 'module'):
+                    # print(ti)
+                    s,_ = self.color_str(s=s)
+                    if 'param' in ti:
+                        for p in ti['param'] :
+                            d = 'parameter {t} {n} = {v}'.format(t=p['decl'],n=p['name'],v=p['value'])
+                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
+                    if 'port' in ti:
+                        for p in ti['port'] :
+                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(p['decl'])[0])
+                elif ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
                     m = re.search(r'(?s)^(.*)\{(.*)\}', ti['decl'])
-                    print(ti)
+                    # print(ti)
                     s,tti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
                     if ti['tag'] == 'enum':
                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
@@ -173,6 +191,9 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         elif 'storage.type.userdefined' in scope:
             ti = verilog_module.lookup_type(self.view,var_name)
             txt = ti['decl']
+        elif 'storage.module' in scope or 'entity.name.type.module' in scope:
+            ti = verilog_module.lookup_module(self.view,var_name)
+            txt = 'module ' + var_name
         # Simply lookup in the file before the use of the variable
         else :
             # select whole file until end of current line
@@ -184,7 +205,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             txt = ti['decl']
         return txt,ti
 
-    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'packed',
+    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'var']
 
     def color_str(self,s, addLink=False):
@@ -194,11 +215,9 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         for i,w in enumerate(ss):
             m = re.match(r'^\w+',w)
             if i == len(ss)-1:
-                if '[' in w :
-                    w = re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w)
-                    sh += re.sub(r'(\#|\:)',r'<span class="operator">\1</span>',w)
-                else:
-                    sh+=w
+                w = re.sub(r'\b((b|d)?\d+)\b',r'<span class="numeric">\1</span>',w)
+                w = re.sub(r'(\#|\:|\')',r'<span class="operator">\1</span>',w)
+                sh+=w
             elif w in ['input', 'output', 'inout']:
                 sh+='<span class="support">{0}</span> '.format(w)
             elif w in self.keywords:
@@ -233,6 +252,10 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(ti['fname'],w)
                 else:
                     sh+='<span class="storage">{0}</span> '.format(w)
+            elif re.match(r'\d+',w) :
+                sh += re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span> ',w)
+            elif w in ['='] :
+                sh += re.sub(r'(\=)',r'<span class="operator">\1</span> ',w)
             else:
                 sh += w + ' '
         return sh,ti

@@ -309,14 +309,15 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         ac = {} # autoconnection (entry is port name)
         wc = {} # warning connection (entry is port name)
         # get settings
-        port_prefix = settings.get('sv.autoconnect_port_prefix')
-        port_suffix = settings.get('sv.autoconnect_port_suffix')
-        indent_level = settings.get('sv.decl_indent')
+        port_prefix = settings.get('sv.autoconnect_port_prefix', [])
+        port_suffix = settings.get('sv.autoconnect_port_suffix', [])
+        indent_level = settings.get('sv.decl_indent', 1)
         #default signal type to logic, except verilog file use wire (if type is implicit)
         fname = view.file_name()
         sig_type = 'logic'
-        if fname.endswith('.v'):
-            sig_type = 'wire'
+        if fname: # handle case where view is a scracth buffer and has no filename
+            if fname.endswith('.v'):
+                sig_type = 'wire'
         # read file to be able to check existing declaration
         flines = view.substr(sublime.Region(0, view.size()))
         mi = verilogutil.parse_module(flines)
@@ -530,8 +531,6 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         # Select whole module instantiation
         r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
         txt = verilogutil.clean_comment(self.view.substr(r))
-        #Extract existing binding
-        bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
         # Parse module definition
         mname = re.findall(r'\w+',txt)[0]
         filelist = self.view.window().lookup_symbol_in_index(mname)
@@ -548,6 +547,24 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         settings = self.view.settings()
         mpl = [x['name'] for x in mi['port']]
         mpal = [x['name'] for x in mi['param']]
+        #Extract existing binding
+        bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
+        # Handle case of binding by position (TODO: support parameter as well ...)
+        if not bl:
+            m = re.search(r'(?s)(#\s*\((?P<params>.*)\)\s*)?\((?P<ports>.*)\)\s*;',txt,flags=re.MULTILINE)
+            pl = m.group('ports')
+            if pl:
+                pa = pl.split(',')
+                bt = ''
+                for i,p in enumerate(pa):
+                    if i >= len(mpl):
+                        break;
+                    bl.append((mpl[i],p.strip()))
+                    bt += '.{portName}({sigName}),\n'.format(portName=bl[-1][0], sigName=bl[-1][1])
+                # Replace connection by position by connection by name
+                r_tmp = self.view.find(pl,r.a,sublime.LITERAL)
+                if r.contains(r_tmp):
+                    self.view.replace(edit,r_tmp,bt)
         ipl = [x[0] for x in bl]
         # Check for added port
         apl = [x for x in mpl if x not in ipl]
