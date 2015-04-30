@@ -10,6 +10,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pattern", nargs='?', default="", help="run tests by name, can be regex")
 args = parser.parse_args()
 
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
 
 skipped_tests = ('test_beautifyText10')
 
