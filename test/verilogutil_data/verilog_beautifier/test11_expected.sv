@@ -1,4 +1,4 @@
-module t(
+module t #(
     aa = 1,
 
     bb = 2
