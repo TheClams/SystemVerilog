@@ -1,6 +1,8 @@
 # Class/function to process verilog file
 import re, string, os
 import pprint
+import json
+import functools
 
 # regular expression for signal/variable declaration:
 #   start of line follow by 1 to 4 word,
@@ -19,9 +21,6 @@ re_param = r'^\s*parameter\b((?:\s*(?:\w+\s+)?(?:[A-Za-z_]\w+)\s*=\s*(?:[^,;]*)\
 # Port direction list constant
 port_dir = ['input', 'output','inout', 'ref']
 
-# TODO: create a class to handle the cache for N module
-cache_module = {'mname' : '', 'fname' : '', 'date' : 0, 'info' : None}
-
 
 def clean_comment(text):
     def replacer(match):
@@ -30,6 +29,7 @@ def clean_comment(text):
             return " " # note: a space and not an empty string
         else:
             return s
+
     pattern = re.compile(
         r'//.*?$|/\*.*?\*/|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
@@ -231,22 +231,51 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
 def parse_module_file(fname,mname=r'\w+'):
     # print("Parsing file " + fname + " for module " + mname)
     fdate = os.path.getmtime(fname)
-    # Check Cache module
-    if cache_module['mname'] == mname and cache_module['fname'] == fname and cache_module['date']==fdate:
-        # print('Using cache !')
-        return cache_module['info']
-    #
-    flines = ''
-    with open(fname, "r") as f:
-        flines = str(f.read())
-    flines = clean_comment(flines)
-    minfo = parse_module(flines,mname)
-    # Put information in cache:
-    cache_module['info']  = minfo
-    cache_module['mname'] = mname
-    cache_module['fname'] = fname
-    cache_module['date']  = fdate
+    minfo = parse_module_file_cache(fname, mname, fdate)
+    print(parse_module_file_cache.cache_info())
     return minfo
+
+
+@functools.lru_cache(maxsize=64)
+def parse_module_file_cache(fname, mname, fdate):
+    minfo = load_cache(fname, mname, fdate)
+    if minfo:
+        return minfo
+    with open(fname) as f:
+        contents = f.read()
+        flines = clean_comment(contents)
+        minfo = parse_module(flines, mname)
+        dump_cache(fname, mname, fdate, minfo)
+    return minfo
+
+
+FILE_CACHE = os.path.join(os.path.expanduser("~"), ".sublimesystemverilog", "parsed_cache.json")
+
+
+def load_cache(fname, mname, mdate):
+    if os.path.exists(FILE_CACHE):
+        with open(FILE_CACHE) as f:
+            contents = json.load(f)
+            parsed = contents.get(fname+mname)
+            if parsed and parsed['mdate'] == mdate:
+                print("hit file cache")
+                return parsed
+
+
+def dump_cache(fname, mname, mdate, parsed):
+    cache = {}
+    parsed['mdate'] = mdate
+    d = {fname+mname: parsed}
+    if os.path.exists(FILE_CACHE):
+        with open(FILE_CACHE) as f:
+            cache = json.load(f)
+    else:
+        os.makedirs(os.path.dirname(FILE_CACHE))
+    cache.update(d)
+    with open(FILE_CACHE, 'w') as f:
+        json.dump(cache, f, indent=2)
+    print("miss file cache")
+
 
 def parse_module(flines,mname=r'\w+'):
     # print("Parsing for module " + mname + ' in \n' + flines)
