@@ -1,0 +1,13 @@
+SystemVerilog 2.3.0 Changelog:
+
+## Improvement ##
+ - Tooltip:
+  * Now support function
+  * Add link when used on module, interface or function and used appropriate color (symbol)
+ - Beautifier:
+  * Add option to control strip of empty line inside module declaration (boolean sv.strip_empty_line)
+  * The auto-selection of block is now smarter (it should prevent changing the base indentation due to a comment above the code for example)
+
+## Fix ##
+ - Highlighting : chandle is a type not a keyword
+ - VerilogUtil: Fix bitwidth extraction with + (impact beautifier, info, ...)

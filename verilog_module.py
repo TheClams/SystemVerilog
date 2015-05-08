@@ -22,12 +22,28 @@ def lookup_module(view,mname):
     filelist = view.window().lookup_symbol_in_index(mname)
     if filelist:
         for f in filelist:
-            fname = sublimeutil.normalize_fname(f[0])
+            fname, display_fname, rowcol = f
+            fname = sublimeutil.normalize_fname(fname)
             mi = verilogutil.parse_module_file(fname,mname)
             if mi:
-                mi['fname'] = fname
+                mi['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
                 break
     return mi
+
+def lookup_function(view,funcname):
+    fi = None
+    filelist = view.window().lookup_symbol_in_index(funcname)
+    if filelist:
+        for f in filelist:
+            fname, display_fname, rowcol = f
+            fname = sublimeutil.normalize_fname(fname)
+            with open(fname,'r') as f:
+                flines = str(f.read())
+            fi = verilogutil.parse_function(flines,funcname)
+            if fi:
+                fi['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
+                break
+    return fi
 
 def lookup_type(view, t):
     ti = None
@@ -37,6 +53,7 @@ def lookup_type(view, t):
             fname, display_fname, rowcol = f
             fname = sublimeutil.normalize_fname(fname)
             # Parse only systemVerilog file. Check might be a bit too restrictive ...
+            # print(t + ' defined in ' + str(fname))
             if fname.lower().endswith(('sv','svh')):
                 # print(t + ' defined in ' + str(fname))
                 with open(fname, 'r') as f:
@@ -530,6 +547,9 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             return
         # Select whole module instantiation
         r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
+        if self.view.classify(r.a) & sublime.CLASS_LINE_START == 0:
+            r.a = self.view.find_by_class(r.a,False,sublime.CLASS_LINE_START)
+        # print(self.view.substr(r))
         txt = verilogutil.clean_comment(self.view.substr(r))
         # Parse module definition
         mname = re.findall(r'\w+',txt)[0]

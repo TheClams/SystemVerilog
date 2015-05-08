@@ -5,14 +5,15 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True):
         self.settings = {'nbSpace': nbSpace, \
                         'useTab':useTab, \
                         'oneBindPerLine':oneBindPerLine, \
                         'oneDeclPerLine':oneDeclPerLine,\
                         'paramOneLine': paramOneLine,\
                         'indentSyle' : indentSyle,\
-                        'reindentOnly' : reindentOnly}
+                        'reindentOnly' : reindentOnly,\
+                        'stripEmptyLine': stripEmptyLine }
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -408,7 +409,8 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param = re.compile(r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)',flags=re.MULTILINE)
+            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
+            re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
             # print(decl)
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
@@ -430,47 +432,49 @@ class VerilogBeautifier():
                 txt_new += '\n'
                 lines = param_txt.splitlines()
                 for i,line in enumerate(lines):
+                    l = line.strip()
                     # ignore the first line with parameter keyword only since it has already been added
-                    if i==0 and line.strip()=='parameter':
+                    if i==0 and l=='parameter':
                         continue
-                    txt_new += self.indent*(ilvl+1)
-                    m_param = re_param.search(line.strip())
+                    l_new = self.indent*(ilvl+1)
+                    m_param = re_param.search(l)
                     if not m_param or self.settings['reindentOnly']:
-                        # print('Line {0} is not a parameter definition'.format(line.strip()))
-                        txt_new += line.strip()
+                        l_new += l
                     else:
+                        # print('params = {0}'.format(m_param.groups()))
                         if has_param_all:
-                            txt_new += 'parameter '
+                            l_new += 'parameter '
                         if len_type>0:
                             if m_param.group('type'):
                                 if m_param.group('type') not in ['signed','unsigned']:
-                                    txt_new += m_param.group('type').ljust(len_type+1)
+                                    l_new += m_param.group('type').ljust(len_type+1)
                                 else:
-                                    txt_new += ''.ljust(len_type+2) + m_param.group('type').ljust(len_sign+1)
+                                    l_new += ''.ljust(len_type+2) + m_param.group('type').ljust(len_sign+1)
                             else:
-                                txt_new += ''.ljust(len_type+2)
+                                l_new += ''.ljust(len_type+2)
                         if len_sign>0:
                             if m_param.group('sign'):
-                                txt_new += m_param.group('sign').ljust(len_sign)
+                                l_new += m_param.group('sign').ljust(len_sign)
                             else:
-                                txt_new += ''.ljust(len_sign+1)
+                                l_new += ''.ljust(len_sign+1)
                         if len_bw>0:
                             if m_param.group('bw'):
-                                txt_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
+                                l_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
                             else:
-                                txt_new += ''.ljust(len_bw+3)
-                        txt_new += m_param.group('param').ljust(len_param)
-                        txt_new += ' = ' + m_param.group('value').ljust(len_value)
+                                l_new += ''.ljust(len_bw+3)
+                        l_new += m_param.group('param').ljust(len_param)
+                        l_new += ' = ' + m_param.group('value').ljust(len_value)
                         if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
-                            txt_new += m_param.group('sep')
+                            l_new += m_param.group('sep')
                         #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
                         if m_param.group('list'):
-                            txt_new += ' ' + m_param.group('list')
+                            l_new += ' ' + m_param.group('list')
                         if i==(len(lines)-1) and m_param.group('comment'):
-                            txt_new += ' '
+                            l_new += ' '
                         if m_param.group('comment'):
-                            txt_new += ' ' + m_param.group('comment')
-                    txt_new += '\n' + self.indent*(ilvl)
+                            l_new += ' ' + m_param.group('comment')
+                    if not self.settings['stripEmptyLine'] or l_new.strip() !='':
+                        txt_new += l_new.rstrip() + '\n'# + self.indent*(ilvl)
             else :
                 if has_param and not has_param_all:
                     txt_new += ' '
@@ -487,8 +491,9 @@ class VerilogBeautifier():
         txt_new += ' (\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
         re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t]*)[ \t]*(?P<comment>.*)'
+        # print(re_str)
         # handle case of multiple input/output declared on same line
-        txt_port = re.sub(r'\s*,\s*(input|output|inout)\b\s+',r',\n\1 ',m.group('ports'))
+        txt_port = re.sub(r'[ \t]*,[ \t]*(input|output|inout)\b[ \t]+',r',\n\1 ',m.group('ports'))
         decl = re.findall(re_str,txt_port,flags=re.MULTILINE)
         # Extract max length of the different field for vertical alignement
         port_dir_l = [x[0] for x in decl if x[0] in verilogutil.port_dir]
@@ -557,83 +562,83 @@ class VerilogBeautifier():
             # Remove leading and trailing space.
             l = line.strip()
             # ignore empty line at the begining and the end of the connection
-            if (i!=(len(lines)-1) and i!=0) or l !='':
+            if (i!=(len(lines)-1) and i!=0 and (not self.settings['stripEmptyLine'] or l !='') ) or l !='':
                 m_port = re.search(re_str,l)
-                txt_new += self.indent*(ilvl+1)
+                l_new = self.indent*(ilvl+1)
                 if self.settings['reindentOnly']:
-                    txt_new += l
+                    l_new += l
                 elif m_port:
                     # For standard i/o
                     if m_port.group('dir') in verilogutil.port_dir :
-                        txt_new += m_port.group('dir').ljust(len_dir)
+                        l_new += m_port.group('dir').ljust(len_dir)
                         # Align userdefined type differently from the standard type
                         if m_port.group('var') or m_port.group('sign') or m_port.group('bw') or m_port.group('type') in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
                             if len_var>0:
                                 if m_port.group('var'):
-                                    txt_new += ' ' + m_port.group('var')
+                                    l_new += ' ' + m_port.group('var')
                                 else:
-                                    txt_new += ' '.ljust(len_var+1)
+                                    l_new += ' '.ljust(len_var+1)
                             if len_type>0:
                                 if m_port.group('type'):
                                     if m_port.group('type') not in ['signed','unsigned']:
-                                        txt_new += ' ' + m_port.group('type').ljust(len_type)
+                                        l_new += ' ' + m_port.group('type').ljust(len_type)
                                     else:
-                                        txt_new += ''.ljust(len_type+1) + ' ' + m_port.group('type').ljust(len_sign)
+                                        l_new += ''.ljust(len_type+1) + ' ' + m_port.group('type').ljust(len_sign)
                                 else:
-                                    txt_new += ''.ljust(len_type+1)
+                                    l_new += ''.ljust(len_type+1)
                                 # add sign space it exists at least for one port
                                 if len_sign>0:
                                     if m_port.group('sign'):
-                                        txt_new += ' ' + m_port.group('sign').ljust(len_sign)
+                                        l_new += ' ' + m_port.group('sign').ljust(len_sign)
                                     elif m_port.group('type') not in ['signed','unsigned']:
-                                        txt_new += ''.ljust(len_sign+1)
+                                        l_new += ''.ljust(len_sign+1)
                             elif len_sign>0:
                                 if m_port.group('type') in ['signed','unsigned']:
-                                    txt_new += ' ' + m_port.group('type').ljust(len_sign)
+                                    l_new += ' ' + m_port.group('type').ljust(len_sign)
                                 elif m_port.group('sign'):
-                                    txt_new += ' ' + m_port.group('sign').ljust(len_sign)
+                                    l_new += ' ' + m_port.group('sign').ljust(len_sign)
                                 else:
-                                    txt_new += ''.ljust(len_sign+1)
+                                    l_new += ''.ljust(len_sign+1)
                             # Add bus width if it exists at least for one port
                             if len_bw>1:
                                 if m_port.group('bw'):
-                                    txt_new += ' [' + m_port.group('bw').strip().rjust(len_bw) + ']'
+                                    l_new += ' [' + m_port.group('bw').strip().rjust(len_bw) + ']'
                                 else:
-                                    txt_new += ''.rjust(len_bw+3)
+                                    l_new += ''.rjust(len_bw+3)
                             if max_len > len_type_full:
-                                txt_new += ''.ljust(max_len-len_type_full)
+                                l_new += ''.ljust(max_len-len_type_full)
                         elif m_port.group('type') :
-                            txt_new += ' ' + m_port.group('type').ljust(len_type_user)
+                            l_new += ' ' + m_port.group('type').ljust(len_type_user)
                         elif len_type_user>0 :
-                            txt_new += ' '.ljust(len_type_user+1)
+                            l_new += ' '.ljust(len_type_user+1)
                     # For interface
                     else :
-                        txt_new += m_port.group('dir').ljust(len_if)
+                        l_new += m_port.group('dir').ljust(len_if)
                     # Add port list: space every port in the list by just on space
                     s = re.sub(r'\s*,\s*',', ',m_port.group('ports').rstrip())
-                    txt_new += ' '
+                    l_new += ' '
                     if s.endswith(', '):
-                        txt_new += s[:-2].ljust(max_port_len)
+                        l_new += s[:-2].ljust(max_port_len)
                         if i!=(len(lines)-1):
-                            txt_new += ','
+                            l_new += ','
                     else:
-                        txt_new += s.ljust(max_port_len) + ' '
+                        l_new += s.ljust(max_port_len) + ' '
                     # Add comment
                     if m_port.group('comment') :
-                        txt_new += ' ' + m_port.group('comment')
+                        l_new += ' ' + m_port.group('comment')
                 else : # No port declaration ? recopy line with just the basic indentation level
                     # Look for a simple comment line and check its indentation: if too large, align with port comment position
                     m_comment = re.search(r'\s*//.*',l)
                     if m_comment:
                         ilvl_comment = self.getIndentLevel(line)
                         if ilvl_comment > (ilvl+2):
-                            txt_new += ''.rjust(len_if+1+max_port_len+2) + l
+                            l_new += ''.rjust(len_if+1+max_port_len+2) + l
                         else:
-                            txt_new += l
+                            l_new += l
                     else:
-                        txt_new += l
+                        l_new += l
                 # Remove trailing spaces/tabs and add the end of line
-                txt_new = txt_new.rstrip(' \t') + '\n'
+                txt_new += l_new.rstrip(' \t') + '\n'
         txt_new += self.indent*(ilvl) + ');'
         return txt_new
 

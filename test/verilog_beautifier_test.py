@@ -8,14 +8,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 import verilog_beautifier
 class BeautifyConfig():
 
-    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False):
+    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True):
         self.nbSpace        = nbSpace
         self.useTab         = useTab
         self.oneBindPerLine = oneBindPerLine
         self.oneDeclPerLine = oneDeclPerLine
         self.paramOneLine   = paramOneLine
         self.indentSyle     = indentSyle
-        self.reindentOnly     = reindentOnly
+        self.reindentOnly   = reindentOnly
+        self.stripEmptyLine = stripEmptyLine
 
 class Tests(unittest.TestCase):
 
@@ -38,7 +39,9 @@ class Tests(unittest.TestCase):
                                                  oneBindPerLine=cfg.oneBindPerLine,
                                                  oneDeclPerLine=cfg.oneDeclPerLine,
                                                  paramOneLine=cfg.paramOneLine,
-                                                 reindentOnly=cfg.reindentOnly)
+                                                 reindentOnly=cfg.reindentOnly,
+                                                 stripEmptyLine=cfg.stripEmptyLine
+                                                 )
         with open(fname_in) as f:
             txt = f.read()
         with open(fname_exp) as f:
@@ -66,7 +69,7 @@ class Tests(unittest.TestCase):
         self.runBeautifyTest(self.path_test+"test3.sv", self.path_test+"test3_expected.sv", cfg)
 
     def test_beautifyText3Indent(self):
-        cfg = BeautifyConfig(nbSpace=2, reindentOnly=True)
+        cfg = BeautifyConfig(nbSpace=2, reindentOnly=True, stripEmptyLine=False)
         self.runBeautifyTest(self.path_test+"test3.sv", self.path_test+"test3_indent_expected.sv", cfg)
 
     def test_beautifyText4(self):
@@ -98,5 +101,9 @@ class Tests(unittest.TestCase):
         self.runBeautifyTest(self.path_test+"test10.sv", self.path_test+"test10_expected.sv", cfg)
 
     def test_beautifyText11(self):
-        cfg = BeautifyConfig()
+        cfg = BeautifyConfig(stripEmptyLine=False)
         self.runBeautifyTest(self.path_test+"test11.sv", self.path_test+"test11_expected.sv", cfg)
+
+    def test_beautifyText11Strip(self):
+        cfg = BeautifyConfig(stripEmptyLine=True)
+        self.runBeautifyTest(self.path_test+"test11.sv", self.path_test+"test11_strip_expected.sv", cfg)

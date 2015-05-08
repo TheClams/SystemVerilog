@@ -7,7 +7,7 @@ import pprint
 #   an optionnal array size,
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
-re_bw    = r'[\w\*\(\)\/><\:\-`\s]+'
+re_bw    = r'[\w\*\(\)\/><\:\-\+`\s]+'
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\['+re_bw+r'\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
@@ -317,6 +317,16 @@ def parse_package(flines,pname=r'\w+'):
     ti = get_all_type_info(txt)
     # print(ti)
     return ti
+
+def parse_function(flines,funcname):
+    flines_c = clean_comment(flines)
+    m = re.search(r'(?s)(\b(function|task)\s+(\w+\s+)?(\w+\s+)?)\b(' + funcname + r')\b\s*\((.*?)\s*\)\s*;',flines_c,re.MULTILINE)
+    if not m:
+        return None
+    # print(m.groups())
+    ti = get_all_type_info(m.groups()[5] + ';')
+    fi = {'name': funcname,'type': m.groups()[1],'decl': m.groups()[0] + ' ' + funcname, 'port' : ti}
+    return fi
 
 # Fill all entry of a case for enum or vector (limited to 8b)
 # ti is the type infor return by get_type_info

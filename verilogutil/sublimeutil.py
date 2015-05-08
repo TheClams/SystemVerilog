@@ -10,6 +10,12 @@ def normalize_fname(fname):
         fname= re.sub(r'/', r'\\', fname)
     return fname
 
+def line_indent(view,point):
+    l = view.substr(view.line(point))
+    if view.settings().get('translate_tabs_to_spaces'):
+        l.replace('\t',' ' * view.settings().get('tab_size',4))
+    return len(l) - len(l.lstrip())
+
 #Expand a region to a given scope
 def expand_to_scope(view, scope_name, region):
 
@@ -51,6 +57,52 @@ def expand_to_scope(view, scope_name, region):
         region.a = p-1
     # print('Retract done:' + str(p) + ' => text = ' + view.substr(region))
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
+    return region
+
+#Expand a region to contain a block of text: enclosed by first empty line or comment line
+def expand_to_block(view, region):
+    r_tmp = region
+    # print('Init region = ' + str(r_tmp) + ' => text = ' + view.substr(region))
+    #Expand backward word by word until scope does not match or end of file is reached
+    p = view.find_by_class(region.a,False,sublime.CLASS_LINE_START)
+    scope = view.scope_name(p)
+    ilvl = line_indent(view,region.a)
+    ilvl_tmp = ilvl
+    while ('comment' not in scope or ilvl_tmp>ilvl) and (view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0:
+        region.a = p
+        if ilvl_tmp < ilvl:
+            ilvl = ilvl_tmp
+        p = view.find_by_class(p,False,sublime.CLASS_LINE_START)
+        if view.substr(p) in [' ', '\t'] and ((view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0) :
+            pp = view.find_by_class(p,True,sublime.CLASS_WORD_START|sublime.CLASS_SUB_WORD_START|sublime.CLASS_PUNCTUATION_START)
+            scope = view.scope_name(pp)
+        else:
+            scope = view.scope_name(p)
+        ilvl_tmp = line_indent(view,p)
+        if p >= region.a:
+            break
+    region.a = view.find_by_class(p,True,sublime.CLASS_LINE_START)
+    # print('Backward done:' + str(region.a) + ' => text = ' + view.substr(region))
+    #Expand forward line by line until we reach a comment or an empty line
+    p = view.find_by_class(region.b,True,sublime.CLASS_LINE_START)
+    scope = view.scope_name(p)
+    ilvl_tmp = line_indent(view,region.b)
+    while ('comment' not in scope or ilvl_tmp>ilvl) and (view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0:
+        region.b = p
+        if ilvl_tmp < ilvl:
+            ilvl = ilvl_tmp
+        p = view.find_by_class(p,True,sublime.CLASS_LINE_START)
+        if view.substr(p) in [' ', '\t'] and ((view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0) :
+            pp = view.find_by_class(p,True,sublime.CLASS_WORD_START|sublime.CLASS_SUB_WORD_START|sublime.CLASS_PUNCTUATION_START)
+            scope = view.scope_name(pp)
+        else:
+            scope = view.scope_name(p)
+        ilvl_tmp = line_indent(view,p)
+        if p <= region.b:
+            break
+    region.b = p - 1
+    # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region))
+    print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
 
 

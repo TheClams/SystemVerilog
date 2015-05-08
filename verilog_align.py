@@ -31,7 +31,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         oneDeclPerLine = self.settings.get('sv.one_decl_per_line',True)
         paramOneLine = self.settings.get('sv.param_oneline',True)
         indentStyle = self.settings.get('sv.indent_style',True)
-        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle)
+        stripEmptyLine = self.settings.get('sv.strip_empty_line',True)
+        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle, False, stripEmptyLine)
         current_pos = self.view.viewport_position( )
         if not use_space:
             char_space = '\t'
@@ -64,8 +65,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         else :
             # empty region ? select all lines before and after until an empty line is found
             if region.empty():
-                region = self.view.expand_by_class(region,sublime.CLASS_EMPTY_LINE)
-                # TODO: maybe have a better approach stopping at a begin end and line of comment as well
+                region = sublimeutil.expand_to_block(self.view,region)
             else:
                 region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :

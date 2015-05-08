@@ -16,7 +16,6 @@ module my_module (
    input  my_pkg::my_type_in  din    ,
    input        [ 7:0]        ctrl   , // Control
                                        // Multiline comment about control
-
    output reg   [15:0]        testbus,
    // spliting comment
    output my_pkg::my_type_out dout     // output data
