@@ -343,6 +343,8 @@ contexts:
           scope: support.function.systemverilog
         - match: \b(virtual)\b
           scope: keyword.control.systemverilog
+    - match: \.([a-zA-Z_][a-zA-Z0-9_]*)\s*
+      scope: support.function.implicitport.systemverilog
   module-param:
     - match: (#)\s*\(
       captures:
