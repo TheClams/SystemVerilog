@@ -1570,7 +1570,7 @@
 					<key>1</key>
 					<dict>
 						<key>name</key>
-						<string>support.function.implicitport.systemverilog</string>
+						<string>support.function.port.implicit.systemverilog</string>
 					</dict>
 				</dict>
 			</dict>
