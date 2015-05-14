@@ -1,0 +1,17 @@
+SystemVerilog 2.3.1 Changelog:
+
+## Improvement ##
+ - Tooltip:
+  * Now includes init value when available
+  * Add parameter & modport information for interface
+  * Better color highlight of type
+
+## Fix ##
+ - Highlighting :
+  * proper highlight of scope inside port connection by name
+  * implicit port connection by name (.port)
+  * Extends scope of parameterized module to ; included => could mess behavior of some function like module reconnect
+ - VerilogUtil:
+  * better parsing of interface with modport and clocking block (now part of extracted information)
+  * get_type_info now collects init value
+ - Expand connect by position now support parametrized module (for port only)

@@ -199,12 +199,13 @@ contexts:
         4: storage.module.systemverilog
       push:
         - meta_scope: meta.module.inst.param.systemverilog
-        - match: (?=;|=|:)
+        - match: ;|(?==|:)
           pop: true
         - match: \(
           push:
             - include: module-binding
             - include: module-param
+            - include: storage-scope-systemverilog
             - include: comments
             - include: operators
             - include: constants
@@ -227,6 +228,7 @@ contexts:
         - match: ;
           pop: true
         - include: module-binding
+        - include: storage-scope-systemverilog
         - include: comments
         - include: strings
         - include: operators
@@ -343,6 +345,8 @@ contexts:
           scope: support.function.systemverilog
         - match: \b(virtual)\b
           scope: keyword.control.systemverilog
+    - match: \w\.([a-zA-Z_][a-zA-Z0-9_]*)
+      # catch field => normal text
     - match: \.([a-zA-Z_][a-zA-Z0-9_]*)\s*
       scope: support.function.port.implicit.systemverilog
   module-param:

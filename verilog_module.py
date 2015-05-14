@@ -571,7 +571,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
         # Handle case of binding by position (TODO: support parameter as well ...)
         if not bl:
-            m = re.search(r'(?s)(#\s*\((?P<params>.*)\)\s*)?\((?P<ports>.*)\)\s*;',txt,flags=re.MULTILINE)
+            m = re.search(r'(?s)(#\s*\((?P<params>.*?)\)\s*)?\s*\w+\s*\((?P<ports>.*?)\)\s*;',txt,flags=re.MULTILINE)
             pl = m.group('ports')
             if pl:
                 pa = pl.split(',')

@@ -29,7 +29,6 @@ def expand_to_scope(view, scope_name, region):
         p = view.find_by_class(p,True,sublime.CLASS_LINE_END)
         scope = view.scope_name(p)
         if p <= region.b:
-            # print('End reached')
             break
     # print('Forward line done:' + str(p))
     # Retract backward until we find the scope back
@@ -46,7 +45,6 @@ def expand_to_scope(view, scope_name, region):
         p = view.find_by_class(p,False,sublime.CLASS_LINE_START)
         scope = view.scope_name(p-1)
         if p >= region.a:
-            # print('Start reached')
             break
     # print('Backward line done:' + str(p))
     # Retract forward until we find the scope back

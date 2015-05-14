@@ -123,7 +123,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
-                if ti and (ti['type'] in ['module','function','task']):
+                if ti and (ti['type'] in ['module','interface','function','task']):
                     # print(ti)
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'param' in ti:
@@ -147,7 +147,6 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 else :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
-                        # print(ti)
                         if 'tag' in ti and ti['tag'] == 'enum':
                             m = re.search(r'\{(.*)\}', ti['decl'])
                             if m:
@@ -162,10 +161,19 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         elif 'interface' in ti['decl']:
                             mi = verilog_module.lookup_module(self.view,ti['name'])
                             if mi :
+                                pprint.pprint(mi)
                                 #TODO: use modport info if it exists
+                                if 'param' in mi:
+                                    for p in mi['param'] :
+                                        d = 'parameter {t} {n} = {v}'.format(t=p['decl'],n=p['name'],v=p['value'])
+                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
                                 for x in mi['signal']:
                                     if x['tag']=='decl':
-                                        s+='<br>{0}{1}'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                                if 'modport' in mi:
+                                    for p in mi['modport'] :
+                                        d = 'modport {n}'.format(n=p['name'])
+                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 self.view.show_popup(s,location=-1, max_width=500, on_navigate=self.on_navigate)
             else :
@@ -214,25 +222,29 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             txt = self.view.substr(sublime.Region(0, region.b))
             # Extract type
             ti = verilogutil.get_type_info(txt,var_name)
-            # print (ti)
             txt = ti['decl']
+            if 'value' in ti and ti['value']:
+                txt += ' = ' + ti['value']
         return txt,ti
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
-                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var']
+                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking']
 
     def color_str(self,s, addLink=False, ti_var=None):
         ss = s.split(' ')
         sh = ''
         ti = None
+        pos_var = len(ss)-1
+        if pos_var>2 and ss[-2] == '=':
+            pos_var -= 2
         for i,w in enumerate(ss):
-            m = re.match(r'^\w+',w)
+            m = re.match(r'^[A-Za-z_]\w?',w)
             if i == len(ss)-1:
                 if m:
                     if addLink and ti_var and 'fname' in ti_var:
                         w ='<a href="{1}@{0}" class="entity">{1}</a>'.format(ti_var['fname'],w)
                 else:
-                    w = re.sub(r'\b((b|d)?\d+)\b',r'<span class="numeric">\1</span>',w)
+                    w = re.sub(r'\b((b|d)?\d+(\.\d+(ms|us|ns|ps|fs)?)?)\b',r'<span class="numeric">\1</span>',w)
                     w = re.sub(r'(\#|\:|\')',r'<span class="operator">\1</span>',w)
                 sh+=w
             elif w in ['input', 'output', 'inout']:
@@ -262,7 +274,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             elif '[' in w or '(' in w:
                 w = re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w)
                 sh += re.sub(r'(\#|\:)',r'<span class="operator">\1</span>',w) + ' '
-            elif (i == len(ss)-2 and m) or (i == len(ss)-3 and '[' in ss[-2]):
+            # Color type: typically just before the variable or one word earlier in case of array or parameter
+            elif (i == pos_var-1 and m) or (i == pos_var-2 and ('[' in ss[pos_var-1] or '#' in ss[pos_var-1])) :
                 if addLink:
                     ti = verilog_module.lookup_type(self.view,w)
                 # print('word={0} => ti={1}'.format(w,ti))

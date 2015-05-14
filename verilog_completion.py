@@ -111,10 +111,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         txt = self.view.substr(sublime.Region(0,self.view.size()))
         txt = verilogutil.clean_comment(txt)
-        # remove modports before looking for I/O and field to avoid duplication of signals
-        txt = re.sub(r'modport\s+\w+\s+\(.*?\);','',txt, flags=re.MULTILINE|re.DOTALL)
-        # remove cloking block input
-        txt = re.sub(r'clocking\b.*?endclocking(\s*:\s*\w+)?','',txt, flags=re.MULTILINE|re.DOTALL)
         ti = verilogutil.parse_module(txt,r'\w+')
         if not ti:
             return c
@@ -464,6 +460,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Interface completion: all signal declaration can be used as completion
     def interface_completion(self,flines, modport_only=False):
         flines = verilogutil.clean_comment(flines)
+        #TODO: use the parse_module function ?
         # Look all modports
         modports = re.findall(r'^\s*modport\s+(\w+)\b', flines, flags=re.MULTILINE)
         # remove modports before looking for I/O and field to avoid duplication of signals

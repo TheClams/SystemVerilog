@@ -46,6 +46,7 @@ def get_type_info(txt,var_name):
     idx_type = 1
     idx_bw = 3
     idx_max = 5
+    idx_val = -1
     if not m:
         m = re.search(re_union+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
         tag = 'struct'
@@ -56,16 +57,17 @@ def get_type_info(txt,var_name):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m:
-                m = re.search(re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)[^\.]*$', txt, flags=re.MULTILINE)
+                m = re.search(re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*([^,;]+))?[^\.]*?$', txt, flags=re.MULTILINE)
                 tag = 'decl'
                 idx_type = 3
                 idx_bw = 4
                 idx_max = 5
+                idx_val = 9
                 if not m :
                     m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
                     tag = 'inst'
     # print('[get_type_info] tag = %s , groups = %s' %(tag,str(m.groups())))
-    ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag)[0]
+    ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag)[0]
     return ti
 
 # Extract all signal declaration
@@ -75,11 +77,27 @@ def get_all_type_info(txt):
     txt = re.sub(r'(?s)^[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
     # Suppose text has already been cleaned
     ti = []
+    # Look all modports
+    r = re.compile(r'(?s)modport\s+(\w+)\s*\((.*?)\);', flags=re.MULTILINE)
+    modports = r.findall(txt)
+    if modports:
+        for modport in modports:
+            ti.append({'decl':modport[1].replace('\n',''),'type':'','array':'','bw':'', 'name':modport[0], 'tag':'modport'})
+        # remove modports before looking for I/O and field to avoid duplication of signals
+        txt = r.sub('',txt)
+    # Look for clocking block
+    r = re.compile(r'(?s)clocking\s+(\w+)(.*?)endclocking(\s*:\s*\w+)?', flags=re.MULTILINE)
+    cbs = r.findall(txt)
+    if cbs:
+        for cb in cbs:
+            ti.append({'decl':'clocking '+cb[0],'type':'','array':'','bw':'', 'name':cb[0], 'tag':'clocking'})
+        # remove clocking block before looking for I/O and field to avoid duplication of signals
+        txt = r.sub('',txt)
     # Look for enum declaration
     # print('Look for enum declaration')
     r = re.compile(re_enum+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,5,'enum')
+        ti_tmp = get_type_info_from_match('',m,1,3,5,-1,'enum')
         # print('[get_all_type_info] enum groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove enum declaration since the content could be interpreted as signal declaration
@@ -88,7 +106,7 @@ def get_all_type_info(txt):
     # print('Look for struct declaration')
     r = re.compile(re_union+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,5,'struct')
+        ti_tmp = get_type_info_from_match('',m,1,3,5,-1,'struct')
         # print('[get_all_type_info] struct groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove struct declaration since the content could be interpreted as signal declaration
@@ -97,34 +115,26 @@ def get_all_type_info(txt):
     # print('Look for typedef declaration')
     r = re.compile(re_tdp+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,1,3,3,'typedef')
+        ti_tmp = get_type_info_from_match('',m,1,3,3,-1,'typedef')
         # print('[get_all_type_info] typedef groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # remove typedef declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
-    # Look all modports
-    r = re.compile(r'modport\s+(\w+)\s+\((.*?)\);', flags=re.MULTILINE)
-    modports = r.findall(txt)
-    if modports:
-        for modport in modports:
-            ti.append({'decl':modport[1],'type':'','array':'','bw':'', 'name':modport[0], 'tag':'modport'})
-        # print(modports)
-        # remove modports before looking for I/O and field to avoid duplication of signals
-        txt = r.sub('',txt)
     # Look for signal declaration
     # print('Look for signal declaration')
+    # TODO: handle init value
     re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*[\w\.\:]+\s*)?(?=;|,|\)\s*;)'
     r = re.compile(re_str,flags=re.MULTILINE)
     # print('[get_all_type_info] decl re="{0}'.format(re_str))
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,3,4,5,'decl')
+        ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
     # print('Look for interface instantiation')
     r = re.compile(re_inst+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*\(',flags=re.MULTILINE)
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,3,4,5,'inst')
+        ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'inst')
         # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # print(ti)
@@ -147,8 +157,8 @@ def get_all_type_info(txt):
     return ti
 
 # Get type info from a match object
-def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
-    ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag':tag}
+def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
+    ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag':tag, 'value':None}
     #return a tuple of None if not found
     if not m:
         return [ti_not_found]
@@ -174,10 +184,13 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
     if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property']:
         return [ti_not_found]
     # print("[get_type_info] Group => " + str(m.groups()))
+    value = None
     ft = ''
     bw = ''
     if var_name!='':
         signal_list = re.findall(r'('+var_name + r')\b\s*(\[(.*?)\]\s*)?', m.groups()[idx_max+1], flags=re.MULTILINE)
+        if idx_val > 0 and len(m.groups())>idx_val and m.groups()[idx_val]:
+            value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
         if m.groups()[idx_max]:
@@ -222,8 +235,9 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,tag):
                     at='associative'
                 else:
                     at='fixed'
+        # TODO: handle init value inside list
         # print("Array: " + str(m) + "=>" + str(at))
-        ti.append({'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag})
+        ti.append({'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value})
     return ti
 
 
@@ -282,9 +296,11 @@ def parse_module(flines,mname=r'\w+'):
                     params[-1]['decl'] = params[-1]['decl'].strip();
                     param_type = params[-1]['decl']
     ## Cleanup param value
+    params_name = []
     if params:
         for param in params:
             param['value'] = param['value'].strip()
+            params_name.append(param['name'])
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(clean_comment(m.group(0)))
     # pprint.pprint(ati,width=200)
@@ -297,10 +313,11 @@ def parse_module(flines,mname=r'\w+'):
         # get type for each port
         ports = []
         ports = [ti for ti in ati if ti['name'] in ports_name]
+    ports_name += params_name
     # Extract instances name
-    inst = [ti for ti in ati if ti['type']!='module' and ti['tag']=='inst']
+    inst = [ti for ti in ati if ti['type']!='module' and ti['type']!='interface' and ti['tag']=='inst']
     # Extract signal name
-    signals = [ti for ti in ati if ti['type']!='module' and ti['tag']!='inst' and ti['name'] not in ports_name]
+    signals = [ti for ti in ati if ti['type'] not in ['module','interface','modport'] and ti['tag']!='inst' and ti['name'] not in ports_name ]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
     modports = [ti for ti in ati if ti['tag']=='modport']
     if modports:
