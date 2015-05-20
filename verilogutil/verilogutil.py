@@ -1,6 +1,7 @@
 # Class/function to process verilog file
 import re, string, os
 import pprint
+import functools
 
 # regular expression for signal/variable declaration:
 #   start of line follow by 1 to 4 word,
@@ -19,9 +20,6 @@ re_param = r'^\s*parameter\b((?:\s*(?:\w+\s+)?(?:[A-Za-z_]\w+)\s*=\s*(?:[^,;]*)\
 # Port direction list constant
 port_dir = ['input', 'output','inout', 'ref']
 
-# TODO: create a class to handle the cache for N module
-cache_module = {'mname' : '', 'fname' : '', 'date' : 0, 'info' : None}
-
 
 def clean_comment(text):
     def replacer(match):
@@ -30,12 +28,28 @@ def clean_comment(text):
             return " " # note: a space and not an empty string
         else:
             return s
+
     pattern = re.compile(
         r'//.*?$|/\*.*?\*/|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
     )
     # do we need trim whitespaces?
     return re.sub(pattern, replacer, text)
+
+# Extract declaration of var_name from a file
+def get_type_info_file(fname,var_name):
+    # print("Parsing file " + fname + " for variable " + var_name)
+    fdate = os.path.getmtime(fname)
+    ti = get_type_info_file_cache(fname, var_name, fdate)
+    # print(get_type_info_file_cache.cache_info())
+    return ti
+
+@functools.lru_cache(maxsize=32)
+def get_type_info_file_cache(fname, var_name, fdate):
+    with open(fname) as f:
+        flines = f.read()
+        ti = get_type_info(flines, var_name)
+    return ti
 
 # Extract the declaration of var_name from txt
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
@@ -258,21 +272,16 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
 def parse_module_file(fname,mname=r'\w+'):
     # print("Parsing file " + fname + " for module " + mname)
     fdate = os.path.getmtime(fname)
-    # Check Cache module
-    if cache_module['mname'] == mname and cache_module['fname'] == fname and cache_module['date']==fdate:
-        # print('Using cache !')
-        return cache_module['info']
-    #
-    flines = ''
-    with open(fname, "r") as f:
-        flines = str(f.read())
-    flines = clean_comment(flines)
-    minfo = parse_module(flines,mname)
-    # Put information in cache:
-    cache_module['info']  = minfo
-    cache_module['mname'] = mname
-    cache_module['fname'] = fname
-    cache_module['date']  = fdate
+    minfo = parse_module_file_cache(fname, mname, fdate)
+    # print(parse_module_file_cache.cache_info())
+    return minfo
+
+@functools.lru_cache(maxsize=32)
+def parse_module_file_cache(fname, mname, fdate):
+    with open(fname) as f:
+        contents = f.read()
+        flines = clean_comment(contents)
+        minfo = parse_module(flines, mname)
     return minfo
 
 def parse_module(flines,mname=r'\w+'):

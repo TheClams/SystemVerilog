@@ -55,10 +55,7 @@ def lookup_type(view, t):
             # Parse only systemVerilog file. Check might be a bit too restrictive ...
             # print(t + ' defined in ' + str(fname))
             if fname.lower().endswith(('sv','svh')):
-                # print(t + ' defined in ' + str(fname))
-                with open(fname, 'r') as f:
-                    flines = str(f.read())
-                ti = verilogutil.get_type_info(flines,t)
+                ti = verilogutil.get_type_info_file(fname,t)
                 if ti['type']:
                     ti['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
                     break
@@ -371,9 +368,6 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':pname, 'tag':''}
             if pname in signal_dict:
                 ti = signal_dict[pname]
-            # ti = verilogutil.get_type_info(flines,pname)
-            # print ("Port " + p['name'] + " => " + pname + " => " + str(ti))
-
             # Check for extended match : prefix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_prefix',False):

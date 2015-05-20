@@ -163,7 +163,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         elif 'interface' in ti['decl']:
                             mi = verilog_module.lookup_module(self.view,ti['name'])
                             if mi :
-                                pprint.pprint(mi)
+                                # pprint.pprint(mi)
                                 #TODO: use modport info if it exists
                                 if 'param' in mi:
                                     for p in mi['param'] :
@@ -240,7 +240,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 txt += ' = ' + ti['value']
         return txt,ti
 
-    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
+    keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking']
 
     def color_str(self,s, addLink=False, ti_var=None):

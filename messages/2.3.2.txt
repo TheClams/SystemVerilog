@@ -2,3 +2,4 @@ SystemVerilog 2.3.2 Changelog:
 
 ## Improvement ##
  - Tooltip: Now display macro definition
+ - Use small cache for parse_module and get_type from file improving speed on auto-completion, tooltip, ...

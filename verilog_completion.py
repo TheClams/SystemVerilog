@@ -190,13 +190,16 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         # Parse only systemVerilog file. Check might be a bit too restrictive ...
                         if fname.lower().endswith(('sv','svh')):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
-                            with open(fname, 'r') as f:
-                                flines = str(f.read())
-                            tti = verilogutil.get_type_info(flines,t)
+                            tti = verilogutil.get_type_info_file(fname,t)
                             if tti['type']:
+                                # In case of interface need to get lines to extract completion
+                                if tti['type']=='interface':
+                                    with open(fname, 'r') as f:
+                                        flines = str(f.read())
                                 break
                     # print(tti)
                     if tti['type']=='interface':
+                        print(tti)
                         return self.interface_completion(flines,modport_only)
                     elif tti['type']=='enum':
                         completion = self.enum_completion()
@@ -444,9 +447,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     fname = sublimeutil.normalize_fname(f[0])
                     # Parse only systemVerilog file. Check might be a bit too restrictive ...
                     if fname.lower().endswith(('sv','svh')):
-                        with open(fname, 'r') as f:
-                            flines = str(f.read())
-                        tti = verilogutil.get_type_info(flines,t)
+                        tti = verilogutil.get_type_info_file(fname,t)
                         if tti:
                             # print('[struct_assign_completion] Type %s found in %s: %s' %(ti['type'],fname,str(tti)))
                             break
@@ -550,13 +551,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r = view.word(r);
         w = str.rstrip(view.substr(r))
         # get type : expect a package, an enum or a class (not supported yet)
+        # TODO: use verilog_module.lookup_type instead of re-writing the same stuff
         filelist = view.window().lookup_symbol_in_index(w)
         if filelist:
+            fname =''
             for f in filelist:
                 fname = sublimeutil.normalize_fname(f[0])
-                with open(fname, 'r') as f:
-                    flines = str(f.read())
-                ti = verilogutil.get_type_info(flines,w)
+                ti = verilogutil.get_type_info_file(fname,w)
                 if ti:
                     break
             if not ti:
@@ -569,6 +570,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
                     c = [[x[0],x[0]] for x in el]
             elif ti['type'] == 'package':
+                with open(fname, 'r') as f:
+                    flines = str(f.read())
                 ti = verilogutil.parse_package(flines)
                 c = [[x['name']+'\t'+x['type'],x['name']] for x in ti]
             elif ti['type'] == 'class':
@@ -790,13 +793,15 @@ class VerilogHelper():
         if t not in ['enum','logic','bit','reg','wire','input','output']:
             #check first in current file
             tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'])
+            # Not in current file ? look in index
             if not tti:
                 filelist = view.window().lookup_symbol_in_index(ti['type'])
                 if filelist:
-                    fname = sublimeutil.normalize_fname(filelist[0][0])
-                    with open(fname, 'r') as f:
-                        flines = str(f.read())
-                    tti = verilogutil.get_type_info(flines,t)
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        tti = verilogutil.get_type_info_file(fname,t)
+                        if tti:
+                            break
             ti = tti
         return verilogutil.fill_case(ti,length)
 
