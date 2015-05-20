@@ -1,0 +1,4 @@
+SystemVerilog 2.3.2 Changelog:
+
+## Improvement ##
+ - Tooltip: Now display macro definition

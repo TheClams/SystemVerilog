@@ -60,6 +60,7 @@ def init_css():
         fct = fg if 'function' not in color_dict else int(color_dict['support.function']['foreground'][1:],16)
         op  = fg if 'keyword.operator' not in color_dict else int(color_dict['keyword.operator']['foreground'][1:],16)
         num = fg if 'constant.numeric' not in color_dict else int(color_dict['constant.numeric']['foreground'][1:],16)
+        st  = fg if 'string' not in color_dict else int(color_dict['string']['foreground'][1:],16)
         # Create background and border color based on the background color
         b = bg & 255
         g = (bg>>8) & 255
@@ -93,6 +94,7 @@ def init_css():
         tooltip_css+= '.entity {{color: #{c:06x};}}\n'.format(c=ent)
         tooltip_css+= '.operator {{color: #{c:06x};}}\n'.format(c=op)
         tooltip_css+= '.numeric {{color: #{c:06x};}}\n'.format(c=num)
+        tooltip_css+= '.string {{color: #{c:06x};}}\n'.format(c=st)
         tooltip_css+= '.extra-info {font-size: 0.9em; }\n'
         #print(tooltip_css)
     else :
@@ -215,6 +217,17 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             ti = verilog_module.lookup_module(self.view,var_name)
             if ti:
                 txt = ti['type'] + ' ' + var_name
+        # Get Macro text
+        elif 'constant.other.define' in scope:
+            filelist = self.view.window().lookup_symbol_in_index(var_name)
+            if filelist:
+                for fi in filelist:
+                    fname = sublimeutil.normalize_fname(fi[0])
+                    with open(fname,'r') as f:
+                        flines = str(f.read())
+                    txt = verilogutil.get_macro(flines,var_name)
+                    if txt:
+                        break
         # Simply lookup in the file before the use of the variable
         else :
             # select whole file until end of current line
@@ -231,7 +244,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking']
 
     def color_str(self,s, addLink=False, ti_var=None):
-        ss = s.split(' ')
+        ss = s.split()
         sh = ''
         ti = None
         pos_var = len(ss)-1
@@ -239,19 +252,22 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             pos_var -= 2
         for i,w in enumerate(ss):
             m = re.match(r'^[A-Za-z_]\w?',w)
-            if i == len(ss)-1:
+            if '"' in w :
+                sh+=re.sub(r'(".*?")',r'<span class="string">\1</span> ',w)
+            elif i == len(ss)-1:
                 if m:
                     if addLink and ti_var and 'fname' in ti_var:
                         w ='<a href="{1}@{0}" class="entity">{1}</a>'.format(ti_var['fname'],w)
                 else:
-                    w = re.sub(r'\b((b|d)?\d+(\.\d+(ms|us|ns|ps|fs)?)?)\b',r'<span class="numeric">\1</span>',w)
+                    w = re.sub(r'\b((b|d|o)?\d+(\.\d+(ms|us|ns|ps|fs)?)?)\b',r'<span class="numeric">\1</span>',w)
+                    w = re.sub(r'(\'h[0-9A-Fa-f]+)\b',r'<span class="numeric">\1</span>',w)
                     w = re.sub(r'(\#|\:|\')',r'<span class="operator">\1</span>',w)
                 sh+=w
             elif w in ['input', 'output', 'inout']:
                 sh+='<span class="support">{0}</span> '.format(w)
             elif w in self.keywords:
                 sh+='<span class="keyword">{0}</span> '.format(w)
-            elif w in ['wire', 'reg', 'logic', 'int', 'signed', 'unsigned', 'real', 'bit', 'rand', 'void']:
+            elif w in ['wire', 'reg', 'logic', 'int', 'signed', 'unsigned', 'real', 'bit', 'rand', 'void', 'string']:
                 sh+='<span class="storage">{0}</span> '.format(w)
             elif '::' in w:
                 ws = w.split('::')
