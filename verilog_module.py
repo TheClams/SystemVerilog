@@ -26,7 +26,7 @@ def lookup_module(view,mname):
             fname = sublimeutil.normalize_fname(fname)
             mi = verilogutil.parse_module_file(fname,mname)
             if mi:
-                mi['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
+                mi['fname'] = (fname,rowcol[0],rowcol[1])
                 break
     return mi
 
@@ -41,7 +41,7 @@ def lookup_function(view,funcname):
                 flines = str(f.read())
             fi = verilogutil.parse_function(flines,funcname)
             if fi:
-                fi['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
+                fi['fname'] = (fname,rowcol[0],rowcol[1])
                 break
     return fi
 
@@ -57,7 +57,7 @@ def lookup_type(view, t):
             if fname.lower().endswith(('sv','svh')):
                 ti = verilogutil.get_type_info_file(fname,t)
                 if ti['type']:
-                    ti['fname'] = '{0}:{1}:{2}'.format(fname,rowcol[0],rowcol[1])
+                    ti['fname'] = (fname,rowcol[0],rowcol[1])
                     break
     return ti
 

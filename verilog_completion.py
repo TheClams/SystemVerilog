@@ -4,18 +4,28 @@ import collections
 
 try:
     from SystemVerilog.verilogutil import verilogutil
-    from SystemVerilog.verilogutil import sublimeutil
     from SystemVerilog.verilogutil import verilog_beautifier
+    from SystemVerilog.verilogutil import sublimeutil
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
     import verilogutil
     import verilog_beautifier
     import sublimeutil
 
+try:
+    from SystemVerilog import verilog_module
+    import verilog_module
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    import verilog_module
+
+############################################################################
+
 def plugin_loaded():
     imp.reload(verilogutil)
     imp.reload(verilog_beautifier)
     imp.reload(sublimeutil)
+    imp.reload(verilog_module)
 
 class VerilogAutoComplete(sublime_plugin.EventListener):
 
@@ -199,7 +209,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                                 break
                     # print(tti)
                     if tti['type']=='interface':
-                        print(tti)
                         return self.interface_completion(flines,modport_only)
                     elif tti['type']=='enum':
                         completion = self.enum_completion()
@@ -551,31 +560,24 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r = view.word(r);
         w = str.rstrip(view.substr(r))
         # get type : expect a package, an enum or a class (not supported yet)
-        # TODO: use verilog_module.lookup_type instead of re-writing the same stuff
-        filelist = view.window().lookup_symbol_in_index(w)
-        if filelist:
-            fname =''
-            for f in filelist:
-                fname = sublimeutil.normalize_fname(f[0])
-                ti = verilogutil.get_type_info_file(fname,w)
-                if ti:
-                    break
-            if not ti:
-                return c
-            # print(ti)
-            # In case of enum, provide all possible value
-            if ti['type'] == 'enum' :
-                m = re.search(r'\{(.*)\}', ti['decl'])
-                if m :
-                    el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
-                    c = [[x[0],x[0]] for x in el]
-            elif ti['type'] == 'package':
-                with open(fname, 'r') as f:
-                    flines = str(f.read())
-                ti = verilogutil.parse_package(flines)
+        ti = verilog_module.lookup_type(view,w)
+        if not ti:
+            return c
+        # print(ti)
+        # In case of enum, provide all possible value
+        if ti['type'] == 'enum' :
+            m = re.search(r'\{(.*)\}', ti['decl'])
+            if m :
+                el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
+                c = [[x[0],x[0]] for x in el]
+        elif ti['type'] == 'package':
+            with open(ti['fname'][0], 'r') as f:
+                flines = str(f.read())
+            ti = verilogutil.parse_package(flines)
+            if ti:
                 c = [[x['name']+'\t'+x['type'],x['name']] for x in ti]
-            elif ti['type'] == 'class':
-                sublime.status_message('Autocompletion for class scope unsupported for the moment')
+        elif ti['type'] == 'class':
+            sublime.status_message('Autocompletion for class scope unsupported for the moment')
         return c
 
     # Completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface with label

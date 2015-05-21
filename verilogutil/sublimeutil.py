@@ -100,7 +100,7 @@ def expand_to_block(view, region):
             break
     region.b = p - 1
     # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region))
-    print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
+    # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
 
 

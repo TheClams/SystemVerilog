@@ -117,9 +117,13 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 region.a = self.view.find_by_class(region.a,False,sublime.CLASS_WORD_START)
             if (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
                 region.b = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
+        # Optionnaly extend selection to parent object (parent.var)
+        # Optionnaly extend selection to scope specifier
+        if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
+            region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         v = self.view.substr(region)
         # print(v)
-        if re.match(r'^\w+$',v): # Check this is valid a valid word
+        if re.match(r'^([A-Za-z_]\w*::|([A-Za-z_]\w*\.)+)?[A-Za-z_]\w*$',v): # Check this is valid a valid word
             s,ti = self.get_type(v,region)
             if not s:
                 sublime.status_message('No definition found for ' + v)
@@ -228,6 +232,15 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     txt = verilogutil.get_macro(flines,var_name)
                     if txt:
                         break
+        # Variable inside a scope
+        elif '::' in var_name:
+            vs = var_name.split('::')
+            if len(vs)==2:
+                ti = verilog_module.lookup_type(self.view,vs[0])
+                if ti and ti['type']=='package':
+                    ti = verilogutil.get_type_info_file(ti['fname'][0],vs[1])
+                    if ti:
+                        txt = ti['decl']
         # Simply lookup in the file before the use of the variable
         else :
             # select whole file until end of current line
@@ -257,7 +270,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             elif i == len(ss)-1:
                 if m:
                     if addLink and ti_var and 'fname' in ti_var:
-                        w ='<a href="{1}@{0}" class="entity">{1}</a>'.format(ti_var['fname'],w)
+                        fname = '{0}:{1}:{2}'.format(ti_var['fname'][0],ti_var['fname'][1],ti_var['fname'][2])
+                        w ='<a href="{1}@{0}" class="entity">{1}</a>'.format(fname,w)
                 else:
                     w = re.sub(r'\b((b|d|o)?\d+(\.\d+(ms|us|ns|ps|fs)?)?)\b',r'<span class="numeric">\1</span>',w)
                     w = re.sub(r'(\'h[0-9A-Fa-f]+)\b',r'<span class="numeric">\1</span>',w)
@@ -275,7 +289,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 if addLink:
                     ti = verilog_module.lookup_type(self.view,ws[1])
                 if ti and 'fname' in ti:
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(ti['fname'],ws[1])
+                    fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(fname,ws[1])
                 else:
                     sh+='<span class="storage">{0}</span> '.format(ws[1])
             elif '.' in w:
@@ -283,7 +298,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 if addLink:
                     ti = verilog_module.lookup_type(self.view,ws[0])
                 if ti and 'fname' in ti:
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(ti['fname'],ws[0])
+                    fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(fname,ws[0])
                 else:
                     sh+='<span class="storage">{0}</span>'.format(ws[0])
                 sh+='.<span class="support">{0}</span> '.format(ws[1])
@@ -296,7 +312,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     ti = verilog_module.lookup_type(self.view,w)
                 # print('word={0} => ti={1}'.format(w,ti))
                 if ti and 'fname' in ti:
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(ti['fname'],w)
+                    fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
+                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(fname,w)
                 else:
                     sh+='<span class="storage">{0}</span> '.format(w)
             elif re.match(r'\d+',w) :
