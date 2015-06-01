@@ -15,3 +15,12 @@ always_comb begin
         end
     endcase
 end
+
+always @(posedge clk) begin
+    if(state==st_idle)
+        case(sym_4b)
+        endcase
+    if(state==st_load_crc0)
+        case(crc)
+        endcase
+end

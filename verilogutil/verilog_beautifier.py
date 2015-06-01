@@ -105,7 +105,7 @@ class VerilogBeautifier():
                     line = ilvl_tmp * self.indent
             # Handle end of split
             if ilvl in split:
-                if self.state not in ['comment_line','comment_block'] and w in [';','end'] :
+                if self.state not in ['comment_line','comment_block'] and w in [';','end','endcase'] :
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     split.pop(ilvl,0)
             # Identify split statement

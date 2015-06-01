@@ -562,7 +562,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         mpl = [x['name'] for x in mi['port']]
         mpal = [x['name'] for x in mi['param']]
         #Extract existing binding
-        bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)',txt,flags=re.MULTILINE)
+        bl = re.findall(r'(?s)\.(\w+)\s*\(\s*(.*?)\s*\)\s*(,|\))',txt,flags=re.MULTILINE)
         # Handle case of binding by position (TODO: support parameter as well ...)
         if not bl:
             m = re.search(r'(?s)(#\s*\((?P<params>.*?)\)\s*)?\s*\w+\s*\((?P<ports>.*?)\)\s*;',txt,flags=re.MULTILINE)
@@ -600,10 +600,15 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         # Check for deleted port
         dpl = [x for x in ipl if x not in mpl and x not in mpal]
         for p in dpl:
-            r_tmp = self.view.find(r'\.'+p+r'\s*\(.*?\)\s*(,)?',r.a)
+            r_tmp = self.view.find(r'(?s)\.'+p+r'\s*\(.*?\)\s*(,|\)\s*;)',r.a)
             if r.contains(r_tmp):
+                s = self.view.substr(r_tmp)
+                if s[-1]==';':
+                    s_tmp = s[:-1].strip()[:-1]
+                    r_tmp.b -= (len(s) - len(s_tmp))
                 self.view.erase(edit,r_tmp)
                 r_tmp = self.view.full_line(r_tmp.a)
+                # cleanup comment
                 m = re.search(r'^\s*(\/\/.*)?$',self.view.substr(r_tmp))
                 if m:
                     self.view.erase(edit,r_tmp)
