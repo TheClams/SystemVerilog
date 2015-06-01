@@ -107,3 +107,7 @@ class Tests(unittest.TestCase):
     def test_beautifyText11Strip(self):
         cfg = BeautifyConfig(stripEmptyLine=True)
         self.runBeautifyTest(self.path_test+"test11.sv", self.path_test+"test11_strip_expected.sv", cfg)
+
+    def test_beautifyText12(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"test12.sv", self.path_test+"test12_expected.sv", cfg)
