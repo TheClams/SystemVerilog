@@ -122,7 +122,7 @@ class VerilogBeautifier():
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     tmp = verilogutil.clean_comment(line).strip()
                     if tmp:
-                        m = re.search(r'(;|\{|\bend|\bendcase)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^(`\w+)\b',tmp)
+                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^(`\w+)\b',tmp)
                         # print('[Beautify] Testing for split: "{0}" (ilvl={1} prev={2}) - split={3}'.format(tmp,ilvl,ilvl_prev,split))
                         if not m:
                             if tmp.startswith('always'):
@@ -409,10 +409,11 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\']+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
-            # print(decl)
+            if not decl:
+                print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
             len_bw    = max([len(x[4]) for x in decl])
