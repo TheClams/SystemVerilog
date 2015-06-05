@@ -57,7 +57,7 @@ def init_css():
         sup = fg if 'support' not in color_dict else int(color_dict['support']['foreground'][1:],16)
         sto = fg if 'storage' not in color_dict else int(color_dict['storage']['foreground'][1:],16)
         ent = fg if 'entity' not in color_dict else int(color_dict['entity']['foreground'][1:],16)
-        fct = fg if 'function' not in color_dict else int(color_dict['support.function']['foreground'][1:],16)
+        fct = fg if 'support.function' not in color_dict else int(color_dict['support.function']['foreground'][1:],16)
         op  = fg if 'keyword.operator' not in color_dict else int(color_dict['keyword.operator']['foreground'][1:],16)
         num = fg if 'constant.numeric' not in color_dict else int(color_dict['constant.numeric']['foreground'][1:],16)
         st  = fg if 'string' not in color_dict else int(color_dict['string']['foreground'][1:],16)
@@ -118,6 +118,10 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             if (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
                 region.b = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
         # Optionnaly extend selection to parent object (parent.var)
+        # TODO: handle multiple level
+        if region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
+            if 'support.function.port' not in self.view.scope_name(region.a):
+                region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         # Optionnaly extend selection to scope specifier
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
             region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
@@ -130,7 +134,6 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
                 if ti and (ti['type'] in ['module','interface','function','task']):
-                    # print(ti)
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'param' in ti:
                         for p in ti['param'] :
@@ -150,6 +153,19 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         if fti:
                             for ti in fti:
                                 s += '<br>{0}{1}'.format('&nbsp;'*4,self.color_str(ti['decl'])[0])
+                elif ti and ti['type']=='class':
+                    ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                    s,_ = self.color_str(s='class {0}'.format(ti['name']), addLink=True,ti_var=ti)
+                    if ci['extend']:
+                        s+=' <span class="keyword">extends</span> '
+                        s+='<span class="storage">{0}</span>'.format(ci['extend'])
+                    for x in ci['member']:
+                        if 'access' not in x:
+                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                    for x in ci['function']:
+                        if 'access' not in x and x['name']!='new':
+                            s+='<br><span class="extra-info">{0}<span class="keyword">function </span><span class="function">{1}</span>()</span>'.format('&nbsp;'*4,x['name'])
+                    # print(ci)
                 else :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
@@ -180,6 +196,15 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                                     for p in mi['modport'] :
                                         d = 'modport {n}'.format(n=p['name'])
                                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
+                        elif ti['type']=='class':
+                            ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                            if ci:
+                                for x in ci['member']:
+                                    if 'access' not in x:
+                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                                for x in ci['function']:
+                                    if 'access' not in x and x['name']!='new':
+                                        s+='<br><span class="extra-info">{0}<span class="keyword">function </span><span class="function">{1}</span>()</span>'.format('&nbsp;'*4,x['name'])
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 self.view.show_popup(s,location=-1, max_width=500, on_navigate=self.on_navigate)
             else :
@@ -194,12 +219,34 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         scope = self.view.scope_name(region.a)
         ti = None
         txt = ''
+        # In case of field, retrieve parent type
+        if '.' in var_name:
+            s = var_name.split('.')
+            if len(s)>1 :
+                lines = self.view.substr(sublime.Region(0, self.view.line(region).b))
+                ti = verilogutil.get_type_info(lines,s[0])
+                #TODO: handle multiple level
+                # Get type definition
+                if ti['type']:
+                    if ti['type']=='module':
+                        ti = verilog_module.lookup_module(self.view,ti['name'])
+                    else:
+                        ti = verilog_module.lookup_type(self.view,ti['type'])
+                    # Lookup for the variable inside the type defined
+                    if ti:
+                        fname = ti['fname'][0]
+                        ti = verilogutil.get_type_info_file(fname,s[1])
+                        if ti['type'] in ['function', 'task']:
+                            with open(fname) as f:
+                                flines = verilogutil.clean_comment(f.read())
+                            ti = verilogutil.parse_function(flines,s[1])
+                        txt = ti['decl']
         # Extract type info from module if we are on port connection
-        if 'support.function.port' in scope:
+        elif 'support.function.port' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
             txt = self.view.substr(region)
             mname = re.search(r'\w+',txt).group(0)
-            #print('Find module with name {0}'.format(mname))
+            #print('[get_type] Find module with name {0}'.format(mname))
             mi = verilog_module.lookup_module(self.view,mname)
             if mi:
                 for p in mi['port']:
@@ -209,11 +256,11 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         # Get function I/O
         elif 'support.function.generic' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)
-            # print (ti)
+            # print ('[get_type] Function: {0}'.format(ti))
             if ti:
                 txt = ti['decl']
         # Get structure/interface
-        elif 'storage.type.userdefined' in scope:
+        elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope:
             ti = verilog_module.lookup_type(self.view,var_name)
             txt = ti['decl']
         # Get Module I/O
@@ -245,16 +292,20 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         else :
             # select whole file until end of current line
             region = self.view.line(region)
-            txt = self.view.substr(sublime.Region(0, region.b))
+            lines = self.view.substr(sublime.Region(0, region.b))
             # Extract type
-            ti = verilogutil.get_type_info(txt,var_name)
-            txt = ti['decl']
-            if 'value' in ti and ti['value']:
-                txt += ' = ' + ti['value']
+            ti = verilogutil.get_type_info(lines,var_name)
+            # Type not found in current file ? fallback to sublime index
+            if not ti['decl']:
+                ti = verilog_module.lookup_type(self.view,var_name)
+            if ti:
+                txt = ti['decl']
+                if 'value' in ti and ti['value']:
+                    txt += ' = ' + ti['value']
         return txt,ti
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
-                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking']
+                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'extends']
 
     def color_str(self,s, addLink=False, ti_var=None):
         ss = s.split()

@@ -87,7 +87,7 @@ def get_type_info(txt,var_name):
 # Extract the macro content from `define name macro_content
 def get_macro(txt, name):
     txt = clean_comment(txt)
-    m = re.search(r'(?s)^`define\s+'+name+r'\b[ \t]*(.*?)(?<!\\)\n',txt,re.MULTILINE)
+    m = re.search(r'(?s)^\s*`define\s+'+name+r'\b[ \t]*(.*?)(?<!\\)\n',txt,re.MULTILINE)
     if not m:
         return ''
     # remove line return
@@ -101,7 +101,7 @@ def get_macro(txt, name):
 def get_all_type_info(txt):
     # txt = clean_comment(txt)
     # Cleanup function contents since this can contains some signal declaration
-    txt = re.sub(r'(?s)^[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t\w]*(protected|local)?[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
     # Suppose text has already been cleaned
     ti = []
     # Look all modports
@@ -262,9 +262,13 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
                     at='associative'
                 else:
                     at='fixed'
+        d = {'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value}
+        ft0 = ft.split()[0]
+        if ft0 in ['local','protected']:
+            d['access'] = ft0
         # TODO: handle init value inside list
         # print("Array: " + str(m) + "=>" + str(at))
-        ti.append({'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value})
+        ti.append(d)
     return ti
 
 
@@ -358,14 +362,54 @@ def parse_package(flines,pname=r'\w+'):
     return ti
 
 def parse_function(flines,funcname):
-    flines_c = clean_comment(flines)
-    m = re.search(r'(?s)(\b(function|task)\s+(\w+\s+)?(\w+\s+)?)\b(' + funcname + r')\b\s*\((.*?)\s*\)\s*;',flines_c,re.MULTILINE)
+    m = re.search(r'(?s)(\b(protected|local)\s+)?(\bvirtual\s+)?\b((function|task)\s+(\w+\s+)?(\w+\s+|\[[\d:]+\]\s+)?)\b(' + funcname + r')\b\s*(\((.*?)\s*\))?\s*;(.*?)\bend\5\b',flines,re.MULTILINE)
     if not m:
         return None
-    # print(m.groups())
-    ti = get_all_type_info(m.groups()[5] + ';')
-    fi = {'name': funcname,'type': m.groups()[1],'decl': m.groups()[0] + ' ' + funcname, 'port' : ti}
+    if m.groups()[9]:
+        ti = get_all_type_info(m.groups()[9] + ';')
+    else:
+        ti_all = get_all_type_info(m.groups()[10])
+        ti = [x for x in ti_all if x['decl'].startswith(('input','output','inout'))]
+    fi = {'name': funcname,'type': m.groups()[4],'decl': m.groups()[3] + ' ' + funcname, 'port' : ti}
+    if m.groups()[1]:
+        fi['access'] = m.groups()[1]
     return fi
+
+# Parse a class for function and members
+def parse_class_file(fname,cname=r'\w+'):
+    # print("Parsing file " + fname + " for module " + mname)
+    fdate = os.path.getmtime(fname)
+    info = parse_class_file_cache(fname, cname, fdate)
+    # print(parse_class_file_cache.cache_info())
+    return info
+
+@functools.lru_cache(maxsize=32)
+def parse_class_file_cache(fname, cname, fdate):
+    with open(fname) as f:
+        contents = f.read()
+        flines = clean_comment(contents)
+        info = parse_class(flines, cname)
+    return info
+
+def parse_class(flines,cname=r'\w+'):
+    # print("Parsing for class " + cname + ' in \n' + flines)
+    m = re.search(r"(?s)(?P<type>class)\s+(?P<name>"+cname+")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>\w+(?:\s*#\(.*?\))?))?\s*;(?P<content>.*?)(?P<ending>endclass)", flines, re.MULTILINE)
+    if m is None:
+        return None
+    txt = clean_comment(m.group('content'))
+    ci = {'type':'class', 'name': m.group('name'), 'extend': None if 'extend' not in m.groupdict() else m.group('extend'), 'function' : []}
+    # TODO: handle parameters ...
+    # Extract all functions
+    fl = re.findall(r'(?s)(\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+)?)\b(\w+)\b\s*\((.*?)\s*\)\s*;',flines,re.MULTILINE)
+    for (_,f_access, f_virtual, f_type, f_return,f_name,f_args) in fl:
+        d = {'name': f_name, 'type': f_type, 'args': f_args, 'return': f_return}
+        if f_access:
+            d['access'] = f_access
+        ci['function'].append(d)
+    # Extract members
+    ci['member'] = get_all_type_info(txt)
+    # print(ci)
+    return ci
 
 # Fill all entry of a case for enum or vector (limited to 8b)
 # ti is the type infor return by get_type_info

@@ -33,12 +33,14 @@ def lookup_module(view,mname):
 def lookup_function(view,funcname):
     fi = None
     filelist = view.window().lookup_symbol_in_index(funcname)
+    print('Files for {0} = {1}'.format(funcname,filelist))
     if filelist:
         for f in filelist:
             fname, display_fname, rowcol = f
             fname = sublimeutil.normalize_fname(fname)
             with open(fname,'r') as f:
                 flines = str(f.read())
+            flines = verilogutil.clean_comment(flines)
             fi = verilogutil.parse_function(flines,funcname)
             if fi:
                 fi['fname'] = (fname,rowcol[0],rowcol[1])

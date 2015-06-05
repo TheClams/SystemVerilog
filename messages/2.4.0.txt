@@ -1,0 +1,17 @@
+SystemVerilog 2.4.0 Changelog:
+
+## Improvement ##
+ - Completion now supports class
+  * proposes only public member
+  * snippets for each arguments of a function
+ - Tooltip: extended support for class
+  * shows the base class, if any
+  * shows members and functions
+  * Colorize function name using theme color
+
+## Bug Fixes ##
+ - Highlight:
+  * Handles user-defined static variable
+  * Handles variable with parameterized parameters
+  * Fix typedef enum content highlighting
+ - get_macro(): handle case where the `define is indentend (affect the tooltip feature)

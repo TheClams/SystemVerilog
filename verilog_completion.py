@@ -202,14 +202,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
                             tti = verilogutil.get_type_info_file(fname,t)
                             if tti['type']:
-                                # In case of interface need to get lines to extract completion
-                                if tti['type']=='interface':
-                                    with open(fname, 'r') as f:
-                                        flines = str(f.read())
                                 break
+                        else :
+                            tti['type'] = ''
                     # print(tti)
                     if tti['type']=='interface':
-                        return self.interface_completion(flines,modport_only)
+                        return self.interface_completion(fname,modport_only)
+                    elif tti['type'] == 'class':
+                        return self.class_completion(fname,tti['name'])
                     elif tti['type']=='enum':
                         completion = self.enum_completion()
                     elif tti['type'] in ['struct','union']:
@@ -467,8 +467,30 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         fe = re.findall(r'(\w+)\s*:',content)
         return self.struct_completion(tti['decl'],True,fe)
 
+    def class_completion(self, fname,cname):
+        ci = verilogutil.parse_class_file(fname,cname)
+        c = []
+        #TODO: parse also the extended class (up to a limit ?)
+        for x in ci['member']:
+            # filter out local and protected variable
+            if 'access' not in x:
+                c.append([x['name']+'\t'+x['type'], x['name']])
+        for x in ci['function']:
+            # filter out local and protected function, and constructor (cannot be called with a .)
+            snippet = x['name']+'('
+            for i,n in enumerate(x['args'].split(',')):
+                if i!=0:
+                    snippet += ', '
+                snippet += '${{{0}:{1}}}'.format(i+1,n.strip())
+            snippet += ')'
+            if 'access' not in x and x['name'] != 'new':
+                c.append([x['name']+'\tFunction', snippet])
+        return c
+
     # Interface completion: all signal declaration can be used as completion
-    def interface_completion(self,flines, modport_only=False):
+    def interface_completion(self,fname, modport_only=False):
+        with open(fname, 'r') as f:
+            flines = str(f.read())
         flines = verilogutil.clean_comment(flines)
         #TODO: use the parse_module function ?
         # Look all modports
