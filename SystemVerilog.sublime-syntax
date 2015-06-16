@@ -30,6 +30,13 @@ contexts:
       captures:
         1: keyword.control.systemverilog
       set: [typedef_symbol, typedef_decl]
+    - match: '\s*\b(nettype)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)(\s+(with)\s+([a-zA-Z_][a-zA-Z0-9_]*))?'
+      captures:
+        1: keyword.control.systemverilog
+        2: storage.type.systemverilog
+        3: entity.name.type.systemverilog
+        5: keyword.control.systemverilog
+        6: support.function.resolve.systemverilog
     - match: '\s*(module)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
       captures:
         1: keyword.control.systemverilog
@@ -40,6 +47,17 @@ contexts:
           captures:
             1: entity.name.function.systemverilog
           pop: true
+        - match: '\s*\bimport\b'
+          scope: keyword.control.systemverilog
+          push:
+            - match: ;
+              pop: true
+            - match: '\b([a-zA-Z_]\w*)(::)'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+            - match: '\*'
+              scope: keyword.operator.systemverilog
         - include: port-dir
         - match: \s*(parameter)
           scope: keyword.other.systemverilog
@@ -243,6 +261,12 @@ contexts:
         - meta_scope: meta.struct.assign.systemverilog
         - match: ;
           pop: true
+        - match: '\?'
+          scope: keyword.operator.systemverilog
+          push:
+            - match: '(?:,|})'
+              pop: true
+            - include: base-grammar
         - match: \b(\w+)\s*(:)(?!:)
           captures:
             1: support.function.field.systemverilog

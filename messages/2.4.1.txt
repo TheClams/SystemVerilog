@@ -1,0 +1,11 @@
+SystemVerilog 2.4.1 Changelog:
+
+## Bug Fixes ##
+ - Highlight:
+  * Support user-defined nettype
+  * Support import declaration between module
+  * Fix highlight of field in structure assign with ternary operator ?:
+ - Parser now support import declaration between module and parameter/port declaration
+ - Tooltip:
+  * Works on user defined input without scope
+  * Better handling of error when type is not found

@@ -260,9 +260,10 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             if ti:
                 txt = ti['decl']
         # Get structure/interface
-        elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope:
+        elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope or 'storage.type.interface' in scope:
             ti = verilog_module.lookup_type(self.view,var_name)
-            txt = ti['decl']
+            if ti:
+                txt = ti['decl']
         # Get Module I/O
         elif 'storage.module' in scope:
             ti = verilog_module.lookup_module(self.view,var_name)

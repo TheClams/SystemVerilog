@@ -26,6 +26,7 @@ typedef logic [31:0] queue_of_levels [$];
     endinterface
 
 module my_module
+    import my_pkg::*;
   #(parameter int P1=0,
     logic [15:0] P2 = 16'b0000_1111,
     real P3 = my_pkg::pp,
@@ -115,3 +116,5 @@ generate
         );
     end
 endgenerate
+
+   nettype t_mytype mytype with myresolve;
