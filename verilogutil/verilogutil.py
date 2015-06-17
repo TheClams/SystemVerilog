@@ -242,10 +242,11 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             # regex can catch more than wanted, so filter based on a list
             if not tmp.startswith('end'):
                 ft += tmp + ' '
+    if not ft:
+        return [ti_not_found]
     ti = []
     for signal in signal_list :
         fts = ft + signal[0]
-        # print("get_type_info: decl => " + ft)
         # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
         at = ""
         if signal[1]!='':
