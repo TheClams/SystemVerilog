@@ -1,0 +1,12 @@
+SystemVerilog 2.4.2 Changelog:
+
+## Bug Fixes ##
+ - Highlight:
+  * Highlight all type inside function/task arguments list
+  * Fix empty typedef case that was breaking highlight
+  * Support macro inside bind
+  * Fix class highlight when indented
+  * Support meta-attribute syntax (* *) : scope is comment.attribute
+ - Tooltip:
+  * Display interface detailed info when called on the interface type directly
+ - Parsing: fix incorrect extract of initial block mistaken as variable declaration

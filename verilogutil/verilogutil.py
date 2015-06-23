@@ -208,7 +208,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property']:
+    if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial']:
         return [ti_not_found]
     # print("[get_type_info] Group => " + str(m.groups()))
     value = None
@@ -291,7 +291,7 @@ def parse_module_file_cache(fname, mname, fdate):
 
 def parse_module(flines,mname=r'\w+'):
     # print("Parsing for module " + mname + ' in \n' + flines)
-    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
+    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+r")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')
