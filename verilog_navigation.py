@@ -133,6 +133,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
+                # print(ti)
                 if ti and (ti['type'] in ['module','interface','function','task']):
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'param' in ti:
@@ -142,6 +143,18 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     if 'port' in ti:
                         for p in ti['port'] :
                             s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(p['decl'])[0])
+                    if ti['type']=='interface':
+                        if 'signal' not in ti:
+                            ti = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
+                        if ti:
+                            if 'signal' in ti:
+                                for x in ti['signal']:
+                                    if x['tag']=='decl':
+                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                            if 'modport' in ti:
+                                for p in ti['modport'] :
+                                    d = 'modport {n}'.format(n=p['name'])
+                                    s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
                 elif ti and 'tag' in ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
                     m = re.search(r'(?s)^(.*)\{(.*)\}', ti['decl'])
                     # print(ti)
@@ -189,9 +202,10 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                                     for p in mi['param'] :
                                         d = 'parameter {t} {n} = {v}'.format(t=p['decl'],n=p['name'],v=p['value'])
                                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(d)[0])
-                                for x in mi['signal']:
-                                    if x['tag']=='decl':
-                                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
+                                if 'signal' in mi:
+                                    for x in mi['signal']:
+                                        if x['tag']=='decl':
+                                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(x['decl'])[0])
                                 if 'modport' in mi:
                                     for p in mi['modport'] :
                                         d = 'modport {n}'.format(n=p['name'])

@@ -401,10 +401,13 @@ class VerilogBeautifier():
     # Align ANSI style port declaration of a module
     def alignModulePort(self,txt, ilvl):
         # Extract parameter and ports
-        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)(?P<import>\s+import\s+.*?;)?\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         txt_new = self.indent*(ilvl) + 'module ' + m.group('mname').strip()
+        # Add optional import declaration
+        if m.group('import'):
+            txt_new += '\n{0}{1}\n'.format(self.indent*(ilvl+1),m.group('import').strip())
         # Add optional parameter declaration
         if m.group('params'):
             param_txt = m.group('params').strip()
@@ -424,7 +427,10 @@ class VerilogBeautifier():
             has_param_all = len(has_param_list)==len(decl)
             has_param = len(has_param_list)>0
             # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param)))
-            txt_new += ' #('
+            if m.group('import'):
+                txt_new += self.indent*(ilvl+1) + '#('
+            else:
+                txt_new += ' #('
             # add only one parameter statement if there is at least one but not on all line
             if has_param and not has_param_all:
                 txt_new += 'parameter'
