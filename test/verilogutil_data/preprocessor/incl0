@@ -1,0 +1,3 @@
+incl0 begin
+`include "incl1"
+incl0 end
