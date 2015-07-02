@@ -161,7 +161,7 @@ contexts:
         - include: operators
         - include: functions
         - include: constants
-    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|event|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
+    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
     - match: \s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|begin|fork|forkjoin|unique|unique0|priority)\b
@@ -198,11 +198,13 @@ contexts:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
         3: entity.name.type.class.systemverilog
-    - match: '\b(extends)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\b(extends)\s+(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.control.systemverilog
-        2: entity.other.inherited-class.systemverilog
+        2: support.type.scope.systemverilog
+        3: keyword.operator.scope.systemverilog
+        4: entity.other.inherited-class.systemverilog
     - include: all-types
     - include: operators
     - include: port-dir
@@ -225,7 +227,7 @@ contexts:
       scope: meta.param.systemverilog
       captures:
         1: keyword.other.systemverilog
-    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=(#\s*\([\w,#\(\)]+\)\s*)?([a-zA-Z][a-zA-Z0-9_\s\[\]'']*)(;|,|=|''\{))'
+    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=(#\s*\([\w,#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*[a-zA-Z][a-zA-Z0-9_]*(\s*\[.*?\]\s*)*(;|,|=|''\{))'
       scope: meta.userdefined.systemverilog
       captures:
         1: keyword.other.systemverilog
@@ -470,7 +472,7 @@ contexts:
         1: support.type.systemverilog
         2: keyword.operator.scope.systemverilog
   storage-type-systemverilog:
-    - match: '\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void)\b'
+    - match: '\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox)\b'
       scope: storage.type.systemverilog
     - match: \s*\b(uvm_transaction|uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence_base|uvm_sequence|uvm_sequence_item|uvm_sequence_state|uvm_sequencer|uvm_sequencer_base|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection|uvm_recorder|uvm_domain|uvm_reg_field|uvm_reg|uvm_reg_block|uvm_bitstream_t|uvm_radix_enum|uvm_printer|uvm_packer|uvm_comparer|uvm_scope_stack)\b
       scope: storage.type.uvm.systemverilog
@@ -514,6 +516,8 @@ contexts:
   typedef_decl:
     - include: struct_decl
     - include: comments
+    - match: '\b(virtual|interface)\b'
+      scope: keyword.control.systemverilog
     - match: '\bclass\b'
       scope: keyword.control.systemverilog
       pop: true
