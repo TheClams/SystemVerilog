@@ -178,7 +178,7 @@ contexts:
     - match: '^\s*(`define)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
       scope: meta.define.systemverilog
       captures:
-        1: constant.other.define.systemverilog
+        1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
     - match: '\s*(primitive|package|constraint|interface|covergroup|program)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
@@ -377,6 +377,8 @@ contexts:
         2: support.variable.systemverilog
     - match: '`(celldefine|else|elsif|endcelldefine|endif|include|line|nounconnected_drive|resetall|timescale|unconnected_drive|undef|begin_\w+|end_\w+|remove_\w+|restore_\w+)\b'
       scope: constant.other.preprocessor.systemverilog
+    - match: '``\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+      scope: variable.macro.systemverilog
     - match: '`\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
       scope: constant.other.define.systemverilog
     - match: \b(null)\b

@@ -102,6 +102,8 @@ def get_all_type_info(txt):
     # txt = clean_comment(txt)
     # Cleanup function contents since this can contains some signal declaration
     txt = re.sub(r'(?s)^[ \t\w]*(protected|local)?[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
+    # Cleanup constraint definition
+    txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*([^\{]+?(\s*\{.*?\})?)*?\s*\};','',txt,  flags=re.MULTILINE)
     # Suppose text has already been cleaned
     ti = []
     # Look all modports
@@ -242,7 +244,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             # regex can catch more than wanted, so filter based on a list
             if not tmp.startswith('end'):
                 ft += tmp + ' '
-    if not ft:
+    if not ft.strip():
         return [ti_not_found]
     ti = []
     for signal in signal_list :

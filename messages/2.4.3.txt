@@ -1,0 +1,8 @@
+SystemVerilog 2.4.3 Changelog:
+
+## Improvements ##
+ - Alignment: indentation of `ifdef, `elsif, `else
+
+## Bug Fixes ##
+ - Parsing: properly exclude constraint content from class member
+ - Highlight: support escape of macro parameter ``param

@@ -48,7 +48,21 @@ class VerilogBeautifier():
             self.state = self.states[-1]
 
     def isStateEnd(self,w):
-        return (self.state=='begin' and w=='end') or (self.state=='covergroup' and w=='endgroup') or (self.state=='fork' and w.startswith('join')) or (self.state=='{' and w=='}') or (self.state=='(' and w==')') or (self.state and w=='end' + self.state)
+        if (self.state=='begin' and w=='end') :
+            return True
+        if (self.state=='covergroup' and w=='endgroup') :
+            return True
+        if (self.state=='fork' and w.startswith('join')) :
+            return True
+        if (self.state=='{' and w=='}') :
+            return True
+        if (self.state=='(' and w==')') :
+            return True
+        if (self.state.startswith('`') and w in ['`elsif', '`else', '`endif']) :
+            return True
+        if (self.state and w=='end' + self.state) :
+            return True
+        return False
 
     def beautifyFile(self,fnameIn,fnameOut=''):
         if not fnameOut:
@@ -77,7 +91,7 @@ class VerilogBeautifier():
         split_always = 0
         self.always_state = ''
         # Split all text in word, special character, space and line return
-        words = re.findall(r"\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
+        words = re.findall(r"`?\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
         for w in words:
             state_end = self.isStateEnd(w)
             # Start of line ?
@@ -96,12 +110,14 @@ class VerilogBeautifier():
                     txt_new += self.alignAssign(block,2)
                     block = ''
                     self.block_state = ''
+                if not has_indent and self.state.startswith('`'):
+                    has_indent = True
                 # Insert indentation except for comment_block without initial indentation and module declaration
                 if self.block_state not in ['module'] and (self.state!='comment_block' or has_indent) and w.strip():
                     ilvl_tmp = ilvl+split_always
                     for i,x in split.items() :
                         ilvl_tmp += x[0]
-                    # print('split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl+split_sum,s=self.states, b=self.block_state))
+                    # print('split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl_tmp,s=self.states, b=self.block_state))
                     line = ilvl_tmp * self.indent
             # Handle end of split
             if ilvl in split:
@@ -366,7 +382,7 @@ class VerilogBeautifier():
         return txt_new
 
     def processWord(self,w, w_prev, state_end, txt):
-        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(']
+        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
         if w in kw_block:
             self.stateUpdate(w)
             if w in ['module','package', 'generate', 'function', 'task']:
