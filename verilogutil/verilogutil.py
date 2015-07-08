@@ -87,15 +87,18 @@ def get_type_info(txt,var_name):
 # Extract the macro content from `define name macro_content
 def get_macro(txt, name):
     txt = clean_comment(txt)
-    m = re.search(r'(?s)^\s*`define\s+'+name+r'\b[ \t]*(.*?)(?<!\\)\n',txt,re.MULTILINE)
+    m = re.search(r'(?s)^\s*`define\s+'+name+r'\b[ \t]*(?:\((.*?)\)[ \t]*)?(.*?)(?<!\\)\n',txt,re.MULTILINE)
     if not m:
         return ''
     # remove line return
-    macro = m.groups()[0].replace('\\\n','')
+    macro = m.groups()[1].replace('\\\n','')
+    param_list = m.groups()[0]
+    if param_list:
+        param_list = param_list.replace('\\\n','')
     # remove escape character for string
     macro = macro.replace('`"','"')
     # TODO: Expand macro if there is some arguments
-    return macro
+    return macro,param_list
 
 # Extract all signal declaration
 def get_all_type_info(txt):

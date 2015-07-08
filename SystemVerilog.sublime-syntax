@@ -50,11 +50,12 @@ contexts:
             - match: \)\s*;
               pop: true
             - include: port-dir
-            - match: '\s*\b(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            - match: '\s*\b(?:\b(virtual)\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
               captures:
-                1: support.type.scope.systemverilog
-                2: keyword.operator.scope.systemverilog
-                3: storage.type.systemverilog
+                1: keyword.other.systemverilog
+                2: support.type.scope.systemverilog
+                3: keyword.operator.scope.systemverilog
+                4: storage.type.systemverilog
             - include: base-grammar
     - match: \s*\b(typedef)\b
       captures:
@@ -327,14 +328,18 @@ contexts:
           captures:
             0: punctuation.definition.attribute.systemverilog
     # stray bracket
-    - match: '\(|\['
-      push: brackets
+    - match: \(
+      push:
+        - match: \)
+          pop: true
+        - include: main
+    - match: '\['
+      push:
+        - match: '\]'
+          pop: true
+        - include: main
     - match: '\)|\]'
       scope: invalid.illegal.stray-bracket-end
-  brackets:
-    - match: '\)|\]'
-      pop: true
-    - include: main
   all-types:
     - include: storage-type-systemverilog
     - include: storage-modifier-systemverilog
@@ -397,30 +402,33 @@ contexts:
     - match: '\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\('
       captures:
         1: support.function.port.systemverilog
-      push:
-        - match: \)
-          pop: true
-        - include: constants
-        - include: comments
-        - include: operators
-        - include: strings
-        - include: constants
-        - match: '\b([a-zA-Z_]\w*)(::)'
-          captures:
-            1: support.type.scope.systemverilog
-            2: keyword.operator.scope.systemverilog
-        - match: '\b([a-zA-Z_]\w*)('')'
-          captures:
-            1: storage.type.interface.systemverilog
-            2: keyword.operator.cast.systemverilog
-        - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
-          scope: support.function.systemverilog
-        - match: \b(virtual)\b
-          scope: keyword.control.systemverilog
+      push: module-binding-signal
     - match: \w\.([a-zA-Z_][a-zA-Z0-9_]*)
       # catch field => normal text
     - match: \.([a-zA-Z_][a-zA-Z0-9_]*)\s*
       scope: support.function.port.implicit.systemverilog
+  module-binding-signal:
+    - match: \(
+      push: module-binding-signal
+    - match: \)
+      pop: true
+    - include: constants
+    - include: comments
+    - include: operators
+    - include: strings
+    - include: constants
+    - match: '\b([a-zA-Z_]\w*)(::)'
+      captures:
+        1: support.type.scope.systemverilog
+        2: keyword.operator.scope.systemverilog
+    - match: '\b([a-zA-Z_]\w*)('')'
+      captures:
+        1: storage.type.interface.systemverilog
+        2: keyword.operator.cast.systemverilog
+    - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+      scope: support.function.systemverilog
+    - match: \b(virtual)\b
+      scope: keyword.control.systemverilog
   module-param:
     - match: (#)\s*\(
       captures:

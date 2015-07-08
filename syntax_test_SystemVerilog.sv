@@ -147,7 +147,10 @@ my_module i_my_module
   (
     .if1(if1),
     .if2(if2),
-    .clk(clk),
+    .clk(`MYMACRO(5).clk),
+//   ^ support.function.port
+//        ^ constant.other.define
+//                   ^ -support.function.port
     .my_out(my_out),
   );
 
@@ -157,14 +160,59 @@ parameter
 localparam mytype myvar = mytype'(MY_INIT/4+8);
 localparam myvar1 = MY_INIT1;
 localparam logic [1:0] myvar2 = MY_INIT2;
+
+/*------------------------------------------------------------------------------
+--  Structure / Typedef
+------------------------------------------------------------------------------*/
 typedef struct {logic a; int b; bit [3:0] c;} mystruct;
 protected const mystruct c_var = '{a:0,b:1,c:4'hD};
+//                                 ^ support.function.field
+
+/*------------------------------------------------------------------------------
+--  Task & functions
+------------------------------------------------------------------------------*/
+
+task connect(virtual nfc_ip_top_if dut_if);
+// <- keyword.control
+//   ^ entity.name.function
+//           ^ keyword.other
+//                   ^ storage.type
+endtask
+
 
 function void my_func(ref logic d, input int din,
                       input bit[3:0] d,
                       output dout);
     $display("d=%0d",d);
 endfunction : my_func
+
+        function automatic integer CLOGB2;
+        endfunction
+
+/*------------------------------------------------------------------------------
+--  Invalid syntax
+------------------------------------------------------------------------------*/
+(])) [)]]
+// <- -invalid.illegal
+ // <- invalid.illegal
+  // <- -invalid.illegal
+   // <- invalid.illegal
+     // <- -invalid.illegal
+      // <- invalid.illegal
+       // <- -invalid.illegal
+        // <- invalid.illegal
+
+/*------------------------------------------------------------------------------
+--  MISC
+------------------------------------------------------------------------------*/
+
+   nettype t_mytype mytype with myresolve;
+// ^ keyword.control
+//         ^ storage.type
+//                  ^ entity.name.type
+//                         ^ keyword.control
+//                              ^ support.function.resolve
+
 
 fork
 join_any
@@ -193,8 +241,6 @@ always_ff @(posedge clk or negedge rst_n) begin : proc_
         a <= a + b;
 end
 
-        function automatic integer CLOGB2;
-        endfunction
 
 generate
     for (int i = 0; i < count; i++) begin
@@ -206,4 +252,3 @@ generate
     end
 endgenerate
 
-   nettype t_mytype mytype with myresolve;
