@@ -27,8 +27,8 @@ def lookup_module(view,mname):
         if fname in flist_norm:
             _,_,rowcol = filelist[flist_norm.index(fname)]
             mi = verilogutil.parse_module_file(fname,mname)
-            if mi:
-                mi['fname'] = (fname,rowcol[0],rowcol[1])
+        if mi:
+            mi['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid module definition to be the correct one
         else:
             for f in filelist:
@@ -54,8 +54,8 @@ def lookup_function(view,funcname):
                 flines = str(f.read())
             flines = verilogutil.clean_comment(flines)
             fi = verilogutil.parse_function(flines,funcname)
-            if fi:
-                fi['fname'] = (fname,rowcol[0],rowcol[1])
+        if fi:
+            fi['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid function definition to be the correct one
         else:
             for f in filelist:
@@ -80,8 +80,8 @@ def lookup_type(view, t):
         if fname in flist_norm:
             _,_,rowcol = filelist[flist_norm.index(fname)]
             ti = verilogutil.get_type_info_file(fname,t)
-            if ti['type']:
-                ti['fname'] = (fname,rowcol[0],rowcol[1])
+        if ti['type']:
+            ti['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid type definition to be the correct one
         else:
             for f in filelist:
