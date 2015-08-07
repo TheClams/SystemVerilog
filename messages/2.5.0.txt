@@ -1,0 +1,16 @@
+SystemVerilog 2.5.0 Changelog:
+
+## Improvement ##
+ - Tooltip: always check if a symbol is defined inside the current file before looking for a definition in another file
+ - Update the Toggle .* command to expand all .* in the file if not inside an instance.
+/!\ The key binding given in the readme was restricting the command to instance only.
+/!\ -> Update your keybinding to use the extended feature.
+
+## Bug Fixes ##
+ - Highlight:
+  * Proper highlight of virtual as a qualifier of a task argument
+  * Better recognition of missing ( or [
+  * Fix highlight of signal inside module binding when parameterized macro for example
+ - Module reconnection: better handling of connection by position when there is more port than connection
+ - Macro extraction: support parameterized macro
+

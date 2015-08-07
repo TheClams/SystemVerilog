@@ -287,13 +287,20 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         elif 'constant.other.define' in scope:
             filelist = self.view.window().lookup_symbol_in_index(var_name)
             if filelist:
-                for fi in filelist:
-                    fname = sublimeutil.normalize_fname(fi[0])
+                fname = self.view.file_name()
+                # Check if symbol is defined in current file first
+                if fname in [sublimeutil.normalize_fname(f[0]) for f in filelist]:
                     with open(fname,'r') as f:
                         flines = str(f.read())
-                    txt = verilogutil.get_macro(flines,var_name)
-                    if txt:
-                        break
+                    txt,_ = verilogutil.get_macro(flines,var_name)
+                else:
+                    for fi in filelist:
+                        fname = sublimeutil.normalize_fname(fi[0])
+                        with open(fname,'r') as f:
+                            flines = str(f.read())
+                        txt,_ = verilogutil.get_macro(flines,var_name)
+                        if txt:
+                            break
         # Variable inside a scope
         elif '::' in var_name:
             vs = var_name.split('::')

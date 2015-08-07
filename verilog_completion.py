@@ -38,6 +38,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         self.view = view
         self.settings = view.settings()
+        if self.settings.get("sv.disable_autocomplete"):
+            return []
         r = view.sel()[0]
         scope = view.scope_name(r.a)
         # If there is a prefix, allow sublime to provide completion ?

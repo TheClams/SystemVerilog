@@ -80,7 +80,7 @@ To map key to the different feature, simply add the following to your user .subl
 		"context":
 		[
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },
-			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog meta.module.inst"}
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
 	},
 	{

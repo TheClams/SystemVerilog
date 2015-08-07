@@ -21,46 +21,79 @@ def lookup_module(view,mname):
     mi = None
     filelist = view.window().lookup_symbol_in_index(mname)
     if filelist:
-        for f in filelist:
-            fname, display_fname, rowcol = f
-            fname = sublimeutil.normalize_fname(fname)
+        # Check if module is defined in current file first
+        fname = view.file_name()
+        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
+        if fname in flist_norm:
+            _,_,rowcol = filelist[flist_norm.index(fname)]
             mi = verilogutil.parse_module_file(fname,mname)
-            if mi:
-                mi['fname'] = (fname,rowcol[0],rowcol[1])
-                break
+        if mi:
+            mi['fname'] = (fname,rowcol[0],rowcol[1])
+        # Consider first file with a valid module definition to be the correct one
+        else:
+            for f in filelist:
+                fname, display_fname, rowcol = f
+                fname = sublimeutil.normalize_fname(fname)
+                mi = verilogutil.parse_module_file(fname,mname)
+                if mi:
+                    mi['fname'] = (fname,rowcol[0],rowcol[1])
+                    break
     return mi
 
 def lookup_function(view,funcname):
     fi = None
     filelist = view.window().lookup_symbol_in_index(funcname)
-    print('Files for {0} = {1}'.format(funcname,filelist))
+    # print('Files for {0} = {1}'.format(funcname,filelist))
     if filelist:
-        for f in filelist:
-            fname, display_fname, rowcol = f
-            fname = sublimeutil.normalize_fname(fname)
+        # Check if function is defined in current file first
+        fname = view.file_name()
+        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
+        if fname in flist_norm:
+            _,_,rowcol = filelist[flist_norm.index(fname)]
             with open(fname,'r') as f:
                 flines = str(f.read())
             flines = verilogutil.clean_comment(flines)
             fi = verilogutil.parse_function(flines,funcname)
-            if fi:
-                fi['fname'] = (fname,rowcol[0],rowcol[1])
-                break
+        if fi:
+            fi['fname'] = (fname,rowcol[0],rowcol[1])
+        # Consider first file with a valid function definition to be the correct one
+        else:
+            for f in filelist:
+                fname, display_fname, rowcol = f
+                fname = sublimeutil.normalize_fname(fname)
+                with open(fname,'r') as f:
+                    flines = str(f.read())
+                flines = verilogutil.clean_comment(flines)
+                fi = verilogutil.parse_function(flines,funcname)
+                if fi:
+                    fi['fname'] = (fname,rowcol[0],rowcol[1])
+                    break
     return fi
 
 def lookup_type(view, t):
     ti = None
     filelist = view.window().lookup_symbol_in_index(t)
     if filelist:
-        for f in filelist:
-            fname, display_fname, rowcol = f
-            fname = sublimeutil.normalize_fname(fname)
-            # Parse only systemVerilog file. Check might be a bit too restrictive ...
-            # print(t + ' defined in ' + str(fname))
-            if fname.lower().endswith(('sv','svh')):
-                ti = verilogutil.get_type_info_file(fname,t)
-                if ti['type']:
-                    ti['fname'] = (fname,rowcol[0],rowcol[1])
-                    break
+        # Check if symbol is defined in current file first
+        fname = view.file_name()
+        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
+        if fname in flist_norm:
+            _,_,rowcol = filelist[flist_norm.index(fname)]
+            ti = verilogutil.get_type_info_file(fname,t)
+        if ti['type']:
+            ti['fname'] = (fname,rowcol[0],rowcol[1])
+        # Consider first file with a valid type definition to be the correct one
+        else:
+            for f in filelist:
+                fname, display_fname, rowcol = f
+                fname = sublimeutil.normalize_fname(fname)
+                # Parse only systemVerilog file. Check might be a bit too restrictive ...
+                # print(t + ' defined in ' + str(fname))
+                if fname.lower().endswith(('sv','svh')):
+                    ti = verilogutil.get_type_info_file(fname,t)
+                    if ti['type']:
+                        ti['fname'] = (fname,rowcol[0],rowcol[1])
+                        break
     return ti
 
 ########################################
@@ -467,7 +500,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
 
 ##########################################
 # Toggle between .* and explicit binding #
-class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
+class VerilogDoToggleDotStarCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
         if len(self.view.sel())==0 : return;
@@ -530,6 +563,22 @@ class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
                         self.view.insert(edit,r_begin.b,'.*,')
         self.view.run_command("verilog_align")
 
+class VerilogToggleDotStarCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        if len(self.view.sel())==0 : return;
+        r = self.view.sel()[0]
+        scope = self.view.scope_name(r.a)
+        if 'meta.module.inst' not in scope: # Not inside a module ? look for all .* inside a module instance and expand them
+            ra = self.view.find_all(r'\.\*',0)
+            for r in reversed(ra):
+                scope = self.view.scope_name(r.a)
+                if 'meta.module.inst' in scope:
+                    self.view.sel().clear()
+                    self.view.sel().add(r)
+                    self.view.run_command("verilog_do_toggle_dot_star")
+        else :
+            self.view.run_command("verilog_do_toggle_dot_star")
 
 ############################
 # Do a module reconnection #
@@ -581,6 +630,8 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
                 r_tmp = self.view.find(pl,r.a,sublime.LITERAL)
                 if r.contains(r_tmp):
                     self.view.replace(edit,r_tmp,bt)
+                    # Update region
+                    r = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
         ipl = [x[0] for x in bl]
         # Check for added port
         apl = [x for x in mpl if x not in ipl]
