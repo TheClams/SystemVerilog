@@ -1,3 +1,0 @@
-incl2 begin
-`include "incl3"
-incl2 end
