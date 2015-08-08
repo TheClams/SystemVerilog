@@ -5,3 +5,4 @@ __pycache__
 Default.sublime-commands
 Default*.sublime-keymap
 *.pyc
+*.DS_Store
