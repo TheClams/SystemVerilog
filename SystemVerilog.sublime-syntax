@@ -103,7 +103,7 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         3: constant.other.define.systemverilog
-    - match: '\s*(begin|fork)\s*((:)\s*([a-zA-Z_][a-zA-Z0-9_]*))\b'
+    - match: '\s*\b(begin|fork)\s*((:)\s*([a-zA-Z_][a-zA-Z0-9_]*))\b'
       scope: meta.definition.systemverilog
       captures:
         0: meta.section.begin.systemverilog

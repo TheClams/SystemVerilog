@@ -80,7 +80,7 @@ def lookup_type(view, t):
         if fname in flist_norm:
             _,_,rowcol = filelist[flist_norm.index(fname)]
             ti = verilogutil.get_type_info_file(fname,t)
-        if ti['type']:
+        if ti and ti['type']:
             ti['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid type definition to be the correct one
         else:
