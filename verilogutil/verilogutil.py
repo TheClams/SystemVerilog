@@ -8,7 +8,7 @@ import functools
 #   an optionnal array size,
 #   an optional list of words
 #   the signal itself (not part of the regular expression)
-re_bw    = r'[\w\*\(\)\/><\:\-\+`\s]+'
+re_bw    = r'[\w\*\(\)\/><\:\-\+`\$\s]+'
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\['+re_bw+r'\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
@@ -263,7 +263,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             elif signal[2]=='*':
                 at='associative'
             else:
-                ma= re.search(r'[A-Za-z_][\w]*',signal[2])
+                ma= re.match(r'[A-Za-z_][\w]*$',signal[2])
                 if ma:
                     at='associative'
                 else:

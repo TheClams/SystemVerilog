@@ -71,6 +71,7 @@ def expand_to_block(view, region):
         if ilvl_tmp < ilvl:
             ilvl = ilvl_tmp
         p = view.find_by_class(p,False,sublime.CLASS_LINE_START)
+        print(p)
         if view.substr(p) in [' ', '\t'] and ((view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0) :
             pp = view.find_by_class(p,True,sublime.CLASS_WORD_START|sublime.CLASS_SUB_WORD_START|sublime.CLASS_PUNCTUATION_START)
             scope = view.scope_name(pp)
@@ -79,7 +80,8 @@ def expand_to_block(view, region):
         ilvl_tmp = line_indent(view,p)
         if p >= region.a:
             break
-    region.a = view.find_by_class(p,True,sublime.CLASS_LINE_START)
+    if (view.classify(p) & sublime.CLASS_LINE_START) == 0 :
+        region.a = view.find_by_class(p,True,sublime.CLASS_LINE_START)
     # print('Backward done:' + str(region.a) + ' => text = ' + view.substr(region))
     #Expand forward line by line until we reach a comment or an empty line
     p = view.find_by_class(region.b,True,sublime.CLASS_LINE_START)

@@ -470,6 +470,8 @@ contexts:
         5: storage.type.interface.systemverilog
     - match: \s*\b(output|input|inout|ref)\b
       scope: support.type.systemverilog
+    - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+      scope: support.function.systemverilog
   storage-modifier-systemverilog:
     - match: '\b(signed|unsigned|small|medium|large|supply[01]|strong[01]|pull[01]|weak[01]|highz[01])\b'
       scope: storage.modifier.systemverilog

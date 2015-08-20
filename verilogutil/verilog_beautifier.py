@@ -76,7 +76,7 @@ class VerilogBeautifier():
     def beautifyText(self,txt):
         # Variables
         self.states = [] # block indent list
-        w_d = ['','\n'] # previous word
+        w_d = ['\n','\n'] # previous word
         line = '' # current line
         block = '' # block of text to align
         self.block_state = ''
