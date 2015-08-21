@@ -22,7 +22,7 @@ class VerilogBeautifier():
         self.states = []
         self.state = ''
         self.re_decl = re.compile(r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*([A-Za-z_][\w\[\]]*)[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*(,[\w, \t]*)?;[ \t]*(.*)')
-        self.re_inst = re.compile(r'(?s)^\s*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
+        self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
 
     def getIndentLevel(self,txt):
         line = txt[:txt.find('\n')]
@@ -122,7 +122,7 @@ class VerilogBeautifier():
             # Handle end of split
             if ilvl in split:
                 if self.state not in ['comment_line','comment_block'] and w in [';','end','endcase'] :
-                    # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                    # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     split.pop(ilvl,0)
             # Identify split statement
             if w=='\n':
@@ -132,8 +132,8 @@ class VerilogBeautifier():
                     self.stateUpdate()
                     if not self.block_state:
                         block_handled = True
-                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
-                # print(line)
+                print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
+                print(line)
                 # Search for split line requiring temporary increase of the indentation level
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     tmp = verilogutil.clean_comment(line).strip()
@@ -240,7 +240,6 @@ class VerilogBeautifier():
                 # Check if this was not already handled
                 # print('[Beautify] state {0}.{1} end on word {2}'.format(self.states,self.block_state,w))
                 if self.block_state == 'generate' :
-                    m = self.re_inst.search(block[9:])
                     block_tmp = block
                     if not self.settings['reindentOnly']:
                         for m in self.re_inst.finditer(block[9:]):
@@ -252,7 +251,7 @@ class VerilogBeautifier():
                                     inst_ilvl = self.getIndentLevel(inst_block)
                                     inst_block_aligned = self.alignInstance(inst_block,inst_ilvl)
                                     block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
-                                    # print('[Beautify] Align block inst in generate : ilvl={0}'.format(inst_ilvl))
+                                    # print('[Beautify] Align block inst in generate : ilvl={0} \n{1}'.format(inst_ilvl,inst_block))
                     block = block_tmp
                 elif w in ['endtask', 'endfunction']:
                     if self.settings['reindentOnly']:

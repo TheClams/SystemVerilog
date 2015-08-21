@@ -71,7 +71,6 @@ def expand_to_block(view, region):
         if ilvl_tmp < ilvl:
             ilvl = ilvl_tmp
         p = view.find_by_class(p,False,sublime.CLASS_LINE_START)
-        print(p)
         if view.substr(p) in [' ', '\t'] and ((view.classify(p) & sublime.CLASS_EMPTY_LINE) == 0) :
             pp = view.find_by_class(p,True,sublime.CLASS_WORD_START|sublime.CLASS_SUB_WORD_START|sublime.CLASS_PUNCTUATION_START)
             scope = view.scope_name(pp)
@@ -100,8 +99,9 @@ def expand_to_block(view, region):
         ilvl_tmp = line_indent(view,p)
         if p <= region.b:
             break
-    region.b = p - 1
-    # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region))
+    if region.b != view.size():
+        region.b = p - 1
+    # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region) + '\n size=' + str(view.size()))
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
 
