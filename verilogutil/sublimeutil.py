@@ -79,7 +79,8 @@ def expand_to_block(view, region):
         ilvl_tmp = line_indent(view,p)
         if p >= region.a:
             break
-    region.a = view.find_by_class(p,True,sublime.CLASS_LINE_START)
+    if (view.classify(p) & sublime.CLASS_LINE_START) == 0 :
+        region.a = view.find_by_class(p,True,sublime.CLASS_LINE_START)
     # print('Backward done:' + str(region.a) + ' => text = ' + view.substr(region))
     #Expand forward line by line until we reach a comment or an empty line
     p = view.find_by_class(region.b,True,sublime.CLASS_LINE_START)
@@ -98,8 +99,9 @@ def expand_to_block(view, region):
         ilvl_tmp = line_indent(view,p)
         if p <= region.b:
             break
-    region.b = p - 1
-    # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region))
+    if region.b != view.size():
+        region.b = p - 1
+    # print('Forward done:' + str(region.b) + ' => text = ' + view.substr(region) + '\n size=' + str(view.size()))
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
 

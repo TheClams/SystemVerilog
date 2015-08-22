@@ -182,6 +182,8 @@ endtask
 
 function void my_func(ref logic d, input int din,
                       input bit[3:0] d,
+                      output bit[$clog(kk)-1:0] d2,
+//                               ^ support.function.systemverilog
                       output dout);
     $display("d=%0d",d);
 endfunction : my_func

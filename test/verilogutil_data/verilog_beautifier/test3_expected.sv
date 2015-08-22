@@ -58,6 +58,12 @@ module my_module (
                default : test = test[0] ? test : 4'b0000;
             endcase
          end
+         4       :
+            if(test) begin
+               test    = test - 1;
+            end else begin
+               test = cnt;
+            end
          default : test = ctrl; // default case
       endcase
    end
