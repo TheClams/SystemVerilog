@@ -132,8 +132,8 @@ class VerilogBeautifier():
                     self.stateUpdate()
                     if not self.block_state:
                         block_handled = True
-                print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
-                print(line)
+                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
+                # print(line)
                 # Search for split line requiring temporary increase of the indentation level
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     tmp = verilogutil.clean_comment(line).strip()
@@ -752,12 +752,13 @@ class VerilogBeautifier():
                 txt_new += '\n'
             if '\n' in m.group('ports').strip() :
                 txt_new += self.alignInstanceBinding(m.group('ports'),ilvl+1)
-                txt_new += self.indent*(ilvl) + ');'
+                txt_new += self.indent*(ilvl)
             else:
                 p = m.group('ports').strip()
                 p = re.sub(r'\s+','',p)
                 p = re.sub(r'\),',r'), ',p)
-                txt_new += p +');'
+                txt_new += p
+        txt_new += ');'
         # Add end
         if m.group('comment'):
             txt_new += ' ' + m.group('comment')
