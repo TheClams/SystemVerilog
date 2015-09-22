@@ -89,11 +89,19 @@ class VerilogBeautifier():
         line_cnt = 1
         split = {}
         split_always = 0
+        last_split = None # last split that was pop
+        split_else = False # If next word is else this means the split continue
         self.always_state = ''
         # Split all text in word, special character, space and line return
         words = re.findall(r"`?\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
         for w in words:
             state_end = self.isStateEnd(w)
+            # Handle special case of if/else block in a split statement (like a case)
+            if w=='else' and split_else:
+                # print('[Beautify] Detected else in a split {0} at level {1} '.format(last_split,ilvl))
+                split[ilvl] = last_split
+            elif w.strip():
+                split_else = False
             # Start of line ?
             if w_d[-1]=='\n':
                 ilvl_prev = ilvl
@@ -123,7 +131,8 @@ class VerilogBeautifier():
             if ilvl in split:
                 if self.state not in ['comment_line','comment_block'] and w in [';','end','endcase'] :
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
-                    split.pop(ilvl,0)
+                    last_split = split.pop(ilvl,0)
+                    split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
             # Identify split statement
             if w=='\n':
                 block_ended = False

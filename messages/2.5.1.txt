@@ -4,7 +4,7 @@ SystemVerilog 2.5.1 Changelog:
  - Alignment:
   * Fix instance alignment inside a generate
   * Fix Port declaration alignement when bitwitdh contains a call to a system function
-  *
+  * Fix if/else alignement inside case statement with no begin
  - Highlight:
   * state name ending with begin are now properly highlighted as a normal word
   * recognize system function call inside bitwitdh definition
