@@ -529,7 +529,6 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         mname = getModuleName(self.view)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
-        txt = verilogutil.clean_comment(txt)
         mi = verilogutil.parse_module(txt,mname)
         if not mi:
             print('[VerilogShowHierarchyCommand] Not inside a module !')

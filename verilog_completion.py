@@ -122,7 +122,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def modport_completion(self):
         c = []
         txt = self.view.substr(sublime.Region(0,self.view.size()))
-        txt = verilogutil.clean_comment(txt)
         ti = verilogutil.parse_module(txt,r'\w+')
         if not ti:
             return c
