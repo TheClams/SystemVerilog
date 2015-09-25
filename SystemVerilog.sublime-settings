@@ -38,5 +38,6 @@
 	"sv.decl_indent": 1, // Number of indentation level for signal declaration
 	"sv.proc_indent": 1, // Number of indentation level for process
 	// Debug option
+	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 leve;) , -1 for no limit
 	"sv.disable_autocomplete": false
 }

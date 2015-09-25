@@ -89,7 +89,7 @@ def lookup_type(view, t):
                 fname = sublimeutil.normalize_fname(fname)
                 # Parse only systemVerilog file. Check might be a bit too restrictive ...
                 # print(t + ' defined in ' + str(fname))
-                if fname.lower().endswith(('sv','svh')):
+                if fname.lower().endswith(('sv','svh', 'v', 'vh')):
                     ti = verilogutil.get_type_info_file(fname,t)
                     if ti['type']:
                         ti['fname'] = (fname,rowcol[0],rowcol[1])

@@ -144,7 +144,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         for p in ti['port'] :
                             s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,self.color_str(p['decl'])[0])
                     if ti['type']=='interface':
-                        if 'signal' not in ti:
+                        if 'signal' not in ti and 'fname' in ti:
                             ti = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
                         if ti:
                             if 'signal' in ti:
