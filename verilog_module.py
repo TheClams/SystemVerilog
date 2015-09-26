@@ -213,6 +213,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         isAutoConnect = settings.get('sv.autoconnect',False)
         isParamOneLine = settings.get('sv.param_oneline',True)
         isInstOneLine = settings.get('sv.inst_oneline',True)
+        isColumnAlignment = settings.get('sv.param_port_alignment',True)
         indent_level = settings.get('sv.decl_indent')
         param_decl = ''
         pm = args['pm']
@@ -264,7 +265,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         inst = pm['name'] + " "
         # Parameters: bind only parameters for which a value different from default was set
         if len(args['pv']) > 0:
-            if isParamOneLine:
+            if isParamOneLine or not isColumnAlignment:
                 max_len = 0
             else:
                 max_len = max([len(x['name']) for x in args['pv']])
@@ -288,7 +289,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
              inst+="\n"
         if pm['port']:
             # Get max length of a port to align everything
-            if isInstOneLine:
+            if isInstOneLine or not isColumnAlignment:
                 max_len_p = 0
                 max_len_s = 0
             else :
