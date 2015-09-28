@@ -1,0 +1,9 @@
+SystemVerilog 2.6.0 Changelog:
+
+## Improvement ##
+ - Autocompletion:
+  * Support multiple level of hierarchy for the dot completion (class.struct.field.sub-field). A max level can be set to avoid blocking Sublime (setting sv.autocomplete_max_lvl).
+  * Now support module (when accessing signal inside a hierarchy)
+
+## Fix ##
+ - Prevent issue due to comment when calling module instance or insert FSM

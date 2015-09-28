@@ -62,7 +62,7 @@ module my_module (
             if(test) begin
                test    = test - 1;
             end else begin
-               test = cnt;
+               test    = cnt;
             end
          default : test = ctrl; // default case
       endcase

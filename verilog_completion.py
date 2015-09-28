@@ -51,7 +51,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.b = r.a+1
         t = view.substr(r)
         completion = []
-        # print('[on_query_completions] prefix="%s" previous char="%s"' %(prefix,t))
+        # print('[SV:on_query_completions] prefix="%s" previous char="%s"' %(prefix,t))
         # Select completion function
         if t=='$':
             completion = self.systemtask_completion()
@@ -122,7 +122,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def modport_completion(self):
         c = []
         txt = self.view.substr(sublime.Region(0,self.view.size()))
-        txt = verilogutil.clean_comment(txt)
         ti = verilogutil.parse_module(txt,r'\w+')
         if not ti:
             return c
@@ -165,10 +164,37 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 return completion
         else :
             modport_only = False
+            # Check for multiple level of hierarchy
+            cnt = 1
+            autocomplete_max_lvl = self.settings.get("sv.autocomplete_max_lvl",4)
+            while r.a>1 and self.view.substr(sublime.Region(r.a-1,r.a))=='.' and (cnt < autocomplete_max_lvl or autocomplete_max_lvl<0):
+                if 'support.function.port' not in self.view.scope_name(r.a):
+                    r.a = self.view.find_by_class(r.a-3,False,sublime.CLASS_WORD_START)
+                cnt += 1
+            if (cnt >= autocomplete_max_lvl and autocomplete_max_lvl>=0):
+                print("[SV:dot_completion] Reached max hierarchy level for autocompletion. You can change setting sv.autocomplete_max_lvl")
+                return completion
+            w = str.rstrip(view.substr(r))
             # get type information on the variable
-            ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),w)
+            txt = view.substr(sublime.Region(0, view.size()))
+            wa = w.split('.')
+            # extract info for first word using current file (to allow unsaved change to be taken into account)
+            ti = verilogutil.get_type_info(txt,wa[0])
+            for i in range(1,len(wa)):
+                # print("[SV:dot_completion] Type of {0} = {1}".format(wa[i-1],ti))
+                if not ti or not ti['type']:
+                    print("[SV:dot_completion] Cound not find type of {0} in {1}".format(wa[i-1],wa))
+                    return completion
+                if ti['type']=='module':
+                    ti = verilog_module.lookup_module(self.view,ti['name'])
+                else:
+                    ti = verilog_module.lookup_type(self.view,ti['type'])
+                # Lookup for the variable inside the type defined
+                if ti:
+                    fname = ti['fname'][0]
+                    ti = verilogutil.get_type_info_file(fname,wa[i])
             # print ('Type info: ' + str(ti))
-            if ti['type'] is None and 'meta.module.systemverilog' not in scope:
+            if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
             if ti['array']!='' :
@@ -191,23 +217,26 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 if ti['type'] is None and 'meta.module.systemverilog' in scope:
                     t = w
                     modport_only = True
+                elif ti['type']=='module':
+                    t = w
                 else:
                     t = ti['type']
                 t = re.sub(r'\w+\:\:','',t) # remove scope from type. TODO: use the scope instead of rely on global lookup
                 filelist = view.window().lookup_symbol_in_index(t)
                 # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
+                    tti = None
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
-                        # Parse only systemVerilog file. Check might be a bit too restrictive ...
-                        if fname.lower().endswith(('sv','svh')):
+                        # Parse only verilog files. Check might be a bit too restrictive ...
+                        if fname.lower().endswith(('sv','svh', 'v', 'vh')):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
                             tti = verilogutil.get_type_info_file(fname,t)
                             if tti['type']:
                                 break
-                        else :
-                            tti['type'] = ''
                     # print(tti)
+                    if not tti:
+                        return completion
                     if tti['type']=='interface':
                         return self.interface_completion(fname,modport_only)
                     elif tti['type'] == 'class':
@@ -216,6 +245,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         completion = self.enum_completion()
                     elif tti['type'] in ['struct','union']:
                         completion = self.struct_completion(tti['decl'])
+                    elif tti['type']=='module':
+                        return self.module_completion(fname,tti['name'])
             #Add randomize function for rand variable
             if ti['decl']:
                 if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
@@ -487,6 +518,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             snippet += ')'
             if 'access' not in x and x['name'] != 'new':
                 c.append([x['name']+'\tFunction', snippet])
+        return c
+
+    def module_completion(self, fname, mname):
+        mi = verilogutil.parse_module_file(fname, mname)
+        c = []
+        # Add instances and signals/IO
+        # print('[SV:module_completion] mi = {0}'.format(mi))
+        for x in mi['inst']:
+            c.append([x['name']+'\t'+x['type'], x['name']])
+        for x in mi['port']:
+            c.append([x['name']+'\t'+x['type'], x['name']])
+        for x in mi['signal']:
+            c.append([x['name']+'\t'+x['type'], x['name']])
         return c
 
     # Interface completion: all signal declaration can be used as completion
@@ -805,12 +849,12 @@ class VerilogHelper():
     def get_case_template(view, sig_name, ti=None):
         m = re.search(r'(?P<name>\w+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)
         if not m:
-            print('[get_case_template] Could not parse ' + sig_name)
+            print('[SV:get_case_template] Could not parse ' + sig_name)
             return (None,None)
         if not ti:
             ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),m.group('name'))
         if not ti['type']:
-            print('[get_case_template] Could not retrieve type of ' + m.group('name'))
+            print('[SV:get_case_template] Could not retrieve type of ' + m.group('name'))
             return (None,None)
         length = 0
         if m.group('h'):
