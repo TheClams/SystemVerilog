@@ -2,7 +2,7 @@ import sys
 import os
 import pprint
 import unittest
-import yaml
+import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 from verilogutil import parse_module, clean_comment
@@ -39,8 +39,8 @@ def _parse_module(test_file, expected_file):
             if actual:
                 actual['signal'] = []
             # pprint.pprint(actual)
-            # print(yaml.dump(actual, default_flow_style=False))
-            expected = yaml.load(ef)
+            # print(json.dumps(actual, indent=4))
+            expected = json.load(ef)
             self.assertEqual(actual, expected, msg="See test: "+str(test_file))
     return test
 
@@ -51,7 +51,7 @@ def _helper(data_dir):
             aname, atype = os.path.splitext(afile)
             if atype == '.sv':
                 test_file = os.path.join(root, afile)
-                expected_file = os.path.join(root, aname + '.yaml')
+                expected_file = os.path.join(root, aname + '.json')
                 yield aname, test_file, expected_file
 
 

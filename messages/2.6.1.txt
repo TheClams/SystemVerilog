@@ -1,0 +1,7 @@
+SystemVerilog 2.6.1 Changelog:
+
+## Improvement ##
+ - Add alignement parameter (sv.param_port_alignment) for instance module to prevent the column alignment on port name and bind name (contribution from Alan Wang)
+
+## Fix ##
+ - Fix alignment of always block not separated from signal declaration (Issues #88)

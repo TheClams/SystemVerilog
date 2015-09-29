@@ -13,7 +13,7 @@ args = parser.parse_args()
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 
-skipped_tests = ('test_beautifyText10')
+skipped_tests = ['test_beautifyText10']
 
 
 test_modules = (os.path.splitext(afile)[0] for afile in os.listdir(".") if afile.endswith("_test.py"))
@@ -31,6 +31,3 @@ for aclass in all_test_classes:
             suite.addTest(t)
 
 unittest.TextTestRunner(verbosity=3).run(suite)
-
-
-

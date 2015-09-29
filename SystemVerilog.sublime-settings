@@ -21,12 +21,13 @@
 	"sv.always_ce_auto" : true, // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
 	"sv.indent_style": "1tbs", // Indentation style used by autocompletion and beautifier when force is enabled. Options are 1tbs or gnu
 	// SystemVerilog Module instantiation configuration
-	"sv.fillparam": true,       // On module instantiation with parameter user is asked a value for each parameter
-	"sv.param_oneline": true,   // On module instantiation with parameter, check if paramter binding can fit on one line
-	"sv.inst_oneline": true,    // On module instantiation check if complete instantiation can fit on one line
-	"sv.autoconnect": true,     // Control if signals are created and connected in module instantiation
-	"sv.param_explicit": false,     // Control if parameter setting is explicit (appears in module instantiation even when default is used)
-	"sv.param_propagate": false,     // Control if parameter setting is explicit (appear in module instantiation even when default is used)
+	"sv.fillparam": true,             // On module instantiation with parameter user is asked a value for each parameter
+	"sv.param_oneline": true,         // On module instantiation with parameter, check if paramter binding can fit on one line
+	"sv.inst_oneline": true,          // On module instantiation check if complete instantiation can fit on one line
+	"sv.autoconnect": true,           // Control if signals are created and connected in module instantiation
+	"sv.param_explicit": false,       // Control if parameter setting is explicit (appears in module instantiation even when default is used)
+	"sv.param_propagate": false,      // Control if parameter setting is explicit (appear in module instantiation even when default is used)
+	"sv.param_port_alignment": true,  // Control if parameters/ports are align together
 	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
 	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
 	"sv.autoconnect_port_prefix": [], // List of prefix to remove from the port before looking for a signal connection

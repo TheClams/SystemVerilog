@@ -30,9 +30,10 @@ class VerilogAlign(sublime_plugin.TextCommand):
         oneBindPerLine = self.settings.get('sv.one_bind_per_line',True)
         oneDeclPerLine = self.settings.get('sv.one_decl_per_line',True)
         paramOneLine = self.settings.get('sv.param_oneline',True)
+        instAlign = self.settings.get('sv.param_port_alignment',True)
         indentStyle = self.settings.get('sv.indent_style',True)
         stripEmptyLine = self.settings.get('sv.strip_empty_line',True)
-        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle, False, stripEmptyLine)
+        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle, False, stripEmptyLine,instAlign)
         current_pos = self.view.viewport_position( )
         if not use_space:
             char_space = '\t'

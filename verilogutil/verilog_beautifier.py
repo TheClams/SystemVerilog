@@ -5,7 +5,7 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True):
         self.settings = {'nbSpace': nbSpace, \
                         'useTab':useTab, \
                         'oneBindPerLine':oneBindPerLine, \
@@ -13,7 +13,8 @@ class VerilogBeautifier():
                         'paramOneLine': paramOneLine,\
                         'indentSyle' : indentSyle,\
                         'reindentOnly' : reindentOnly,\
-                        'stripEmptyLine': stripEmptyLine }
+                        'stripEmptyLine': stripEmptyLine,\
+                        'instAlignPort' : instAlignPort }
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -118,6 +119,13 @@ class VerilogBeautifier():
                     txt_new += self.alignAssign(block,2)
                     block = ''
                     self.block_state = ''
+                elif self.block_state == 'decl' and w in ['always','always_ff','always_comb','always_latch', 'constraint', 'assign'] :
+                    if self.settings['reindentOnly']:
+                        txt_new += block
+                    else :
+                        txt_new += self.alignDecl(block)
+                    block = ''
+                    self.block_state = ''
                 if not has_indent and self.state.startswith('`'):
                     has_indent = True
                 # Insert indentation except for comment_block without initial indentation and module declaration
@@ -202,7 +210,7 @@ class VerilogBeautifier():
                     block_ended = False
                 line += w
                 if self.state not in ['comment_line','comment_block']:
-                    # print('State={0}.{1} -- Testing {2}'.format(self.state,self.block_state,block+line))
+                    # print('State={0}.{1} -- Testing "{2}"'.format(self.state,self.block_state,block+line))
                     action = self.processWord(w,w_d[-1], state_end, block + line)
                     if action.startswith("incr_ilvl"):
                         ilvl+=1
@@ -781,14 +789,24 @@ class VerilogBeautifier():
         # Parse bindings to find length of port and signals
         re_str_bind_port = r'^[ \t]*(?P<lcomma>,)?[ \t]*\.\s*(?P<port>\w+)\s*\(\s*'
         re_str_bind_sig = r'(?P<signal>.*?)\s*\)\s*(?P<comma>,)?\s*(?P<comment>\/\/.*?|\/\*.*?)?$'
+        re_str_bind_implicit = r'^[ \t]*(?P<lcomma>,)?[ \t]*\.\s*(?P<port>\w+)\s*(,|\/\/.*?|\Z)'
         binds = re.findall(re_str_bind_port+re_str_bind_sig,txt,flags=re.MULTILINE)
         max_port_len = 0
         max_sig_len = 0
         ports_len = [len(x[1]) for x in binds]
         sigs_len = [len(x[2].strip()) for x in binds]
-        if ports_len:
+        ports_impl = None
+        binds_impl = re.findall(re_str_bind_implicit,txt,flags=re.MULTILINE)
+        if binds_impl:
+            ports_impl = [x[1] for x in binds_impl]
+        if ports_len and self.settings['instAlignPort']:
             max_port_len = max(ports_len)
-        if sigs_len:
+            if binds_impl:
+                ports_impl_len = [len(x[1]) for x in binds_impl]
+                max_port_len_impl = max(ports_impl_len)
+                if max_port_len_impl > max_port_len:
+                    max_port_len = max_port_len_impl
+        if sigs_len and self.settings['instAlignPort']:
             max_sig_len = max(sigs_len)
         #TODO: if the .* is at the beginning make sure it is not follow by another binding
         lines = txt.strip().splitlines()
@@ -808,16 +826,26 @@ class VerilogBeautifier():
                     if m:
                         is_split = True
                         # print('Detected split at Line ' + str(i) + ' : ' + l)
+                    # Look for an implicit port
+                    elif ports_impl:
+                        m = re.search(r'^[ \t]*\.\s*(?P<port>\w+)\s*(?P<comma>,)?(?P<comment>\/\/.*?|\/\*.*?)?',l)
+                        if m :
+                            if m.group('port') not in ports_impl:
+                                m = None # False alert
                 if m:
                     # print('Line ' + str(i) + '/' + str(len(lines)) + ' : ' + str(m.groups()) + ' => split = ' + str(is_split))
                     txt_new += self.indent*(ilvl)
                     txt_new += '.' + m.group('port').ljust(max_port_len)
-                    txt_new += '(' + m.group('signal').strip().ljust(max_sig_len)
+                    if 'signal' in m.groupdict():
+                        txt_new += '(' + m.group('signal').strip().ljust(max_sig_len)
+                    elif max_sig_len>0 and i!=(len(lines)-1):
+                        txt_new += ''.ljust(max_sig_len+2) # 2 is for the parenthesis ()
                     if not is_split:
-                        txt_new += ')'
+                        if 'signal' in m.groupdict():
+                            txt_new += ')'
                         if i!=(len(lines)-1): # Add comma for all lines except last
                             txt_new += ','
-                    if m.group('comment'):
+                    if 'comment' in m.groupdict() and m.group('comment'):
                         if txt_new[-1] != ',':
                             txt_new += ' '
                         txt_new += ' ' + m.group('comment')

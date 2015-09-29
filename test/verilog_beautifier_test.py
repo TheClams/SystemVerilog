@@ -2,13 +2,12 @@ import sys
 import os
 import pprint
 import unittest
-import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 import verilog_beautifier
 class BeautifyConfig():
 
-    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True):
+    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True):
         self.nbSpace        = nbSpace
         self.useTab         = useTab
         self.oneBindPerLine = oneBindPerLine
@@ -17,6 +16,7 @@ class BeautifyConfig():
         self.indentSyle     = indentSyle
         self.reindentOnly   = reindentOnly
         self.stripEmptyLine = stripEmptyLine
+        self.instAlignPort  = instAlignPort
 
 class Tests(unittest.TestCase):
 
@@ -40,7 +40,8 @@ class Tests(unittest.TestCase):
                                                  oneDeclPerLine=cfg.oneDeclPerLine,
                                                  paramOneLine=cfg.paramOneLine,
                                                  reindentOnly=cfg.reindentOnly,
-                                                 stripEmptyLine=cfg.stripEmptyLine
+                                                 stripEmptyLine=cfg.stripEmptyLine,
+                                                 instAlignPort=cfg.instAlignPort
                                                  )
         with open(fname_in) as f:
             txt = f.read()
@@ -119,3 +120,11 @@ class Tests(unittest.TestCase):
     def test_beautifyText14(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"test14.sv", self.path_test+"test14_expected.sv", cfg)
+
+    def test_beautifyInstNoAlign(self):
+        cfg = BeautifyConfig(instAlignPort=False)
+        self.runBeautifyTest(self.path_test+"instance.sv", self.path_test+"instance_no_align.sv", cfg)
+
+    def test_beautifyInst(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"instance_no_align.sv", self.path_test+"instance.sv", cfg)
