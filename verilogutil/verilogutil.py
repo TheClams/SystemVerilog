@@ -10,7 +10,7 @@ import functools
 #   the signal itself (not part of the regular expression)
 re_bw    = r'[\w\*\(\)\/><\:\-\+`\$\s]+'
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?<!@)\s*(?:^|,|\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
+re_decl  = r'(?:^|,|(?:\w|\)|#)\s*\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*((?:[A-Za-z_]\w*\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\['+re_bw+r'\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union|`\w+)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -34,6 +34,8 @@ def clean_comment(text):
         re.DOTALL | re.MULTILINE
     )
     # do we need trim whitespaces?
+    # txt_clean = re.sub(pattern, replacer, text)
+    # return re.sub(r'^\s*$', '', txt_clean, flags = re.MULTILINE)
     return re.sub(pattern, replacer, text)
 
 # Extract declaration of var_name from a file
@@ -55,6 +57,7 @@ def get_type_info_file_cache(fname, var_name, fdate):
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
 def get_type_info(txt,var_name):
     txt = clean_comment(txt)
+    # print('[get_type_info] text = {0}'.format(txt))
     m = re.search(re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
     tag = 'enum'
     idx_type = 1
@@ -126,7 +129,7 @@ def get_all_type_info(txt):
         # remove clocking block before looking for I/O and field to avoid duplication of signals
         txt = r.sub('',txt)
     # Look for enum declaration
-    # print('Look for enum declaration')
+    # print('[get_all_type_info] Look for enum declaration')
     r = re.compile(re_enum+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,-1,'enum')
@@ -135,7 +138,7 @@ def get_all_type_info(txt):
     # remove enum declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for struct declaration
-    # print('Look for struct declaration')
+    # print('[get_all_type_info] Look for struct declaration')
     r = re.compile(re_union+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,5,-1,'struct')
@@ -144,7 +147,7 @@ def get_all_type_info(txt):
     # remove struct declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for typedef declaration
-    # print('Look for typedef declaration')
+    # print('[get_all_type_info] Look for typedef declaration')
     r = re.compile(re_tdp+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*;',flags=re.MULTILINE)
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,1,3,3,-1,'typedef')
@@ -153,23 +156,25 @@ def get_all_type_info(txt):
     # remove typedef declaration since the content could be interpreted as signal declaration
     txt = r.sub('',txt)
     # Look for signal declaration
-    # print('Look for signal declaration')
+    # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
     re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*[\w\.\:]+\s*)?(?=;|,|\)\s*;)'
+    # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
-    # print('[get_all_type_info] decl re="{0}'.format(re_str))
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
-    # print('Look for interface instantiation')
-    r = re.compile(re_inst+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*\(',flags=re.MULTILINE)
+    # print('[get_all_type_info] Look for interface instantiation')
+    re_str = re_inst+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*\('
+    r = re.compile(re_str,flags=re.MULTILINE)
+    # print('[get_all_type_info] inst re="{0}"'.format(re_str))
     for m in r.finditer(txt):
         ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'inst')
         # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
-    # print(ti)
+    # print('[get_all_type_info] {0}'.format(ti))
     # Look for non-ansi declaration where a signal is declared twice (I/O then reg/wire) and merge it into one declaration
     ti_dict = {}
     pop_list = []
@@ -191,6 +196,7 @@ def get_all_type_info(txt):
 # Get type info from a match object
 def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag':tag, 'value':None}
+    # print("[SV:get_type_info_from_match] varname={0} m={1} idx_type={2} idx_bw={3} idx_max={4},idx_val={5} tag={6}".format(var_name,m.groups(),idx_type,idx_bw,idx_max,idx_val,tag))
     #return a tuple of None if not found
     if not m:
         return [ti_not_found]
@@ -215,7 +221,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     # Remove potential false positive
     if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial']:
         return [ti_not_found]
-    # print("[get_type_info] Group => " + str(m.groups()))
+    # print("[SV:get_type_info_from_match] Group => " + str(m.groups()))
     value = None
     ft = ''
     bw = ''
@@ -231,7 +237,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             signal_list += re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max+1], flags=re.MULTILINE)
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
-    # print("[get_type_info] signal_list = " + str(signal_list) + ' for line ' + line)
+    # print("[SV:get_type_info_from_match] signal_list = " + str(signal_list) + ' for line ' + line)
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):
         # print('[get_type_info_from_match] tag='+tag+ ' name='+str(signal_list)+ ' match (' + str(i) + ') = ' + str(m.groups()[i]).strip())
@@ -335,6 +341,7 @@ def parse_module(flines,mname=r'\w+'):
             params_name.append(param['name'])
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(clean_comment(m.group(0)))
+    # print('[SV.parse_module] ati = ')
     # pprint.pprint(ati,width=200)
     # Extract port name
     ports = []
@@ -354,6 +361,7 @@ def parse_module(flines,mname=r'\w+'):
     modports = [ti for ti in ati if ti['tag']=='modport']
     if modports:
         minfo['modport'] = modports
+    # print('[SV.parse_module] minfo = ')
     # pprint.pprint(minfo,width=200)
     return minfo
 

@@ -1,0 +1,8 @@
+SystemVerilog 2.6.2 Changelog:
+
+## Improvement ##
+ - Show signal information now works on multiple level of hierarchy (class.member.field for example)
+
+## Fix ##
+ - Update a regexp used to parse file to avoid some deadlock (could happen in large file with lot's of comment/empty line)
+ - Add limit to the popup text to avoid crashing sublime text (happens with complex interface/module with huge number of port/signal)
