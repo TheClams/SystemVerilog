@@ -5,7 +5,7 @@ import unittest
 import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
-from verilogutil import parse_module, clean_comment
+from verilogutil import parse_module, parse_package, clean_comment
 
 
 class Tests(unittest.TestCase):
@@ -38,7 +38,16 @@ def _parse_module(test_file, expected_file):
             # ignore signal
             if actual:
                 actual['signal'] = []
-            # pprint.pprint(actual)
+            # print(json.dumps(actual, indent=4))
+            expected = json.load(ef)
+            self.assertEqual(actual, expected, msg="See test: "+str(test_file))
+    return test
+
+
+def _parse_package(test_file, expected_file):
+    def test(self):
+        with open(test_file) as af, open(expected_file) as ef:
+            actual = parse_package(af.read())
             # print(json.dumps(actual, indent=4))
             expected = json.load(ef)
             self.assertEqual(actual, expected, msg="See test: "+str(test_file))
@@ -65,6 +74,7 @@ def bind_test_suite(method, data_path):
 def bind_all_tests():
     suites = (
         (_parse_module, os.path.join('verilogutil_data', 'parse_module_data')),
+        (_parse_package, os.path.join('verilogutil_data', 'parse_package')),
         (_clean_comment, os.path.join('verilogutil_data', 'clean_comment_data'))
     )
     for method, data_path in suites:

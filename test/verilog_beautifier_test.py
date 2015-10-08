@@ -128,3 +128,7 @@ class Tests(unittest.TestCase):
     def test_beautifyInst(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"instance_no_align.sv", self.path_test+"instance.sv", cfg)
+
+    def test_cstyle(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"cstyle_array.sv", self.path_test+"cstyle_array_exp.sv", cfg)

@@ -22,7 +22,7 @@ class VerilogBeautifier():
             self.indent = self.indentSpace
         self.states = []
         self.state = ''
-        self.re_decl = re.compile(r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*([A-Za-z_][\w\[\]]*)[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*(,[\w, \t]*)?;[ \t]*(.*)')
+        self.re_decl = re.compile(r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*([A-Za-z_]\w*)[ \t]*(\[('+verilogutil.re_bw+r')\])*[ \t]*(,[\w, \t]*)?;[ \t]*(.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
 
     def getIndentLevel(self,txt):
@@ -884,6 +884,7 @@ class VerilogBeautifier():
         for l in lines:
             m = self.re_decl.search(l)
             if m:
+                # print('[alignDecl] {0}'.format(m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
                     len_max[ilvl] = [0,0,0,0,0,0,0,0,0,0]

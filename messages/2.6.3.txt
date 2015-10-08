@@ -1,0 +1,5 @@
+SystemVerilog 2.6.3 Changelog:
+
+## Fix ##
+ - Fix parsing of struct fields with array's size using math operator (Issue 92)
+ - Fix alignement issue with c-style array (Issue 91)

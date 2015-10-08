@@ -642,6 +642,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             with open(ti['fname'][0], 'r') as f:
                 flines = str(f.read())
             ti = verilogutil.parse_package(flines)
+            # print(ti)
             if ti:
                 c = [[x['name']+'\t'+x['type'],x['name']] for x in ti]
         elif ti['type'] == 'class':
