@@ -861,11 +861,12 @@ class VerilogHelper():
         if m.group('h'):
             length = int(m.group('h')) - int(m.group('l')) + 1
         t = ti['type'].split()[0]
+        # print('[get_case_template] ti = {0}'.format(ti))
         if t not in ['enum','logic','bit','reg','wire','input','output']:
             #check first in current file
-            tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'])
+            tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'], False)
             # Not in current file ? look in index
-            if not tti:
+            if not tti['type']:
                 filelist = view.window().lookup_symbol_in_index(ti['type'])
                 if filelist:
                     for f in filelist:
@@ -873,6 +874,7 @@ class VerilogHelper():
                         tti = verilogutil.get_type_info_file(fname,t)
                         if tti:
                             break
+            # print('[get_case_template] tti = {0}'.format(tti))
             ti = tti
         return verilogutil.fill_case(ti,length)
 

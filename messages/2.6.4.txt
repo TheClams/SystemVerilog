@@ -1,0 +1,5 @@
+SystemVerilog 2.6.4 Changelog:
+
+## Fix ##
+ - Fix issue with case auto-complete on enum if signal is a port
+ - Fix minor issue with alignement of a module declaration using an import statement (extra space)

@@ -527,7 +527,9 @@ class VerilogBeautifier():
         if not m.group('ports'):
             return txt_new + '();'
         # Add port list declaration
-        txt_new += ' (\n'
+        if txt_new[-1]!='\n':
+            txt_new += ' '
+        txt_new += '(\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
         re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t]*)[ \t]*(?P<comment>.*)'
         # print(re_str)

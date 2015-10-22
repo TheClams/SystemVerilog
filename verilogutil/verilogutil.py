@@ -55,7 +55,7 @@ def get_type_info_file_cache(fname, var_name, fdate):
 
 # Extract the declaration of var_name from txt
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
-def get_type_info(txt,var_name):
+def get_type_info(txt,var_name,search_decl=True):
     txt = clean_comment(txt)
     # print('[get_type_info] text = {0}'.format(txt))
     m = re.search(re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
@@ -73,7 +73,7 @@ def get_type_info(txt,var_name):
             idx_max = 3
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
-            if not m:
+            if not m and search_decl:
                 m = re.search(re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*([^,;]+))?[^\.]*?$', txt, flags=re.MULTILINE)
                 tag = 'decl'
                 idx_type = 3
@@ -432,6 +432,7 @@ def fill_case(ti,length=0):
     if not ti['type']:
         print('[fill_case] No type for signal ' + str(ti['name']))
         return (None,None)
+    # print('[fill_case] ti = {0}'.format(ti))
     t = ti['type'].split()[0]
     s = '\n'
     if t == 'enum':
