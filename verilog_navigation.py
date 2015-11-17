@@ -118,8 +118,8 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             if (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
                 region.b = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
         # Optionnaly extend selection to parent object (parent.var)
-        while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
-            if 'support.function.port' not in self.view.scope_name(region.a):
+        if 'support.function.port' not in self.view.scope_name(region.a):
+            while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
                 region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         # Optionnaly extend selection to scope specifier
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :

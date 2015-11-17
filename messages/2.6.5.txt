@@ -1,0 +1,4 @@
+SystemVerilog 2.6.5 Changelog:
+
+## Fix ##
+ - Fix deadlock on instance port information
