@@ -22,7 +22,7 @@ class VerilogBeautifier():
             self.indent = self.indentSpace
         self.states = []
         self.state = ''
-        self.re_decl = re.compile(r'^[ \t]*(\w+\:\:)?([A-Za-z_]\w*)[ \t]+(signed|unsigned\b)?[ \t]*(\[('+verilogutil.re_bw+r')\])?[ \t]*([A-Za-z_]\w*)[ \t]*(\[('+verilogutil.re_bw+r')\])*[ \t]*(,[\w, \t]*)?;[ \t]*(.*)')
+        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(\[(?P<array>'+verilogutil.re_bw+r')\])*[ \t]*(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
 
     def getIndentLevel(self,txt):
@@ -161,13 +161,13 @@ class VerilogBeautifier():
                             if tmp.startswith('always'):
                                 split_always = 1
                                 # print('[Beautify] Always split on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
-                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' :
+                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state not in ['(',''] :
                                 if ilvl not in split:
                                     if self.state == 'case' and re.match(r'\s*\w+\s*,$',tmp):
                                         # print('[Beautify] Multiple state case at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
                                         pass
                                     else:
-                                        # print('[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                                        # print('[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=tmp, state=self.states, block_state=self.block_state, ilvl=ilvl))
                                         split[ilvl] = [1,tmp]
                                 else :
                                     m = re.match(r'^\s*(assign\s+)?\w+\s*(<?=)\s*(.*)',split[ilvl][1])
@@ -220,7 +220,7 @@ class VerilogBeautifier():
                             line = ''
             # Handle the self.block_state and call appropriate alignement function
             if w==';' and self.state not in ['comment_line','comment_block', '(']:
-                if self.block_state in ['text','decl'] and self.re_decl.match(line.strip()):
+                if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
                 elif self.block_state in ['module','instance','text','package','decl'] or (self.block_state in ['struct','struct_assign'] and self.state!='{'):
@@ -400,6 +400,9 @@ class VerilogBeautifier():
     def processWord(self,w, w_prev, state_end, txt):
         kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
         if w in kw_block:
+            # Handle case where this is an external declaration (meaning no block following)
+            if txt.strip().startswith('extern'):
+                return ""
             self.stateUpdate(w)
             if w in ['module','package', 'generate', 'function', 'task']:
                 self.block_state = w
@@ -889,59 +892,79 @@ class VerilogBeautifier():
                 # print('[alignDecl] {0}'.format(m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
-                    len_max[ilvl] = [0,0,0,0,0,0,0,0,0,0]
-                for i,g in enumerate(m.groups()):
+                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':0,'name':0,'array':0,'sig_list':0,'comment':0, 'init':0}
+                for k,g in m.groupdict().items():
                     if g:
-                        if len(g.strip()) > len_max[ilvl][i]:
-                            len_max[ilvl][i] = len(g.strip())
-                        if i==8 and one_decl_per_line:
+                        if len(g.strip()) > len_max[ilvl][k]:
+                            len_max[ilvl][k] = len(g.strip())
+                        if k=='sig_list' and one_decl_per_line:
                             for s in g.split(','):
-                                if len(s.strip()) > len_max[ilvl][5]:
-                                    len_max[ilvl][5] = len(s.strip())
+                                if len(s.strip()) > len_max[ilvl]['name']:
+                                    len_max[ilvl]['name'] = len(s.strip())
             else:
                 ilvl = 0
             lines_match.append((l,m,ilvl))
+        # print(len_max)
         # Update alignement of each line
         txt_new = ''
         for line,m,ilvl in lines_match:
             if m:
                 l = self.indent*ilvl
-                if m.groups()[0]:
-                    l += (m.groups()[0]+m.groups()[1]).ljust(len_max[ilvl][0]+len_max[ilvl][1]+1)
+                len_type = len_max[ilvl]['scope']+len_max[ilvl]['type']+1
+                # Add localparam/parameter. Adjust align length if not present on this line but present on other line
+                if m.group('param'):
+                    l += (m.group('param')).ljust(len_max[ilvl]['param']+1)
+                elif len_max[ilvl]['param']!=0:
+                    len_type += len_max[ilvl]['param']+1
+                # Add Scope+type
+                if m.group('scope'):
+                    l += (m.group('scope')+m.group('type')).ljust(len_type)
                 else:
-                    l += m.groups()[1].ljust(len_max[ilvl][0]+len_max[ilvl][1]+1)
+                    l += m.group('type').ljust(len_type)
                 #Align with signess only if it exist in at least one of the line
-                if len_max[ilvl][2]>0:
-                    if m.groups()[2]:
-                        l += m.groups()[2].ljust(len_max[ilvl][2]+1)
+                if len_max[ilvl]['sign']>0:
+                    if m.group('sign'):
+                        l += m.group('sign').ljust(len_max[ilvl]['sign']+1)
                     else:
-                        l += ''.ljust(len_max[ilvl][2]+1)
+                        l += ''.ljust(len_max[ilvl]['sign']+1)
                 #Align with width only if it exist in at least one of the line
-                if len_max[ilvl][4]>1:
-                    if m.groups()[4]:
-                        l += '[' + m.groups()[4].strip().rjust(len_max[ilvl][4]) + '] '
+                if len_max[ilvl]['bw']>0:
+                    if m.group('bw'):
+                        l += '[' + m.group('bw').strip().rjust(len_max[ilvl]['bw']) + '] '
                     else:
-                        l += ''.rjust(len_max[ilvl][4]+3)
+                        l += ''.rjust(len_max[ilvl]['bw']+3)
                 d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
                 # list of signals : do not align with the end of lign
-                if m.groups()[8]:
-                    l += m.groups()[5]
+                if m.group('sig_list'):
+                    l += m.group('name')
+                    # No alignement for array/init in case of signal list
+                    if m.group('array'):
+                        l += '[' + m.group('array').strip().rjust(len_max[ilvl]['array']) + ']'
+                    if m.group('init'):
+                        l += ' = ' + m.group('init').strip().ljust(len_max[ilvl]['init'])
                     if one_decl_per_line:
-                        for s in m.groups()[8].split(','):
+                        for s in m.group('sig_list').split(','):
                             if s != '':
-                                l += ';\n' + d + s.strip().ljust(len_max[ilvl][5])
+                                l += ';\n' + d + s.strip().ljust(len_max[ilvl]['name'])
                     else :
-                        l += m.groups()[8].strip()
+                        l += m.group('sig_list').strip()
                 else :
-                    l += m.groups()[5].ljust(len_max[ilvl][5])
-                    if len_max[ilvl][6]>1:
-                        if m.groups()[7]:
-                            l += '[' + m.groups()[7].strip().rjust(len_max[ilvl][7]) + ']'
+                    l += m.group('name').ljust(len_max[ilvl]['name'])
+                    # Align array definition
+                    if len_max[ilvl]['array']>0:
+                        if m.group('array'):
+                            l += '[' + m.group('array').strip().rjust(len_max[ilvl]['array']) + ']'
                         else:
-                            l += ''.rjust(len_max[ilvl][7]+2)
+                            l += ''.rjust(len_max[ilvl]['array']+2)
+                    # Align init value (if available)
+                    if len_max[ilvl]['init']>0:
+                        if m.group('init'):
+                            l += ' = ' + m.group('init').strip().ljust(len_max[ilvl]['init'])
+                        else:
+                            l += ''.rjust(len_max[ilvl]['init']+3)
                 l += ';'
-                if m.groups()[9]:
-                    l += ' ' + m.groups()[9].strip()
+                if m.group('comment'):
+                    l += ' ' + m.group('comment').strip()
             else : # Not a declaration ? don't touch
                 l = line
             txt_new += l + '\n'

@@ -1,0 +1,5 @@
+SystemVerilog 2.6.6 Changelog:
+
+## Fix ##
+ - Fix a few alignement issue (extern functions, local param declaration, ...)
+ - Fix syntax Highlithing of extern function definition

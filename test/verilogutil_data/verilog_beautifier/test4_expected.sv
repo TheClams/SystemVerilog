@@ -1,8 +1,8 @@
 package my_pkg;
 
   // Align declaration
-  localparam uint MY_PARAM0 = 7;
-  localparam uint PARAM1 = 127;
+  localparam uint MY_PARAM0 = 7  ;
+  localparam uint PARAM1    = 127;
 
 
   // Block {}

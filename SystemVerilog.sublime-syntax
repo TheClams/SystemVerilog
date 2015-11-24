@@ -15,10 +15,14 @@ contexts:
         - meta_scope: meta.function.systemverilog
         - match: ;
           pop: true
-        - match: '\b([a-zA-Z_][a-zA-Z0-9_]*\s+)?([a-zA-Z_][a-zA-Z0-9_:]*)\s*(?=\(|;)'
+        - match: '\b(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_:]*)\s*(?=\(|;)'
           captures:
-            1: storage.type.systemverilog
-            2: entity.name.function.systemverilog
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.systemverilog
+            4: support.type.scope.systemverilog
+            5: keyword.operator.scope.systemverilog
+            6: entity.name.function.systemverilog
         - match: \(
           set:
             - meta_scope: meta.function.port.systemverilog

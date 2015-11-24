@@ -180,7 +180,9 @@ task connect(virtual nfc_ip_top_if dut_if);
 endtask
 
 
-function void my_func(ref logic d, input int din,
+function void my_pkg::my_func(ref logic d, input int din,
+//            ^ support.type.scope.systemverilog
+//                  ^ keyword.operator.scope.systemverilog
                       input bit[3:0] d,
                       output bit[$clog(kk)-1:0] d2,
 //                               ^ support.function.systemverilog
