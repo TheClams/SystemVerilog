@@ -238,7 +238,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if not tti:
                         return completion
                     if tti['type']=='interface':
-                        return self.interface_completion(fname,modport_only)
+                        return self.interface_completion(fname,tti['name'], modport_only)
                     elif tti['type'] == 'class':
                         return self.class_completion(fname,tti['name'])
                     elif tti['type']=='enum':
@@ -534,44 +534,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         return c
 
     # Interface completion: all signal declaration can be used as completion
-    def interface_completion(self,fname, modport_only=False):
-        with open(fname, 'r') as f:
-            flines = str(f.read())
-        flines = verilogutil.clean_comment(flines)
-        #TODO: use the parse_module function ?
-        # Look all modports
-        modports = re.findall(r'^\s*modport\s+(\w+)\b', flines, flags=re.MULTILINE)
-        # remove modports before looking for I/O and field to avoid duplication of signals
-        flines = re.sub(r'modport\s+\w+\s+\(.*?\);','',flines, flags=re.MULTILINE|re.DOTALL)
-        # remove cloking block input
-        flines = re.sub(r'clocking\b.*?endclocking(\s*:\s*\w+)?','',flines, flags=re.MULTILINE|re.DOTALL)
-        #Look for signal declaration
-        int_decl = r'(?<!@)\s*(?:^|,|\()\s*(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w:\.]*\s+)(\[[\w:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*)\b\s*(?:;|\))'
-        mlist = re.findall(int_decl, flines, flags=re.MULTILINE)
+    def interface_completion(self,fname, iname, modport_only=False):
+        ii = verilogutil.parse_module_file(fname, iname)
+        # print(ii)
         c = []
-        c_param = []
-        # print('Declarations founds: ',mlist)
-        if mlist is not None and not modport_only:
-            # for each matched declaration extract only the signal name.
-            # Each declaration can be a list => split it
-            # it can included default initialization => remove it
-            for m in mlist:
-                slist = re.findall(r'([A-Za-z_][\w]*)\s*(\=\s*\w+)?(,|$)',m[5])
-                # print('Parsing ',str(m[5]),' with type ' + m[0] +' => ',str(slist))
-                # Provide information on the type of signal : I/O, parameter or field
-                if slist is not None:
-                    if m[0].strip() in ['input', 'output', 'inout']:
-                        for s in slist: c.append([s[0]+'\tI/O',s[0]])
-                    elif m[0].strip() == 'parameter':
-                        for s in slist: c_param.append([s[0]+'\tParam',s[0]])
-                    elif m[0].strip() not in ['initial'] :
-                        for s in slist: c.append([s[0]+'\tField',s[0]])
-        # Completion for modports:
-        if modports:
-            for mp in modports:
-                c.append([mp+'\tModport',mp])
-        for x in c_param:
-            c.append(x)
+        if not modport_only:
+            for x in ii['port']:
+                c.append([x['name']+'\tI/O', x['name']])
+            for x in ii['signal']:
+                c.append([x['name']+'\tField', x['name']])
+        for x in ii['modport']:
+            c.append([x['name']+'\tModport', x['name']])
+        if not modport_only:
+            for x in ii['param']:
+                c.append([x['name']+'\tParam', x['name']])
         return c
 
     # Provide completion for module binding:

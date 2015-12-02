@@ -1,0 +1,5 @@
+SystemVerilog 2.6.7 Changelog:
+
+## Fix ##
+ - Fix deadlock due to a regexp on constraint statement
+ - Interface completion now use the parsing function in verilogutil: this fixes case of multiple interface in same file and probably a few other issues
