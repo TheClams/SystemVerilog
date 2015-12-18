@@ -306,7 +306,7 @@ contexts:
             - match: '(?:,|})'
               pop: true
             - include: base-grammar
-        - match: \b(\w+)\s*(:)(?!:)
+        - match: '\b([a-zA-Z_]\w*)\s*(:)(?!:)'
           captures:
             1: support.function.field.systemverilog
             2: keyword.operator.other.systemverilog

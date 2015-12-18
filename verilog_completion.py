@@ -484,6 +484,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         else :
             t = re.sub(r'\w+\:\:','',t)
             filelist = view.window().lookup_symbol_in_index(t)
+            tti = None
             if filelist:
                 for f in filelist:
                     fname = sublimeutil.normalize_fname(f[0])
@@ -538,17 +539,23 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         ii = verilogutil.parse_module_file(fname, iname)
         # print(ii)
         c = []
+        c_clocking = []
         if not modport_only:
             for x in ii['port']:
                 c.append([x['name']+'\tI/O', x['name']])
             for x in ii['signal']:
-                c.append([x['name']+'\tField', x['name']])
+                if x['tag']=='clocking':
+                    c_clocking.append([x['name']+'\tClocking', x['name']])
+                else:
+                    c.append([x['name']+'\tField', x['name']])
         if 'modport' in ii:
             for x in ii['modport']:
                 c.append([x['name']+'\tModport', x['name']])
         if not modport_only:
             for x in ii['param']:
                 c.append([x['name']+'\tParam', x['name']])
+        if c_clocking:
+            c += c_clocking
         return c
 
     # Provide completion for module binding:

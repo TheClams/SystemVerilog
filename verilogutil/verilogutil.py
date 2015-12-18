@@ -362,7 +362,7 @@ def parse_module(flines,mname=r'\w+'):
     # Extract instances name
     inst = [ti for ti in ati if ti['type']!='module' and ti['type']!='interface' and ti['tag']=='inst']
     # Extract signal name
-    signals = [ti for ti in ati if ti['type'] not in ['module','interface','modport'] and ti['tag']!='inst' and ti['name'] not in ports_name ]
+    signals = [ti for ti in ati if ti['type'] not in ['module','interface'] and ti['tag'] not in ['inst','modport'] and ti['name'] not in ports_name ]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
     modports = [ti for ti in ati if ti['tag']=='modport']
     if modports:
