@@ -1,0 +1,8 @@
+SystemVerilog 2.6.8 Changelog:
+
+## Fix ##
+ - Module instantiation: Fix type checking in module instantiation for case where a scope is used
+ - Highlighting: fix issue with scope inside parameter
+ - Completion:
+  * Fix modport appearing in double
+  * Clocking block indicated as such and put at the end of the list
