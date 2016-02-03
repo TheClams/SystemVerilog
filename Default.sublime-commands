@@ -42,6 +42,12 @@
     },
     {
         "caption": "Verilog: Find Unused Signals",
-        "command": "verilog_find_unused"
+        "command": "verilog_linting",
+        "args" : {"unused": "True"}
+    },
+    {
+        "caption": "Verilog: Linting",
+        "command": "verilog_linting",
+        "args" : {"unused": "True", "undeclared": "True"}
     }
 ]

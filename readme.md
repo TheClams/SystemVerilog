@@ -27,7 +27,6 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * 'begin end' macro to surround a text by begin/end (cf Keymapping section to see how to use it)
  * Various Snippets (module, interface, class, for, ...)
  * Insert template for FSM
- * Find/Remove all unused signals
 
 ####Module Instance helper:
 
@@ -43,6 +42,9 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * Align module instantiation
  * Align assignement
 
+####Linting:
+ * Find/Remove all unused signals
+ * List all undeclared signals
 
 ####Configuration
 To see all existing configuration option, go to Preferences->Package Settings->SystemVerilog->Settings (Default).

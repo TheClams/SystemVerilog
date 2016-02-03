@@ -1,0 +1,11 @@
+SystemVerilog 2.7.0 Changelog:
+
+## Improvements ##
+ - Alignement:
+  * Enum value on multiple line properly aligned together
+ - Linting:
+  * Add option to report any undeclared signal in a module (accessible from menu 'Verilog: Linting')
+
+## Fix ##
+ - Highlighting:
+  * fix issue with scope inside struct

@@ -223,8 +223,7 @@ class VerilogBeautifier():
                 if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
-                elif self.block_state in ['module','instance','text','package','decl'] or (self.block_state in ['struct','struct_assign'] and self.state!='{'):
-                    # print('Aligning block {0}'.format(self.block_state))
+                elif self.block_state in ['module','instance','text','package','decl'] or (self.block_state in ['struct','struct_assign','enum'] and self.state!='{'):
                     if self.block_state=='module':
                         block_tmp = self.alignModulePort(block+line,ilvl-1)
                         line = ''
@@ -240,6 +239,9 @@ class VerilogBeautifier():
                         line = ''
                     elif self.block_state=='struct_assign':
                         block_tmp = self.alignAssign(block+line,1)
+                        line = ''
+                    elif self.block_state=='enum':
+                        block_tmp = self.alignAssign(block+line,4)
                         line = ''
                     elif self.block_state=='decl':
                         block_tmp = self.alignDecl(block)
@@ -373,7 +375,7 @@ class VerilogBeautifier():
         # Check that there is no reminding stuff todo:
         block = block+line
         # print('[Beautify] state={block_state}.{state}\n{block} '.format(state=self.state, block_state=self.block_state, block=block))
-        if self.block_state in ['module','instance','text','package','decl', 'assign'] or (self.block_state in ['struct','struct_assign'] and self.state!='{'):
+        if self.block_state in ['module','instance','text','package','decl', 'assign'] or (self.block_state in ['struct','struct_assign','enum'] and self.state!='{'):
             if self.block_state=='module':
                 block_tmp = self.alignModulePort(block,ilvl-1)
             elif self.settings['reindentOnly']:
@@ -427,6 +429,8 @@ class VerilogBeautifier():
                 self.block_state = 'instance'
             elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
                 self.block_state = 'struct'
+            elif re.match(r'\s*\b(typedef\s+)?(enum)\b',tmp, flags=re.MULTILINE):
+                self.block_state = 'enum'
             elif re.match(r"(?s)^.*=\s*'\{",tmp, flags=re.MULTILINE):
                 # print('Matching struct assign on "{0}"'.format(txt))
                 self.block_state = 'struct_assign'

@@ -353,9 +353,11 @@ contexts:
     - include: operators
     - include: constants
     - include: strings
-    - match: '^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
+    - match: '^\s*(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
       captures:
-        1: storage.type.interface.systemverilog
+        2: support.type.scope.systemverilog
+        3: keyword.operator.scope.systemverilog
+        4: storage.type.userdefined.systemverilog
     - include: storage-scope-systemverilog
   comments:
     - match: /\*

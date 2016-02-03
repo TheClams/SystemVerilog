@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap, pprint, imp
+import re, string, os, sys, functools, mmap, pprint, imp, threading
 from collections import Counter
 from plistlib import readPlistFromBytes
 
@@ -620,45 +620,90 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
         else :
             sublime.status_message("No instance found !")
 
-#############################################
-# Find all unused signals in current module #
-class VerilogFindUnusedCommand(sublime_plugin.TextCommand):
+####################################################################
+# Analyze code and do various check: unused/undeclared signals ... #
+class VerilogLintingCommand(sublime_plugin.TextCommand):
 
-    def run(self,edit):
-        txt = self.view.substr(sublime.Region(0,self.view.size()))
-        txt = verilogutil.clean_comment(txt)
-        mi = verilogutil.parse_module(txt,r'\w+')
-        if not mi:
-            sublime.status_message('No module found !')
-            return
-        sl = [x['name'] for x in mi['signal']]
-        self.us = ''
-        words = re.findall(r'(?<!\.)\w+',txt,re.MULTILINE)
-        cnt = Counter(words)
-        for s in sl:
-            if cnt[s]==1 :
-                if self.us:
-                    self.us += ', '
-                self.us += s
-        self.sid = {x['name']:x for x in mi['signal'] if x['name'] in self.us}
-        if self.us:
-            sl = self.us.split(', ')
-            re_str = '(?<!\.)('
-            for i,s in enumerate(sl):
-                re_str += r'\b'+s+r'\b'
-                if i!=len(sl)-1:
-                    re_str+='|'
-            re_str += ')'
+    def run(self,edit, unused="False", undeclared="False"):
+        self.txt = self.view.substr(sublime.Region(0,self.view.size()))
+        self.txt = verilogutil.clean_comment(self.txt)
+        self.mi = verilogutil.parse_module(self.txt,r'\w+')
+        self.result = {"unused":"", "undeclared":""}
+        self.unused = None
+        if self.mi:
+            if undeclared=="True":
+                self.find_undeclared()
+            if unused=="True":
+                self.find_unused()
+        # Print result
+        if self.unused:
+            re_str = '(?<!\.)(' + '|'.join(r'\b{0}\b'.format(s) for s in self.unused) + ')'
             rl = self.view.find_all(re_str)
             self.view.sel().clear()
             self.view.sel().add_all(rl)
-            panel = sublime.active_window().show_input_panel("Unused signal to remove", self.us, self.on_prompt_done, None, None)
+            panel = sublime.active_window().show_input_panel("Unused signal to remove", self.result["unused"], self.on_prompt_done, None, None)
         else:
-            sublime.status_message('No unused signals !')
+            self.print_result()
+
+
+    def find_undeclared(self):
+        signals = []
+        re_sig = re.compile(r'(?s)(?<!(?:\.|:|\'))\b([A-Za-z_]\w+)\b(?!:)',re.MULTILINE)
+        # Collect all words part of an assign
+        tmp = re.findall(r'(?s)^\s*(?:assign\s+)?(\w+\b\s*<?=.*?);',self.txt,re.MULTILINE)
+        for x in tmp:
+            signals += re_sig.findall(x)
+        # Collect all words part of sensibility list
+        tmp = re.findall(r'(?s)@\s*\((.*?)\)',self.txt,re.MULTILINE)
+        for x in tmp:
+            x = re.sub(r'\b(pos|neg)?edge\b','',x)
+            signals += re_sig.findall(x)
+        # Collect all words part of binding (does not work with implicit binding ...)
+        tmp = re.findall(r'(?s)\.[A-Za-z_]\w+\s*\((.*?)\)',self.txt,re.MULTILINE)
+        for x in tmp:
+            signals += re_sig.findall(x)
+        # Extract the list of declared signals/port/param
+        decl = []
+        for x in self.mi['signal']:
+            decl.append(x['name'])
+        for x in self.mi['port']:
+            decl.append(x['name'])
+        for x in self.mi['param']:
+            decl.append(x['name'])
+        for x in self.mi['inst']:
+            decl.append(x['name'])
+        # Remove duplicate and check that each signals is inside the list of declared signals
+        signals = list(set(signals)) # remove duplicate
+        undecl = [s for s in signals if s not in decl]
+        # TODO: check for import statements if some signal are undeclared
+        if undecl:
+            self.result["undeclared"] = ', '.join([x for x in undecl])
+
+    def find_unused(self):
+        sl = [x['name'] for x in self.mi['signal']]
+        words = re.findall(r'(?<!\.)\w+',self.txt,re.MULTILINE)
+        cnt = Counter(words)
+        self.unused = [s for s in sl if cnt[s]==1]
+        self.result["unused"] = ', '.join(self.unused)
+        self.sid = {x['name']:x for x in self.mi['signal'] if x['name'] in self.result["unused"]}
 
     # Remove all signals kept in the input panel
     def on_prompt_done(self, content):
         self.view.run_command("verilog_delete_signal", {"args":{'signals':content, 'sid':self.sid}})
+        self.print_result()
+
+    # Display in a panel all linting result
+    def print_result(self):
+        s = ''
+        if self.result["undeclared"]:
+            s+='Found undeclared signals: {0}\n'.format(self.result["undeclared"])
+        if self.result["unused"]:
+            s+='Found unused signals: {0}\n'.format(self.result["unused"])
+        if s:
+            sublimeutil.print_to_panel(s,'sv_lint')
+        else:
+            sublime.status_message('Linting successful: no issue found')
+
 
 
 class VerilogDeleteSignalCommand(sublime_plugin.TextCommand):
