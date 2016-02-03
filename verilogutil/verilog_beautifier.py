@@ -440,7 +440,7 @@ class VerilogBeautifier():
     # Align ANSI style port declaration of a module
     def alignModulePort(self,txt, ilvl):
         # Extract parameter and ports
-        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)(?P<import>\s+import\s+.*?;)?\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*)\s*\))?\s*\(\s*(?P<ports>.*)\s*\)\s*;$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)(?P<import>\s+import\s+.*?;)?\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*?)\s*\))?\s*(\(\s*(?P<ports>.*)\s*\))?\s*;$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         txt_new = self.indent*(ilvl) + 'module ' + m.group('mname').strip()
@@ -532,7 +532,9 @@ class VerilogBeautifier():
             #
         # Handle special case of no ports
         if not m.group('ports'):
-            return txt_new + '();'
+            if not self.settings['reindentOnly']:
+                txt_new += '()'
+            return txt_new + ';'
         # Add port list declaration
         if txt_new[-1]!='\n':
             txt_new += ' '

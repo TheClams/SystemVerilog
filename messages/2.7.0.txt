@@ -9,3 +9,5 @@ SystemVerilog 2.7.0 Changelog:
 ## Fix ##
  - Highlighting:
   * fix issue with scope inside struct
+ - Alignement :
+  * Support module without port list
