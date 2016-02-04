@@ -4,3 +4,5 @@ SystemVerilog 2.7.1 Changelog:
  - Alignement :
   * Support keywords sequence and property
   * Better handling of split statement after a @()
+ - Linting : find undeclared signals now also check for imports
+ - Parsing : improve constant declaration parsing

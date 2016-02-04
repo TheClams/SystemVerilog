@@ -675,9 +675,20 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
         # Remove duplicate and check that each signals is inside the list of declared signals
         signals = list(set(signals)) # remove duplicate
         undecl = [s for s in signals if s not in decl]
-        # TODO: check for import statements if some signal are undeclared
         if undecl:
-            self.result["undeclared"] = ', '.join([x for x in undecl])
+            # Look for import package to be sure signals/constant used were not declared in a package
+            imps = re.findall(r'(?s)^\s*import\s*(.*?);',self.txt,re.MULTILINE)
+            if imps:
+                pkgs = []
+                decl = []
+                for imp in imps:
+                    pkgs += re.findall(r'\b(\w+)::',imp)
+                for pkg in pkgs:
+                    pi = verilog_module.lookup_package(self.view,pkg)
+                    decl += [x['name'] for x in pi if x['tag'] in ['decl']]
+                undecl = [x for x in undecl if x not in decl]
+            if undecl:
+                self.result["undeclared"] = ', '.join([x for x in undecl])
 
     def find_unused(self):
         sl = [x['name'] for x in self.mi['signal']]

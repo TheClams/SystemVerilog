@@ -74,7 +74,9 @@ def get_type_info(txt,var_name,search_decl=True):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m and search_decl:
-                m = re.search(re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*([^,;]+))?[^\.]*?$', txt, flags=re.MULTILINE)
+                re_str = re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
+                # print(re_str)
+                m = re.search(re_str, txt, flags=re.MULTILINE)
                 tag = 'decl'
                 idx_type = 3
                 idx_bw = 4
@@ -164,7 +166,7 @@ def get_all_type_info(txt):
     # Look for signal declaration
     # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
-    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*[\w\.\:]+\s*)?(?=;|,|\)\s*;)'
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\']+)\s*)?(?=;|,|\)\s*;)'
     # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
     for m in r.finditer(txt):
@@ -369,6 +371,21 @@ def parse_module(flines,mname=r'\w+'):
         minfo['modport'] = modports
     # print('[SV.parse_module] minfo = ')
     # pprint.pprint(minfo,width=200)
+    return minfo
+
+# Parse a package for port information
+def parse_package_file(fname,pname=r'\w+'):
+    # print("Parsing file " + fname + " for package " + pname)
+    fdate = os.path.getmtime(fname)
+    minfo = parse_package_file_cache(fname, pname, fdate)
+    # print(parse_package_file_cache.cache_info())
+    return minfo
+
+@functools.lru_cache(maxsize=32)
+def parse_package_file_cache(fname, pname, fdate):
+    with open(fname) as f:
+        flines = f.read()
+        minfo = parse_package(flines, pname)
     return minfo
 
 def parse_package(flines,pname=r'\w+'):

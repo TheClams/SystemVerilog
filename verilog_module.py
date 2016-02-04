@@ -41,6 +41,27 @@ def lookup_module(view,mname):
     # print('[SV:lookup_module] {0}'.format(mi))
     return mi
 
+def lookup_package(view,pkgname):
+    pi = None
+    filelist = view.window().lookup_symbol_in_index(pkgname)
+    if filelist:
+        # Check if module is defined in current file first
+        fname = view.file_name()
+        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
+        if fname in flist_norm:
+            _,_,rowcol = filelist[flist_norm.index(fname)]
+            pi = verilogutil.parse_package_file(fname,pkgname)
+        # Consider first file with a valid module definition to be the correct one
+        else:
+            for f in filelist:
+                fname, display_fname, rowcol = f
+                fname = sublimeutil.normalize_fname(fname)
+                pi = verilogutil.parse_package_file(fname,pkgname)
+                if pi:
+                    break
+    # print('[SV:lookup_package] {0}'.format(pi))
+    return pi
+
 def lookup_function(view,funcname):
     fi = None
     filelist = view.window().lookup_symbol_in_index(funcname)
