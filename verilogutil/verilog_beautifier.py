@@ -133,7 +133,7 @@ class VerilogBeautifier():
                     ilvl_tmp = ilvl+split_always
                     for i,x in split.items() :
                         ilvl_tmp += x[0]
-                    # print('split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl_tmp,s=self.states, b=self.block_state))
+                    # print('[Beautify] split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl_tmp,s=self.states, b=self.block_state))
                     line = ilvl_tmp * self.indent
             # Handle end of split
             if ilvl in split:
@@ -149,8 +149,9 @@ class VerilogBeautifier():
                     self.stateUpdate()
                     if not self.block_state:
                         block_handled = True
-                # print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
-                # print(line)
+                # if line:
+                #     print('[Beautify] {line_cnt:4}: ilvl={ilvl} state={state} bs={bstate} as={astate} split={split}'.format(line_cnt=line_cnt, state=self.states, bstate=self.block_state, astate=self.always_state, ilvl=ilvl, split=split))
+                #     print(line)
                 # Search for split line requiring temporary increase of the indentation level
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     tmp = verilogutil.clean_comment(line).strip()
@@ -169,7 +170,9 @@ class VerilogBeautifier():
                                     else:
                                         # print('[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=tmp, state=self.states, block_state=self.block_state, ilvl=ilvl))
                                         split[ilvl] = [1,tmp]
-                                else :
+                                # Exclude the @(event) cases
+                                elif not split[ilvl][1].strip().startswith('@') :
+                                    # Exclude the assign cases
                                     m = re.match(r'^\s*(assign\s+)?\w+\s*(<?=)\s*(.*)',split[ilvl][1])
                                     if not m:
                                         # print('[Beautify] Incrementing split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
@@ -211,7 +214,7 @@ class VerilogBeautifier():
                 line += w
                 if self.state not in ['comment_line','comment_block']:
                     # print('State={0}.{1} -- Testing "{2}"'.format(self.state,self.block_state,block+line))
-                    action = self.processWord(w,w_d[-1], state_end, block + line)
+                    action = self.processWord(w,w_d, state_end, block + line)
                     if action.startswith("incr_ilvl"):
                         ilvl+=1
                         if action == "incr_ilvl_flush":
@@ -257,7 +260,7 @@ class VerilogBeautifier():
             # Handle the end of self.state
             if state_end:
                 # Check if this was not already handled
-                # print('[Beautify] state {0}.{1} end on word {2}'.format(self.states,self.block_state,w))
+                # print('[Beautify] state {0}.{1} end on word {2}, ilvl={3}'.format(self.states,self.block_state,w,ilvl))
                 if self.block_state == 'generate' :
                     block_tmp = block
                     if not self.settings['reindentOnly']:
@@ -272,7 +275,7 @@ class VerilogBeautifier():
                                     block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
                                     # print('[Beautify] Align block inst in generate : ilvl={0} \n{1}'.format(inst_ilvl,inst_block))
                     block = block_tmp
-                elif w in ['endtask', 'endfunction']:
+                elif w in ['endtask', 'endfunction', 'endsequence', 'endproperty']:
                     if self.settings['reindentOnly']:
                         block = block+line
                     else:
@@ -283,6 +286,11 @@ class VerilogBeautifier():
                     self.stateUpdate()
                     assert ilvl>0, '[Beautify] Block end with already no indentation ! Line {line_cnt:4}: "{line:<150}" => state={state:<16} '.format(line_cnt=line_cnt, line=line, state=self.state)
                     ilvl-=1
+                    # Handle end of split
+                    if ilvl in split and w in ['end','endcase'] :
+                        # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                        last_split = split.pop(ilvl,0)
+                        split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
             # Comment: do not try to recognise words, just end of the comment
             elif self.state=='comment_line':
                 if w=='\n':
@@ -340,7 +348,7 @@ class VerilogBeautifier():
                             line = re.sub(r'^'+self.indent,'',line,flags=re.MULTILINE)
                             # print('[Beautify] End of always block at line {0}, extracting {1}'.format(line_cnt,line))
                             self.block_state = ''
-                            action = self.processWord(w,w_d[-1],state_end, line)
+                            action = self.processWord(w,w_d,state_end, line)
                             if action.startswith("incr_ilvl"):
                                 ilvl+=1
                                 if action == "incr_ilvl_flush":
@@ -400,13 +408,14 @@ class VerilogBeautifier():
         return txt_new
 
     def processWord(self,w, w_prev, state_end, txt):
-        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
+        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
         if w in kw_block:
             # Handle case where this is an external declaration (meaning no block following)
-            if txt.strip().startswith('extern'):
+            if w_prev[-2] in ['extern','cover','assert']:
                 return ""
             self.stateUpdate(w)
-            if w in ['module','package', 'generate', 'function', 'task']:
+            # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
+            if w in ['module','package', 'generate', 'function', 'task', 'property', 'sequence']:
                 self.block_state = w
                 return "incr_ilvl_flush"
             else:
@@ -419,13 +428,13 @@ class VerilogBeautifier():
                 self.block_state = 'always'
                 self.always_state = ''
                 # print('Start of always block')
-            elif w_prev=='\n' and w!= '/' and not state_end:
+            elif w_prev[-1]=='\n' and w!= '/' and not state_end:
                 # print('Start of text block with "{0}"'.format(w))
                 self.block_state = 'text'
         elif self.block_state=='text':
             tmp = verilogutil.clean_comment(txt).strip()
             m = self.re_inst.match(tmp)
-            if m and m.group('itype') not in ['else', 'begin', 'end'] and m.group('iname') not in ['if','for','foreach']:
+            if m and m.group('itype') not in ['else', 'begin', 'end', 'assert', 'cover'] and m.group('iname') not in ['if','for','foreach']:
                 self.block_state = 'instance'
             elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
                 self.block_state = 'struct'

@@ -225,7 +225,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial']:
+    if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover']:
         return [ti_not_found]
     # print("[SV:get_type_info_from_match] Group => " + str(m.groups()))
     value = None
