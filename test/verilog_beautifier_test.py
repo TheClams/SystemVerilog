@@ -25,13 +25,7 @@ class Tests(unittest.TestCase):
     def show_repr(self, actual, expected):
         return "\n\n" \
                "RESULT:\n{raw_actual}\n" \
-               "EXPECTED:\n{raw_expected}\n\n" \
-               "RESULT REPR:\n{repr_actual}\n" \
-               "EXPECTED REPR:\n{repr_expected}" \
-               "\n".format(raw_actual=actual,
-                           raw_expected=expected,
-                           repr_actual=repr(actual),
-                           repr_expected=repr(expected))
+               "EXPECTED:\n{raw_expected}\n\n".format(raw_actual=actual,raw_expected=expected)
 
     def runBeautifyTest(self, fname_in, fname_exp, cfg) :
         b = verilog_beautifier.VerilogBeautifier(nbSpace=cfg.nbSpace,
@@ -73,9 +67,9 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig(nbSpace=2, reindentOnly=True, stripEmptyLine=False)
         self.runBeautifyTest(self.path_test+"test3.sv", self.path_test+"test3_indent_expected.sv", cfg)
 
-    def test_beautifyText4(self):
+    def test_beautifyTypedef(self):
         cfg = BeautifyConfig(nbSpace=2)
-        self.runBeautifyTest(self.path_test+"test4.sv", self.path_test+"test4_expected.sv", cfg)
+        self.runBeautifyTest(self.path_test+"typedef.sv", self.path_test+"typedef_exp.sv", cfg)
 
     def test_beautifyText5(self):
         cfg = BeautifyConfig()

@@ -7,9 +7,9 @@ always_comb begin
             sym_4b   = crc;
             load_sym = load_crc_str;
         end
-        st_idle           :
-            sym_4b   = 0;
-        default           : begin
+        st_idle :
+            sym_4b = 0;
+        default : begin
             sym_4b   = i_sym_4b;
             load_sym = i_load_sym_4b_str;
         end

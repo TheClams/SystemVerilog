@@ -39,7 +39,7 @@ module my_module (
 
    always_ff @(posedge clk or negedge rst_n)
       if(~rst_n)
-         dout    <= 0;
+         dout <= 0;
       else if(clk_en) begin
          dout    <= ~dout;
          testbus <= ctrl[3:0];
@@ -48,9 +48,9 @@ module my_module (
    // case align
    always_comb begin : proc_comb
       case(my_if.sel)
-         16      : test = din[16]; // blabla
-         7       : test = din[7];
-         3       : begin
+         16 : test = din[16]; // blabla
+         7  : test = din[7];
+         3  : begin
             case(cnt[1:0])
                0       : test = 4'h0;
                1       : test = 5 + test; // test
@@ -58,11 +58,11 @@ module my_module (
                default : test = test[0] ? test : 4'b0000;
             endcase
          end
-         4       :
+         4 :
             if(test) begin
-               test    = test - 1;
+               test = test - 1;
             end else begin
-               test    = cnt;
+               test = cnt;
             end
          default : test = ctrl; // default case
       endcase

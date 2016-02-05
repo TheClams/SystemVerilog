@@ -701,27 +701,49 @@ class VerilogBeautifier():
         txt_new += self.indent*(ilvl) + ');'
         return txt_new
 
-    # Alignement for case/structure assign : "word: statement"
+    # Alignement for various assign (field, case, blocking, non blocking)
     def alignAssign(self,txt, mask_op):
         #TODO handle array
         re_str_l = []
+        # case/structure : "word: statement"
         if mask_op & 1:
             re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:(?!\:))\s*(?P<statement>.*)$')
+        # Continous assignement: "assign word = statement"
         if mask_op & 2:
             re_str_l.append(r'^[ \t]*(?P<scope>assign)\s+(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>=)\s*(?P<statement>.*)$')
+        # Assignement : "word <= statement"
         if mask_op & 4:
             re_str_l.append(r'^[ \t]*(?P<scope>)(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>(<)?=)\s*(?P<statement>.*)$')
         txt_new = txt
-        max_len_glob = {}
-        for re_str in re_str_l:
+        for i,re_str in enumerate(re_str_l):
             lines = txt_new.splitlines()
             lines_match = []
             matched = False
-            # Process each line to identify a signal declaration, save the match information in an array, and process the max length for each field
+            ilvl = -1
+            ilvl_prev = -1
+            max_len = {}
+            max_len_idx = -1
+            # Two possible method: either align on the indent level globally,
+            # or break the text in block of same indent level
+            # First method is prefered for structure assignment (TBD for complex stuct with more than 2 level ...)
+            if (mask_op & 1) and (i==0) and txt.strip().endswith(';') and not txt.strip().startswith('always'):
+                ilvl_glob = True
+                # print("[Beautifier] alignAssign with ilvl_glob True for :\n" + txt)
+            else :
+                ilvl_glob = False
+            # Process each line to identify a signal declaration,
+            # save the match information in an array, and process the max length for a block of text with same indent level
             for l in lines:
                 l = l
                 m = re.search(re_str,l)
+                ilvl_prev = ilvl
                 ilvl = self.getIndentLevel(l)
+                if ilvl_glob :
+                    max_len_idx = ilvl
+                elif ilvl!= ilvl_prev :
+                    max_len_idx += 1
+                if max_len_idx not in max_len:
+                    max_len[max_len_idx] = 0
                 len_c = 0
                 if m:
                     matched = True
@@ -732,15 +754,14 @@ class VerilogBeautifier():
                             len_c+=1
                     if m.group('bitslice'):
                         len_c += len(re.sub(r'\s','',m.group('bitslice')))+2
-                    if ilvl not in max_len_glob or len_c>max_len_glob[ilvl]:
-                        max_len_glob[ilvl] = len_c
-                lines_match.append((l,m,ilvl,len_c))
+                    if len_c>max_len[max_len_idx]:
+                        max_len[max_len_idx] = len_c
+                lines_match.append((l,m,ilvl,max_len_idx))
             # If no match return text as is
             if matched :
                 txt_new = ''
-                ilvl_prev = -1
                 # Update alignement of each line
-                for idx,(line,m,ilvl,len_c) in enumerate(lines_match):
+                for idx,(line,m,ilvl,len_idx) in enumerate(lines_match):
                     if m:
                         l = ''
                         if m.group('scope'):
@@ -750,12 +771,9 @@ class VerilogBeautifier():
                         l += m.group('name')
                         if m.group('bitslice'):
                             l += '[' + re.sub(r'\s','',m.group('bitslice')) + ']'
-                        # l = self.indent*ilvl + l.ljust(max_len) + ' ' + m.group('op') + ' ' + m.group('statement')
-                        l = self.indent*ilvl + l.ljust(max_len_glob[ilvl]) + ' ' + m.group('op') + ' ' + m.group('statement')
-                        ilvl_prev = ilvl
+                        l = self.indent*ilvl + l.ljust(max_len[len_idx]) + ' ' + m.group('op') + ' ' + m.group('statement')
                     else :
                         l = line
-                        ilvl_prev = -1
                     txt_new += l.rstrip() + '\n'
                 if txt[-1]!='\n':
                     txt_new = txt_new[:-1]
