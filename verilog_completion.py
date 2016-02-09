@@ -50,6 +50,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.a = r.a - 1 - len(prefix)
         r.b = r.a+1
         t = view.substr(r)
+        lr = view.line(r)
+        lr.b = r.b
+        l = view.substr(lr)
         completion = []
         # print('[SV:on_query_completions] prefix="%s" previous char="%s"' %(prefix,t))
         # Select completion function
@@ -62,10 +65,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif t==':':
             completion =  self.scope_completion(view,r)
         elif t==')':
-            l = view.substr(view.line(r))
             m = re.search(r'^\s*case\s*\((.+?)\)',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
+        elif t in ['=','?',' '] and not prefix:
+            m = re.search(r'(?P<name>\w+)\s*(?:<=|=|!=|==)=?(\s*|[^;]+?(\?|:)\s*)$',l)
+            if m:
+                completion = self.enum_assign_completion(view,m.group('name'))
         elif 'meta.struct.assign' in scope:
             completion = self.struct_assign_completion(view,r)
         elif prefix:
@@ -132,7 +138,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 modport += ', '
         modport += ');'
         return [['modport\tModport template',modport]]
-
 
     def dot_completion(self,view,r):
         # select word before the dot and quit with no completion if no word found
@@ -589,6 +594,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             c.append(['case\tcase Template',s])
         return c
 
+    # Complete enum assign/comparison with all possible value
+    def enum_assign_completion(self, view, sname):
+        c = []
+        ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),sname)
+        if ti['type']:
+            if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout']:
+                ti = verilog_module.lookup_type(view,ti['type'])
+            if ti and ti['type']=='enum':
+                m = re.search(r'\{(.*)\}', ti['decl'])
+                if m :
+                    el = re.findall(r"(\w+).*?(?:,|$)",m.groups()[0])
+                    c += ([['{0}\tEnum value'.format(x),x] for x in el])
+        return c
+
     # Completion for ::
     def scope_completion(self,view,r):
         c = []
@@ -839,7 +858,7 @@ class VerilogHelper():
             length = int(m.group('h')) - int(m.group('l')) + 1
         t = ti['type'].split()[0]
         # print('[get_case_template] ti = {0}'.format(ti))
-        if t not in ['enum','logic','bit','reg','wire','input','output']:
+        if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
             tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'], False)
             # Not in current file ? look in index

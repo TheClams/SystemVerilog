@@ -2,4 +2,3 @@ SystemVerilog 2.7.2 Changelog:
 
 ## Improvement ##
  - Alignement : Change logic for assignement to work more by block of continuous indent level. This looks nicer IMHO.
-♥
