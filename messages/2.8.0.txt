@@ -1,0 +1,16 @@
+SystemVerilog 2.8.0 Changelog:
+
+## Improvement ##
+ - Completion:
+  * Support enum assignement/test
+  * Improve completion for function arguments and support function call from package
+  * Support keyword this for class
+ - Tooltip:
+  * Support package
+  * Support scope definition for variable/function/...
+ - Parser :
+  * Improve package parsing to extract function information.
+
+## Fix ##
+  - Parser:
+   * Fix parsing of import function (input/output could end up in global variable of the package ...)

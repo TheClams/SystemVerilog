@@ -165,6 +165,9 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     s += self.add_info([x for x in ci['member'] if 'access' not in x])
                     s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
                     # print(ci)
+                elif ti and ti['type']=='package':
+                    s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
+                    s += self.add_info([x for x in ti['member']])
                 else :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
@@ -222,9 +225,16 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         return s
 
     def get_type(self,var_name,region):
-        scope = self.view.scope_name(region.a)
+        vs = None
+        if '::' in var_name:
+            vs = var_name.split('::')
+            var_name = vs[1]
+            scope = self.view.scope_name(region.a+len(vs[0])+2)
+        else:
+            scope = self.view.scope_name(region.a)
         ti = None
         txt = ''
+        # print ('[get_type] var={0} scope="{1}"'.format(var_name,scope))
         # In case of field, retrieve parent type
         if '.' in var_name:
             s = var_name.split('.')
@@ -261,7 +271,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         txt = p['decl']
                         break
         # Get function I/O
-        elif 'support.function.generic' in scope:
+        elif 'support.function.generic' in scope or 'entity.name.function' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)
             # print ('[get_type] Function: {0}'.format(ti))
             if ti:
@@ -276,6 +286,12 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             ti = verilog_module.lookup_module(self.view,var_name)
             if ti:
                 txt = ti['type'] + ' ' + var_name
+        # Get Package info
+        elif 'support.type.scope' in scope:
+            print('lookup_package {0}'.format(var_name))
+            ti = verilog_module.lookup_package(self.view,var_name)
+            if ti:
+                txt = 'package {0}'.format(var_name)
         # Get Macro text
         elif 'constant.other.define' in scope:
             filelist = self.view.window().lookup_symbol_in_index(var_name)
@@ -295,14 +311,15 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         if txt:
                             break
         # Variable inside a scope
-        elif '::' in var_name:
-            vs = var_name.split('::')
+        elif vs:
             if len(vs)==2:
                 ti = verilog_module.lookup_type(self.view,vs[0])
                 if ti and ti['type']=='package':
                     ti = verilogutil.get_type_info_file(ti['fname'][0],vs[1])
                     if ti:
                         txt = ti['decl']
+                        if 'value' in ti and ti['value']:
+                            txt += ' = {0}'.format(ti['value'])
         # Simply lookup in the file before the use of the variable
         else :
             # select whole file until end of current line
@@ -331,7 +348,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         if pos_var>2 and ss[-2] == '=':
             pos_var -= 2
         for i,w in enumerate(ss):
-            m = re.match(r'^[A-Za-z_]\w?',w)
+            m = re.match(r'^[A-Za-z_]\w+$',w)
             if '"' in w :
                 sh+=re.sub(r'(".*?")',r'<span class="string">\1</span> ',w)
             elif i == len(ss)-1:
@@ -385,7 +402,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     sh+='<span class="storage">{0}</span> '.format(w)
             elif re.match(r'\d+',w) :
                 sh += re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span> ',w)
-            elif w in ['='] :
+            elif w in ['=','#'] :
                 sh += re.sub(r'(\=)',r'<span class="operator">\1</span> ',w)
             else:
                 sh += w + ' '
@@ -685,7 +702,8 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
                     pkgs += re.findall(r'\b(\w+)::',imp)
                 for pkg in pkgs:
                     pi = verilog_module.lookup_package(self.view,pkg)
-                    decl += [x['name'] for x in pi if x['tag'] in ['decl']]
+                    if pi:
+                        decl += [x['name'] for x in pi['member'] if x['tag'] in ['decl']]
                 undecl = [x for x in undecl if x not in decl]
             if undecl:
                 self.result["undeclared"] = ', '.join([x for x in undecl])

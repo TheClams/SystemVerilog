@@ -485,7 +485,7 @@ contexts:
     - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)(::)'
       scope: meta.scope.systemverilog
       captures:
-        1: support.type.systemverilog
+        1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
   storage-type-systemverilog:
     - match: '\s*\b(var|wire|tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox)\b'

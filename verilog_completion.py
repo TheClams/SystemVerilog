@@ -150,7 +150,22 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         scope = view.scope_name(r.a)
         completion = []
         # print ('previous word: ' + w)
-        if w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
+        if w=='this':
+            # Retrieve class name (handle case where multiple class are defined in the same file)
+            nl = []
+            ra = view.find_all(r'\bclass\s+(\w+)\b',0,'$1',nl)
+            name = ''
+            if ra:
+                # print(nl)
+                for (rf,n) in zip(ra,nl):
+                    if rf.a < r.a:
+                        name = n
+                    else:
+                        break
+            if name :
+                txt = self.view.substr(sublime.Region(0,self.view.size()))
+                return self.class_completion('',name,txt,False)
+        elif w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
             #No word before dot => check the scope
             if 'meta.module.inst' in scope:
                 r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
@@ -505,8 +520,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         fe = re.findall(r'(\w+)\s*:',content)
         return self.struct_completion(tti['decl'],True,fe)
 
-    def class_completion(self, fname,cname):
-        ci = verilogutil.parse_class_file(fname,cname)
+    def class_completion(self, fname,cname, txt=None, publicOnly=True):
+        if fname:
+            ci = verilogutil.parse_class_file(fname,cname)
+        else:
+            ci = verilogutil.parse_class(txt,cname)
+        # print('[SV:class_completion] Class = {0}'.format(ci))
         c = []
         #TODO: parse also the extended class (up to a limit ?)
         for x in ci['member']:
@@ -516,13 +535,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         for x in ci['function']:
             # filter out local and protected function, and constructor (cannot be called with a .)
             snippet = x['name']+'('
-            for i,n in enumerate(x['args'].split(',')):
-                if i!=0:
-                    snippet += ', '
-                snippet += '${{{0}:{1}}}'.format(i+1,n.strip())
-            snippet += ')'
-            if 'access' not in x and x['name'] != 'new':
-                c.append([x['name']+'\tFunction', snippet])
+            for i,p in enumerate(x['port']):
+                snippet+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
+                if i != (len(x['port'])-1):
+                    snippet+=', '
+            snippet+= ')${0}'
+            if ('access' not in x or not publicOnly) and x['name'] != 'new':
+                c.append(['{0}\t{1}'.format(x['name'],x['type']), snippet])
         return c
 
     def module_completion(self, fname, mname):
@@ -638,9 +657,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             with open(ti['fname'][0], 'r') as f:
                 flines = str(f.read())
             ti = verilogutil.parse_package(flines)
-            # print(ti)
             if ti:
-                c = [[x['name']+'\t'+x['type'],x['name']] for x in ti]
+                for x in ti:
+                    s = x['name']
+                    if x['type'] in ['function','task']:
+                        s+= '('
+                        for i,p in enumerate(x['port']):
+                            s+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
+                            if i != (len(x['port'])-1):
+                                s+=', '
+                        s+= ')${0}'
+                    c.append([x['name']+'\t'+x['type'],s])
         elif ti['type'] == 'class':
             sublime.status_message('Autocompletion for class scope unsupported for the moment')
         return c

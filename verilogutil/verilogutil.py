@@ -111,6 +111,7 @@ def get_all_type_info(txt):
     # Cleanup function contents since this can contains some signal declaration
     # print('[get_all_type_info] Cleanup functions/task')
     txt = re.sub(r'(?s)^[ \t\w]*(protected|local)?[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t\w]*(import|export)[ \t\w]*(\".*?\"[ \t\w]*)?(pure)?[ \t\w]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
     # Cleanup constraint definition
     # print('[get_all_type_info] Cleanup constraint')
     txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*(?:[^\{\}]+?(?:\{[^\{\}]*?\})?)*?\s*\}','',txt,  flags=re.MULTILINE)
@@ -166,11 +167,11 @@ def get_all_type_info(txt):
     # Look for signal declaration
     # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
-    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\']+)\s*)?(?=;|,|\)\s*;)'
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"]+)\s*)?(?=;|,|\)\s*;)'
     # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
     for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'decl')
+        ti_tmp = get_type_info_from_match('',m,3,4,5,8,'decl')
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
@@ -239,10 +240,14 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
+        re_str = r'(\w+)\b\s*(\[(.*?)\]\s*)?(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
         if m.groups()[idx_max]:
-            signal_list = re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max], flags=re.MULTILINE)
+            signal_list = re.findall(re_str, m.groups()[idx_max], flags=re.MULTILINE)
         if m.groups()[idx_max+1]:
-            signal_list += re.findall(r'(\w+)\b\s*(\[(.*?)\]\s*)?,?', m.groups()[idx_max+1], flags=re.MULTILINE)
+            s = m.groups()[idx_max+1]
+            if idx_val > 0 and len(m.groups())>idx_val and m.groups()[idx_val]:
+                s += ' = ' + m.groups()[idx_val]
+            signal_list += re.findall(re_str, s, flags=re.MULTILINE)
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
     # print("[SV:get_type_info_from_match] signal_list = " + str(signal_list) + ' for line ' + line)
@@ -282,6 +287,8 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
                     at='associative'
                 else:
                     at='fixed'
+        if not value and len(signal)>=4:
+            value = signal[3]
         d = {'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value}
         ft0 = ft.split()[0]
         if ft0 in ['local','protected']:
@@ -394,23 +401,17 @@ def parse_package(flines,pname=r'\w+'):
     if m is None:
         return None
     txt = clean_comment(m.group('content'))
-    ti = get_all_type_info(txt)
+    ti = get_all_function(txt)
+    ti += get_all_type_info(txt)
     # print(ti)
     return ti
 
 def parse_function(flines,funcname):
-    m = re.search(r'(?s)(\b(protected|local)\s+)?(\bvirtual\s+)?\b((function|task)\s+(\w+\s+)?(\w+\s+|\[[\d:]+\]\s+)?)\b(' + funcname + r')\b\s*(\((.*?)\s*\))?\s*;(.*?)\bend\5\b',flines,re.MULTILINE)
-    if not m:
+    fi = get_all_function(flines,funcname)
+    if not fi:
         return None
-    if m.groups()[9]:
-        ti = get_all_type_info(m.groups()[9] + ';')
-    else:
-        ti_all = get_all_type_info(m.groups()[10])
-        ti = [x for x in ti_all if x['decl'].startswith(('input','output','inout'))]
-    fi = {'name': funcname,'type': m.groups()[4],'decl': m.groups()[3] + ' ' + funcname, 'port' : ti}
-    if m.groups()[1]:
-        fi['access'] = m.groups()[1]
-    return fi
+    else :
+        return fi[0]
 
 # Parse a class for function and members
 def parse_class_file(fname,cname=r'\w+'):
@@ -440,17 +441,31 @@ def parse_class(flines,cname=r'\w+'):
     # print('Init ci:\n'+str(ci))
     # TODO: handle parameters ...
     # Extract all functions
-    fl = re.findall(r'(?s)(\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+)?)\b(\w+)\b\s*\((.*?)\s*\)\s*;',txt,flags=re.MULTILINE)
-    for (_,f_access, f_virtual, f_type, f_return,f_name,f_args) in fl:
-        d = {'name': f_name, 'type': f_type, 'args': f_args, 'return': f_return}
-        if f_access:
-            d['access'] = f_access
-        ci['function'].append(d)
+    ci['function'] = get_all_function(txt)
     # print('ci after function extract\n'+str(ci))
     # Extract members
     ci['member'] = get_all_type_info(txt)
     # print('Final ci:\n'+str(ci))
     return ci
+
+def get_all_function(txt,funcname=r'\w+'):
+    fil = [] # Function Info list
+    fl = re.findall(r'(?s)(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*\((.*?)\s*\)\s*;(.*?)\bend\3\b',txt,flags=re.MULTILINE)
+    for (f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
+        if f_args:
+            pi = get_all_type_info(f_args + ';')
+        else:
+            ti_all = get_all_type_info(f_content)
+            pi = [x for x in ti_all if x['decl'].startswith(('input','output','inout','ref'))]
+        f_decl = '{acc} {virt} {type} {ret} {name}'.format(acc=f_access, virt=f_virtual, type=f_type, ret=f_return,name=f_name)
+        f_decl = re.sub(r'\s+',' ',f_decl.strip())
+        d = {'name': f_name, 'type': f_type, 'port': pi, 'return': f_return, 'decl': f_decl}
+        if f_access:
+            d['access'] = f_access
+        if d['return'].startswith('automatic'):
+            d['return'] = ' '.join(d['return'].split()[1:])
+        fil.append(d)
+    return fil
 
 # Fill all entry of a case for enum or vector (limited to 8b)
 # ti is the type infor return by get_type_info

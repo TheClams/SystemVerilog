@@ -1,4 +1,0 @@
-SystemVerilog 2.7.3 Changelog:
-
-## Improvement ##
- - Completion: provide completion for enum assignement/test
