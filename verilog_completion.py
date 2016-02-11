@@ -46,29 +46,34 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         flag = 0
         if(prefix==''):
             flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
-        # Get previous character
-        r.a = r.a - 1 - len(prefix)
-        r.b = r.a+1
-        t = view.substr(r)
+        # Extract previous character and whole line before prefix
+        r.a -= (1+len(prefix))
         lr = view.line(r)
-        lr.b = r.b
-        l = view.substr(lr)
+        lr.b = r.a + 1
+        l = view.substr(lr).strip()
+        m = re.search(r'\b(\w*)\s*([^\w\s]*)$',l)
+        if m:
+            prev_symb = m.groups()[1]
+            prev_word = m.groups()[0]
+        else :
+            prev_symb = ''
+            prev_word = ''
         completion = []
-        # print('[SV:on_query_completions] prefix="%s" previous char="%s"' %(prefix,t))
+        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}"'.format(prefix,prev_symb,prev_word,l,r))
         # Select completion function
-        if t=='$':
+        if prev_symb=='$':
             completion = self.systemtask_completion()
-        elif t=='`':
+        elif prev_symb=='`':
             completion =  self.tick_completion()
-        elif t=='.':
+        elif prev_symb=='.':
             completion =  self.dot_completion(view,r)
-        elif t==':':
-            completion =  self.scope_completion(view,r)
-        elif t==')':
-            m = re.search(r'^\s*case\s*\((.+?)\)',l)
+        elif prev_symb=='::':
+            completion =  self.scope_completion(view,prev_word)
+        elif prev_symb==')':
+            m = re.search(r'^\s*case\s*\((.+?)\)$',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
-        elif t in ['=','?',' '] and not prefix:
+        elif prev_symb in ['=','?',':'] and not prefix:
             m = re.search(r'(?P<name>\w+)\s*(?:<=|=|!=|==)=?(\s*|[^;]+?(\?|:)\s*)$',l)
             if m:
                 completion = self.enum_assign_completion(view,m.group('name'))
@@ -150,21 +155,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         scope = view.scope_name(r.a)
         completion = []
         # print ('previous word: ' + w)
-        if w=='this':
-            # Retrieve class name (handle case where multiple class are defined in the same file)
-            nl = []
-            ra = view.find_all(r'\bclass\s+(\w+)\b',0,'$1',nl)
-            name = ''
-            if ra:
-                # print(nl)
-                for (rf,n) in zip(ra,nl):
-                    if rf.a < r.a:
-                        name = n
-                    else:
-                        break
-            if name :
+        if w == 'this':
+            cname = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
+            if cname :
                 txt = self.view.substr(sublime.Region(0,self.view.size()))
-                return self.class_completion('',name,txt,False)
+                return self.class_completion('',cname,txt,False)
+        elif w == 'super':
+            cname = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
+            if cname :
+                if cname:
+                    ci = verilog_module.lookup_type(self.view,cname)
+                    if ci:
+                        return self.class_completion(ci['fname'][0],cname,'',False)
         elif w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
             #No word before dot => check the scope
             if 'meta.module.inst' in scope:
@@ -200,6 +202,15 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             wa = w.split('.')
             # extract info for first word using current file (to allow unsaved change to be taken into account)
             ti = verilogutil.get_type_info(txt,wa[0])
+            # Type not found ? check for extended class
+            # TODO: check for import
+            if not ti['type'] :
+                cname = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
+                if cname:
+                    ci = verilog_module.lookup_type(view,cname)
+                    if ci:
+                        ti = verilogutil.get_type_info_file(ci['fname'][0],wa[0])
+                        # print(ti)
             for i in range(1,len(wa)):
                 # print("[SV:dot_completion] Type of {0} = {1}".format(wa[i-1],ti))
                 if not ti or not ti['type']:
@@ -460,7 +471,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         return c
 
     def struct_assign_completion(self,view,r):
-        start_pos = r.a # save original position of the .
+        start_pos = r.a # save original position of caret
         r_start = r.a
         r_end = r.a
         scope = view.scope_name(r.a)
@@ -525,23 +536,24 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             ci = verilogutil.parse_class_file(fname,cname)
         else:
             ci = verilogutil.parse_class(txt,cname)
-        # print('[SV:class_completion] Class = {0}'.format(ci))
+        # print('[SV:class_completion] Class {0} in file {1} = \n {2}'.format(cname,fname,ci))
         c = []
-        #TODO: parse also the extended class (up to a limit ?)
-        for x in ci['member']:
-            # filter out local and protected variable
-            if 'access' not in x:
-                c.append([x['name']+'\t'+x['type'], x['name']])
-        for x in ci['function']:
-            # filter out local and protected function, and constructor (cannot be called with a .)
-            snippet = x['name']+'('
-            for i,p in enumerate(x['port']):
-                snippet+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
-                if i != (len(x['port'])-1):
-                    snippet+=', '
-            snippet+= ')${0}'
-            if ('access' not in x or not publicOnly) and x['name'] != 'new':
-                c.append(['{0}\t{1}'.format(x['name'],x['type']), snippet])
+        if ci:
+            #TODO: parse also the extended class (up to a limit ?)
+            for x in ci['member']:
+                # filter out local and protected variable
+                if 'access' not in x:
+                    c.append([x['name']+'\t'+x['type'], x['name']])
+            for x in ci['function']:
+                # filter out local and protected function, and constructor (cannot be called with a .)
+                snippet = x['name']+'('
+                for i,p in enumerate(x['port']):
+                    snippet+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
+                    if i != (len(x['port'])-1):
+                        snippet+=', '
+                snippet+= ')${0}'
+                if ('access' not in x or not publicOnly) and x['name'] != 'new':
+                    c.append(['{0}\t{1}'.format(x['name'],x['type']), snippet])
         return c
 
     def module_completion(self, fname, mname):
@@ -628,20 +640,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         return c
 
     # Completion for ::
-    def scope_completion(self,view,r):
+    def scope_completion(self,view,w):
         c = []
-        # select char before the : and quit with no completion if is not a scope operator
-        start_pos = r.a # save original position of the .
-        r.b = r.b-1
-        start_word = view.substr(view.word(r))
-        # print ('Start Word: ' + start_word)
-        if start_word != '::' :
-            return c
-        #Select previous word and get it's type
-        r.a -=1
-        r.b = r.a
-        r = view.word(r);
-        w = str.rstrip(view.substr(r))
         # get type : expect a package, an enum or a class (not supported yet)
         ti = verilog_module.lookup_type(view,w)
         if not ti:

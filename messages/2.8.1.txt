@@ -1,0 +1,12 @@
+SystemVerilog 2.8.1 Changelog:
+
+## Improvements ##
+ - Completion & Tooltip:
+  * can now find an object definition in a parent class (if inside extended class)
+  * Support of keyword super
+
+## Fix ##
+  - Completion:
+   * Correctly allow completion for enum after : (in a  "= ? :" statement")
+  - Tooltip:
+   * Works correctly for variable defined in a package scope

@@ -98,6 +98,8 @@ def lookup_function(view,funcname):
 
 def lookup_type(view, t):
     ti = None
+    if '::' in t:
+        t = t.split('::')[-1]
     filelist = view.window().lookup_symbol_in_index(t)
     if filelist:
         # Check if symbol is defined in current file first

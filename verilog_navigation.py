@@ -157,7 +157,11 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                         if fti:
                             s += self.add_info(fti)
                 elif ti and ti['type']=='class':
-                    ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                    if 'fname' in ti:
+                        ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                    else :
+                        txt = self.view.substr(sublime.Region(0, self.view.size()))
+                        ci = verilogutil.parse_class(txt,ti['name'])
                     s,_ = self.color_str(s='class {0}'.format(ti['name']), addLink=True,ti_var=ti)
                     if ci['extend']:
                         s+=' <span class="keyword">extends</span> '
@@ -241,6 +245,16 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             lines = self.view.substr(sublime.Region(0, self.view.line(region).b))
             ti = verilogutil.get_type_info(lines,s[0])
             for i in range(1,len(s)):
+                #if not found check for a definition in base class if we this is an extended class
+                if not ti['type'] :
+                    cname = sublimeutil.find_closest(self.view,region,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
+                    if cname:
+                        ci = verilog_module.lookup_type(self.view,cname)
+                        if ci:
+                            if s[0]=='super':
+                                ti['type'] = ci['name']
+                            else:
+                                ti = verilogutil.get_type_info_file(ci['fname'][0],s[0])
                 # Get type definition
                 if ti and ti['type']:
                     if ti['type']=='module':
@@ -248,7 +262,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     else:
                         ti = verilog_module.lookup_type(self.view,ti['type'])
                 # Lookup for the variable inside the type defined
-                if ti:
+                if ti and 'fname' in ti:
                     fname = ti['fname'][0]
                     ti = verilogutil.get_type_info_file(fname,s[i])
                     if ti['type'] in ['function', 'task']:
@@ -256,7 +270,6 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                             flines = verilogutil.clean_comment(f.read())
                         ti = verilogutil.parse_function(flines,s[i])
             if ti:
-                # print (ti)
                 txt = ti['decl']
         # Extract type info from module if we are on port connection
         elif 'support.function.port' in scope:
@@ -288,7 +301,6 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 txt = ti['type'] + ' ' + var_name
         # Get Package info
         elif 'support.type.scope' in scope:
-            print('lookup_package {0}'.format(var_name))
             ti = verilog_module.lookup_package(self.view,var_name)
             if ti:
                 txt = 'package {0}'.format(var_name)
@@ -327,6 +339,13 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             lines = self.view.substr(sublime.Region(0, region.b))
             # Extract type
             ti = verilogutil.get_type_info(lines,var_name)
+            #if not found check for a definition in base class if we this is an extended class
+            if not ti['type'] :
+                cname = sublimeutil.find_closest(self.view,region,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
+                if cname:
+                    ci = verilog_module.lookup_type(self.view,cname)
+                    if ci:
+                        ti = verilogutil.get_type_info_file(ci['fname'][0],var_name)
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
@@ -361,7 +380,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     w = re.sub(r'(\'h[0-9A-Fa-f]+)\b',r'<span class="numeric">\1</span>',w)
                     w = re.sub(r'(\#|\:|\')',r'<span class="operator">\1</span>',w)
                 sh+=w
-            elif w in ['input', 'output', 'inout']:
+            elif w in ['input', 'output', 'inout', 'ref']:
                 sh+='<span class="support">{0}</span> '.format(w)
             elif w in self.keywords:
                 sh+='<span class="keyword">{0}</span> '.format(w)

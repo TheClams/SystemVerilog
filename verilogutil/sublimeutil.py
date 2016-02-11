@@ -105,6 +105,17 @@ def expand_to_block(view, region):
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
 
+def find_closest(view, r, re_str):
+    nl = []
+    ra = view.find_all(re_str,0,'$1',nl)
+    name = ''
+    if ra:
+        for (rf,n) in zip(ra,nl):
+            if rf.a < r.a:
+                name = n
+            else:
+                break
+    return name
 
 # Create a panel and display a text
 def print_to_panel(txt,name):
