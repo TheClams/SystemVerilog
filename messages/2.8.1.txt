@@ -4,6 +4,7 @@ SystemVerilog 2.8.1 Changelog:
  - Completion & Tooltip:
   * can now find an object definition in a parent class (if inside extended class)
   * Support of keyword super
+ - Alignement: better support of arrays in port declaration
 
 ## Fix ##
   - Completion:

@@ -748,7 +748,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
         if self.result["unused"]:
             s+='Found unused signals: {0}\n'.format(self.result["unused"])
         if s:
-            sublimeutil.print_to_panel(s,'sv_lint')
+            sublimeutil.print_to_panel(s,'SystemVerilog')
         else:
             sublime.status_message('Linting successful: no issue found')
 

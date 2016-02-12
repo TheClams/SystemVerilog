@@ -195,13 +195,14 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
     def run(self, edit, args):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
+        settings = self.view.settings()
         self.pm = verilogutil.parse_module_file(self.fname, args['mname'])
-        self.param_explicit = self.view.settings().get('sv.param_explicit',False)
-        self.param_propagate = self.view.settings().get('sv.param_propagate',False)
+        self.param_explicit = settings.get('sv.param_explicit',False)
+        self.param_propagate = settings.get('sv.param_propagate',False)
         # print(self.pm)
         if self.pm is not None:
             self.param_value = []
-            if self.pm['param'] and self.view.settings().get('sv.fillparam'):
+            if self.pm['param'] and settings.get('sv.fillparam'):
                 self.cnt = 0
                 self.show_prompt()
             else:
@@ -361,7 +362,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         if len(wc)>0 :
             s+= 'Found ' + str(len(wc)) + ' mismatch(es) for port(s): ' + str([x for x in wc.keys()]) + '\n'
         if s!='':
-            sublimeutil.print_to_panel(s,'sv')
+            sublimeutil.print_to_panel(s,'SystemVerilog')
 
     def get_region_decl(self, view, settings, r=None):
         if not r:
@@ -730,6 +731,6 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             if len(wc)>0 :
                 s+= 'Found ' + str(len(wc)) + ' mismatch(es) for port(s): ' + str([x for x in wc.keys()]) +'\n'
         if s:
-            sublimeutil.print_to_panel(s,'sv')
+            sublimeutil.print_to_panel(s,'SystemVerilog')
         # Realign
         self.view.run_command("verilog_align")
