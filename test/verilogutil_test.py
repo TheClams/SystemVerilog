@@ -35,9 +35,6 @@ def _parse_module(test_file, expected_file):
     def test(self):
         with open(test_file) as af, open(expected_file) as ef:
             actual = parse_module(af.read())
-            # ignore signal
-            if actual:
-                actual['signal'] = []
             # print(json.dumps(actual, indent=4))
             expected = json.load(ef)
             self.assertEqual(actual, expected, msg="See test: "+str(test_file))

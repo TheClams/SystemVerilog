@@ -684,7 +684,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
 
     def find_undeclared(self):
         signals = []
-        re_sig = re.compile(r'(?s)(?<!(?:\.|:|\'))\b([A-Za-z_]\w+)\b(?!:)',re.MULTILINE)
+        re_sig = re.compile(r'(?s)(?<!(?:\.|:|\'|\$))\b([A-Za-z_]\w+)\b(?!:)',re.MULTILINE)
         # Collect all words part of an assign
         tmp = re.findall(r'(?s)^\s*(?:assign\s+)?(\w+\b\s*<?=.*?);',self.txt,re.MULTILINE)
         for x in tmp:
@@ -710,6 +710,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
             decl.append(x['name'])
         # Remove duplicate and check that each signals is inside the list of declared signals
         signals = list(set(signals)) # remove duplicate
+        signals = [s for s in signals if s not in ['and','or']] # remove false positive
         undecl = [s for s in signals if s not in decl]
         if undecl:
             # Look for import package to be sure signals/constant used were not declared in a package

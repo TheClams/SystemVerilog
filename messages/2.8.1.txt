@@ -7,7 +7,7 @@ SystemVerilog 2.8.1 Changelog:
  - Alignement: better support of arrays in port declaration
 
 ## Fix ##
-  - Completion:
-   * Correctly allow completion for enum after : (in a  "= ? :" statement")
-  - Tooltip:
-   * Works correctly for variable defined in a package scope
+  - Completion: Correctly allow completion for enum after : (in a  "= ? :" statement")
+  - Tooltip: Works correctly for variable defined in a package scope
+  - Parsing : Correctly extract declaration of arrays in a list
+  - Linting : ignore systemtask and verilog keywords and/or

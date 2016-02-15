@@ -19,4 +19,6 @@ inout wire unsigned c11, cc11,
 output reg dump
 );
 
+logic toto[4],b[5];
+
 endmodule
