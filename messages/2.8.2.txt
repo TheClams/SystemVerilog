@@ -1,0 +1,4 @@
+SystemVerilog 2.8.2 Changelog:
+
+## Fix ##
+  - Completion: was broken badly in 2.8.1 ...

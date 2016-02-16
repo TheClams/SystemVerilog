@@ -47,17 +47,28 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if(prefix==''):
             flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
         # Extract previous character and whole line before prefix
-        r.a -= (1+len(prefix))
-        lr = view.line(r)
-        lr.b = r.a + 1
+        prev_symb = ''
+        prev_word = ''
+        lr = sublime.Region(r.a,r.b)
+        lr.a = view.find_by_class(lr.b,False,sublime.CLASS_LINE_START)
         l = view.substr(lr).strip()
-        m = re.search(r'\b(\w*)\s*([^\w\s]*)$',l)
-        if m:
-            prev_symb = m.groups()[1]
-            prev_word = m.groups()[0]
-        else :
-            prev_symb = ''
-            prev_word = ''
+        r.b -= len(prefix)
+        r.a = r.b - 1
+        tmp_r = sublime.Region(r.a,r.b)
+        if not view.substr(tmp_r).strip() :
+            tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
+            tmp_r.a = tmp_r.b
+        if view.classify(tmp_r.b) & sublime.CLASS_PUNCTUATION_END:
+            tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)
+            prev_symb = view.substr(tmp_r).strip()
+            tmp_r.b = tmp_r.a
+            if not view.substr(tmp_r).strip() :
+                tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
+                tmp_r.a = tmp_r.b
+        if view.classify(tmp_r.b) & sublime.CLASS_WORD_END:
+            tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_WORD_START)
+            prev_word = view.substr(tmp_r).strip()
+            tmp_r.b = tmp_r.a
         completion = []
         # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}"'.format(prefix,prev_symb,prev_word,l,r))
         # Select completion function
