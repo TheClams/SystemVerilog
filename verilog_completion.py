@@ -833,10 +833,10 @@ class VerilogHelper():
             pl = [] # posedge list
             r = view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
             if pl:
-                pl_c = []
+                # Make hypothesis that all clock signals have a c in their name
+                pl_c = [x for x in pl if 'c' in x]
+                # select most common one only if the name defined in settings is not in the list
                 if clk_name not in set(pl):
-                    # Make hypothesis that all clock signals have a c in their name
-                    pl_c = [x for x in pl if 'c' in x]
                     if pl_c :
                         clk_name = collections.Counter(pl_c).most_common(1)[0][0]
                 if rst_name not in set(pl):
@@ -877,8 +877,8 @@ class VerilogHelper():
             a_nr += 'if(' + clk_en_name + ')'
         a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'
         a_l = beautifier.beautifyText(a_l)
-        a_h = beautifier.beautifyText(a_l)
-        a_nr = beautifier.beautifyText(a_l)
+        a_h = beautifier.beautifyText(a_h)
+        a_nr = beautifier.beautifyText(a_nr)
         return (a_l,a_h,a_nr)
 
     def get_case_template(view, sig_name, ti=None):

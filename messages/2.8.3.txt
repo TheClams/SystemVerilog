@@ -1,0 +1,4 @@
+SystemVerilog 2.8.3 Changelog:
+
+## Fix ##
+  - Completion: Fix snippets always_ff synchronous and/or with reset active high
