@@ -111,9 +111,9 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"test13.sv", self.path_test+"test13_expected.sv", cfg)
 
-    def test_beautifyText14(self):
+    def test_beautifyPortArray(self):
         cfg = BeautifyConfig()
-        self.runBeautifyTest(self.path_test+"test14.sv", self.path_test+"test14_expected.sv", cfg)
+        self.runBeautifyTest(self.path_test+"port_array.sv", self.path_test+"port_array_exp.sv", cfg)
 
     def test_beautifyInstNoAlign(self):
         cfg = BeautifyConfig(instAlignPort=False)

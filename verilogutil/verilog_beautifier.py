@@ -549,7 +549,7 @@ class VerilogBeautifier():
             txt_new += ' '
         txt_new += '(\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
-        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
+        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
         # print(re_str)
         # handle case of multiple input/output declared on same line
         txt_port = re.sub(r'[ \t]*,[ \t]*(input|output|inout)\b[ \t]+',r',\n\1 ',m.group('ports'))
@@ -571,19 +571,19 @@ class VerilogBeautifier():
             if x[1] != '':
                 len_var = 3
         # Get bitwidth length, if any
-        port_bw_l  = [re.sub(r'\s*','',x[5]) for x in decl]
+        port_bw_l  = [re.sub(r'\s*','',x[4]) for x in decl]
         len_bw = 0
         if len(port_bw_l)>0:
-            len_bw  = max([len(x) for x in port_bw_l])
+            len_bw  = max([len(x.strip()[1:-1].strip()) for x in port_bw_l])
         # Get port length (ignore list, just align on the first port of the list if nay)
         max_port_len = 0
         port_l = []
         for x in decl:
-            s = x[6].strip()
+            s = x[5].strip()
             if s[-1]==',':
                 s = s[:-1].strip()
             if ',' in s:
-                s = x[7]
+                s = x[6]
             port_l.append(s)
         max_port_len=max([len(x) for x in port_l])
         len_sign = 0
@@ -607,7 +607,7 @@ class VerilogBeautifier():
             if len_var > 0:
                 len_type_full += 4
             if len_bw > 0:
-                len_type_full += 2+len_bw
+                len_type_full += len_bw+2
             if len_sign > 0:
                 len_type_full += 1+len_sign
         max_len = len_type_full
@@ -670,7 +670,7 @@ class VerilogBeautifier():
                             # Add bus width if it exists at least for one port
                             if len_bw>1:
                                 if m_port.group('bw'):
-                                    l_new += ' [' + m_port.group('bw').strip().rjust(len_bw) + ']'
+                                    l_new += ' [' + m_port.group('bw').strip()[1:-1].strip().rjust(len_bw) + ']'
                                 else:
                                     l_new += ''.rjust(len_bw+3)
                             if max_len > len_type_full:
