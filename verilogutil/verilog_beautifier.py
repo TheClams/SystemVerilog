@@ -137,7 +137,7 @@ class VerilogBeautifier():
                     line = ilvl_tmp * self.indent
             # Handle end of split
             if ilvl in split:
-                if self.state not in ['comment_line','comment_block'] and w in [';','end','endcase'] :
+                if self.state not in ['comment_line','comment_block','string'] and w in [';','end','endcase'] :
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     last_split = split.pop(ilvl,0)
                     split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
@@ -190,7 +190,7 @@ class VerilogBeautifier():
                 line_cnt+=1
             # else:
             elif not w_d[-1]=='\n' or w.strip():
-                if self.state not in ['comment_line','comment_block'] and self.settings['indentSyle']=='gnu':
+                if self.state not in ['comment_line','comment_block','string'] and self.settings['indentSyle']=='gnu':
                     if w == 'begin' and line.strip()!='':
                         ilvl_tmp = ilvl+split_always+1
                         for i,x in split.items() :
@@ -212,7 +212,7 @@ class VerilogBeautifier():
                     line = line.rstrip() + '\n'
                     block_ended = False
                 line += w
-                if self.state not in ['comment_line','comment_block']:
+                if self.state not in ['comment_line','comment_block','string']:
                     # print('State={0}.{1} -- Testing "{2}"'.format(self.state,self.block_state,block+line))
                     action = self.processWord(w,w_d, state_end, block + line)
                     if action.startswith("incr_ilvl"):
@@ -222,7 +222,7 @@ class VerilogBeautifier():
                             block = line
                             line = ''
             # Handle the self.block_state and call appropriate alignement function
-            if w==';' and self.state not in ['comment_line','comment_block', '(']:
+            if w==';' and self.state not in ['comment_line','comment_block','string', '(']:
                 if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
@@ -304,7 +304,14 @@ class VerilogBeautifier():
                     line = ''
                     if not self.block_state:
                         block_handled = True
-            # Identify start of comment
+            elif self.state=='string':
+                if w=='"':
+                    self.stateUpdate()
+                    block += line
+                    line = ''
+                    if not self.block_state:
+                        block_handled = True
+            # Identify start of comments/string
             else :
                 if w_d[-1]=='/':
                     if w=='/':
@@ -316,6 +323,8 @@ class VerilogBeautifier():
                     if line.strip() in ["//", "/*"] and not has_indent:
                         line = line.strip()
                     # print('[Beautify] state={self.block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                elif w=='"':
+                    self.stateUpdate('string')
             # Handle always block_state
             if self.block_state == 'always' and (not self.state or self.state in ['module','interface']):
                 tmp = verilogutil.clean_comment(block + line).strip()

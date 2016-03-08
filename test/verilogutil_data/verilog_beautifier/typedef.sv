@@ -40,7 +40,7 @@ package my_pkg;
       type_name: "my_name",
       cfg_type_name: "config",
       my_dict: '{"key0": "value0",
-                            "key16": "my_value"},
+                            "key16": "module"},
       comp_mode: my_other_pkg::COMP_MODE,
       mode: my_other_pkg::DEFAULT_MODE
    };
