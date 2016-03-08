@@ -10,7 +10,7 @@ import functools
 #   the signal itself (not part of the regular expression)
 re_bw    = r'[\w\*\(\)\/><\:\-\+`\$\s]+'
 re_var   = r'^\s*(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
-re_decl  = r'(?:^|,|(?:\w|\)|#)\s*\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)(\['+re_bw+r'\])?\s*((?:[A-Za-z_]\w*(?:\s*\[[^=\^\&\|,;]*?\]\s*)?\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
+re_decl  = r'(?:^|,|(?:\w|\)|#)\s*\(|;)\s*(?:const\s+)?(\w+\s+)?(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:\.]*\s+)((?:\['+re_bw+r'\]\s*)*)\s*((?:[A-Za-z_]\w*(?:\s*\[[^=\^\&\|,;]*?\]\s*)?\s*(?:\=\s*[\w\.\:]+\s*)?,\s*)*)\b'
 re_enum  = r'^\s*(typedef\s+)?(enum)\s+(\w+\s*)?(\['+re_bw+r'\])?\s*(\{[\w=,\s`\'\/\*]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_union = r'^\s*(typedef\s+)?(struct|union|`\w+)\s+(packed\s+)?(signed|unsigned)?\s*(\{[\w,;\s`\[\:\]\/\*\+\-><\(\)\$]+\})\s*([A-Za-z_][\w=,\s]*,\s*)?\b'
 re_tdp   = r'^\s*(typedef\s+)(\w+)\s*(#\s*\(.*?\))?\s*()\b'
@@ -256,16 +256,17 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         # print('[get_type_info_from_match] tag='+tag+ ' name='+str(signal_list)+ ' match (' + str(i) + ') = ' + str(m.groups()[i]).strip())
         if m.groups()[i] is not None:
             tmp = m.groups()[i].strip()
-            # Cleanup space in enum/struct declaration
-            if i==4 and t in ['enum','struct']:
-                tmp = re.sub(r'\s+',' ',tmp,flags=re.MULTILINE)
-            #Cleanup spaces in bitwidth
-            if i==idx_bw:
-                tmp = re.sub(r'\s+','',tmp,flags=re.MULTILINE)
-                bw = tmp
-            # regex can catch more than wanted, so filter based on a list
-            if not tmp.startswith('end'):
-                ft += tmp + ' '
+            if tmp:
+                # Cleanup space in enum/struct declaration
+                if i==4 and t in ['enum','struct']:
+                    tmp = re.sub(r'\s+',' ',tmp,flags=re.MULTILINE)
+                #Cleanup spaces in bitwidth
+                if i==idx_bw:
+                    tmp = re.sub(r'\s+','',tmp,flags=re.MULTILINE)
+                    bw = tmp
+                # regex can catch more than wanted, so filter based on a list
+                if not tmp.startswith('end'):
+                    ft += tmp + ' '
     if not ft.strip():
         return [ti_not_found]
     ti = []

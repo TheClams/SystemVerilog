@@ -1,4 +1,5 @@
 SystemVerilog 2.8.5 Changelog:
 
 ## Fix ##
+  - Parser: properly identify multidimensionnal signals
   - Alignment: Ignore any keywords inside string
