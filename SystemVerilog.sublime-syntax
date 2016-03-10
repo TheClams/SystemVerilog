@@ -348,11 +348,15 @@ contexts:
       push:
         - match: \)
           pop: true
+        - match: .*$(?!\n)
+          scope: invalid.illegal.unbalanced-bracket
         - include: main
     - match: '\['
       push:
         - match: '\]'
           pop: true
+        - match: .*$(?!\n)
+          scope: invalid.illegal.unbalanced-bracket
         - include: main
     - match: '\)|\]'
       scope: invalid.illegal.stray-bracket-end

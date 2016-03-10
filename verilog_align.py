@@ -19,7 +19,7 @@ def plugin_loaded():
 class VerilogAlign(sublime_plugin.TextCommand):
 
     def run(self,edit, cmd=""):
-        if len(self.view.sel())==0 : return;
+        if len(self.view.sel())==0 : return
         # TODO: handle multi cursor. Currently only first one ise used
         # Expand the selection to a complete scope supported by the one of the align function
         # Get sublime setting

@@ -1,5 +1,10 @@
 SystemVerilog 2.8.5 Changelog:
 
+## Enhancement ##
+ - Now highlight in red the last line of a file if there is unbalanced bracket/parenthesis
+
 ## Fix ##
   - Parser: properly identify multidimensionnal signals
-  - Alignment: Ignore any keywords inside string
+  - Alignment:
+  	* Ignore any keywords inside string
+  	* Alignement of multidimensionnal packed array is now done per dimension

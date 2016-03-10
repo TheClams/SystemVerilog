@@ -580,10 +580,17 @@ class VerilogBeautifier():
             if x[1] != '':
                 len_var = 3
         # Get bitwidth length, if any
-        port_bw_l  = [re.sub(r'\s*','',x[4]) for x in decl]
-        len_bw = 0
+        port_bw_l  = [re.findall(r'\[(.+?)\]',re.sub(r'\s*','',x[4])) for x in decl]
+        len_bw_a = []
         if len(port_bw_l)>0:
-            len_bw  = max([len(x.strip()[1:-1].strip()) for x in port_bw_l])
+            for x in port_bw_l:
+                for i,y in enumerate(x):
+                    if i>=len(len_bw_a):
+                        len_bw_a.append(len(y))
+                    elif len_bw_a[i]<len(y):
+                        len_bw_a[i] = len(y)
+        # get total length of bitwidth, adding all internal length and adding 2 for each dimmension for the brackets
+        len_bw = sum(len_bw_a) + 2*len(len_bw_a)
         # Get port length (ignore list, just align on the first port of the list if nay)
         max_port_len = 0
         port_l = []
@@ -616,7 +623,7 @@ class VerilogBeautifier():
             if len_var > 0:
                 len_type_full += 4
             if len_bw > 0:
-                len_type_full += len_bw+2
+                len_type_full += len_bw
             if len_sign > 0:
                 len_type_full += 1+len_sign
         max_len = len_type_full
@@ -678,10 +685,13 @@ class VerilogBeautifier():
                                     l_new += ''.ljust(len_sign+1)
                             # Add bus width if it exists at least for one port
                             if len_bw>1:
+                                s = ''
                                 if m_port.group('bw'):
-                                    l_new += ' [' + m_port.group('bw').strip()[1:-1].strip().rjust(len_bw) + ']'
-                                else:
-                                    l_new += ''.rjust(len_bw+3)
+                                    s = ' '
+                                    bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m_port.group('bw')))
+                                    for i,bw in enumerate(bw_a):
+                                        s += '[' + bw.rjust(len_bw_a[i]) + ']'
+                                l_new += s.ljust(len_bw+1)
                             if max_len > len_type_full:
                                 l_new += ''.ljust(max_len-len_type_full)
                         elif m_port.group('type') :
