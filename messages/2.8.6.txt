@@ -1,0 +1,4 @@
+SystemVerilog 2.8.6 Changelog:
+
+## Fix ##
+  - Completion: fix regression on package completion

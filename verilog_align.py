@@ -69,9 +69,9 @@ class VerilogAlign(sublime_plugin.TextCommand):
             else:
                 region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
-                region.b -= 1;
+                region.b -= 1
             if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
-                region.a += 1;
+                region.a += 1
             txt = self.view.substr(region)
             txt = beautifier.beautifyText(txt)
         if txt:
