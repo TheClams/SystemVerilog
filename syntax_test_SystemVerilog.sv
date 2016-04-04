@@ -5,7 +5,7 @@
 //      ^ entity.name.type.define
 `my_macro
 // <- constant.other.define
-
+logic x;
 /*------------------------------------------------------------------------------
 --  Test interface definition with modport
 ------------------------------------------------------------------------------*/
@@ -99,13 +99,27 @@ module my_module
     my_interface1.sys   if1,
 //  ^ storage.type.interface
 //                ^ support.modport
-    my_interface2       if2, // Coment if2
-//  ^ storage.type.interface
+    my_interface2       if2, // Comment if2
+//  ^ storage.type.userdefined
 //                           ^ comment.line
-    input   logic       clk, /* comment clk */
+    input var  logic    clk, /* comment clk */
+//  ^ support.type
+//        ^ storage.type
+//              ^ storage.type
 //                           ^ comment.block
+    input wire my_pkg::my_type din,
+//        ^ storage.type
+//             ^ support.type.scope
+//                     ^ storage.type
+
     output  wire        my_out
   );
+
+wire my_pkg::my_type data;
+// <- storage.type
+//   ^ support.type.scope
+//           ^ storage.type
+
 
     timeunit 1ns;
 //  ^ keyword.control

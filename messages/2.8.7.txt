@@ -1,0 +1,4 @@
+SystemVerilog 2.8.7 Changelog:
+
+## Fix ##
+  - Highlight: support net specifier (var/wire) with user-defined type
