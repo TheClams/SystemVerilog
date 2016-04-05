@@ -4,6 +4,8 @@
 name: SystemVerilog
 file_extensions: [sv, v, svh, vh]
 scope: source.systemverilog
+variables:
+  id: '[A-Za-z_][A-Za-z_0-9]*'
 contexts:
   main:
     - match: \s*\b(local\s+|protected\s+)?\s*\b(function)\b(\s+automatic)?
@@ -15,7 +17,7 @@ contexts:
         - meta_scope: meta.function.systemverilog
         - match: ;
           pop: true
-        - match: '\b(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_:]*)\s*(?=\(|;)'
+        - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
@@ -29,7 +31,7 @@ contexts:
             - match: \)\s*;
               pop: true
             - include: port-dir
-            - match: '\s*\b(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            - match: '\s*\b(?:({{id}})(::))?({{id}})\s+({{id}})'
               captures:
                 1: support.type.scope.systemverilog
                 2: keyword.operator.scope.systemverilog
@@ -45,7 +47,7 @@ contexts:
         - meta_scope: meta.task.systemverilog
         - match: ;
           pop: true
-        - match: '\s*\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+        - match: '\s*\b({{id}})\b'
           captures:
             1: entity.name.function.systemverilog
         - match: \(
@@ -54,7 +56,7 @@ contexts:
             - match: \)\s*;
               pop: true
             - include: port-dir
-            - match: '\s*\b(?:\b(virtual)\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+({{id}})'
               captures:
                 1: keyword.other.systemverilog
                 2: support.type.scope.systemverilog
@@ -65,14 +67,14 @@ contexts:
       captures:
         1: keyword.control.systemverilog
       set: [typedef_symbol, typedef_decl]
-    - match: '\s*\b(nettype)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)(\s+(with)\s+([a-zA-Z_][a-zA-Z0-9_]*))?'
+    - match: '\s*\b(nettype)\s+({{id}})\s+({{id}})(\s+(with)\s+({{id}}))?'
       captures:
         1: keyword.control.systemverilog
         2: storage.type.systemverilog
         3: entity.name.type.systemverilog
         5: keyword.control.systemverilog
         6: support.function.resolve.systemverilog
-    - match: '\s*(module)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\s*(module)\s+\b({{id}})\b'
       captures:
         1: keyword.control.systemverilog
         2: entity.name.type.module.systemverilog
@@ -87,7 +89,7 @@ contexts:
           push:
             - match: ;
               pop: true
-            - match: '\b([a-zA-Z_]\w*)(::)'
+            - match: '\b({{id}})(::)'
               captures:
                 1: support.type.scope.systemverilog
                 2: keyword.operator.scope.systemverilog
@@ -98,7 +100,7 @@ contexts:
           scope: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport
-    - match: '\b(sequence)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+    - match: '\b(sequence)\s+({{id}})'
       scope: meta.sequence.systemverilog
       captures:
         1: keyword.control.systemverilog
@@ -107,14 +109,14 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         3: constant.other.define.systemverilog
-    - match: '\s*\b(begin)\b\s*((:)\s*([a-zA-Z_][a-zA-Z0-9_]*))?\b'
+    - match: '\s*\b(begin)\b\s*((:)\s*({{id}}))?\b'
       scope: meta.definition.systemverilog
       captures:
         0: meta.section.begin.systemverilog
         1: keyword.other.block.systemverilog
         3: keyword.operator.systemverilog
         4: entity.name.section.systemverilog
-    - match: '\s*\b(fork)\b\s*((:)\s*([a-zA-Z_][a-zA-Z0-9_]*))?\b'
+    - match: '\s*\b(fork)\b\s*((:)\s*({{id}}))?\b'
       scope: meta.definition.systemverilog
       captures:
         0: meta.section.fork.systemverilog
@@ -192,30 +194,30 @@ contexts:
         4: entity.label.systemverilog
     - match: '\b(std)\b::'
       scope: support.class.systemverilog
-    - match: '^\s*(`define)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+    - match: '^\s*(`define)\s+({{id}})'
       scope: meta.define.systemverilog
       captures:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
-    - match: '\s*(primitive|package|constraint|interface|covergroup|program)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\s*(primitive|package|constraint|interface|covergroup|program)\s+\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.control.systemverilog
         2: entity.name.type.class.systemverilog
-    - match: '(([a-zA-Z_][a-zA-Z0-9_]*)\s*(:))?\s*(coverpoint|cross)\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+    - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\s+({{id}})'
       scope: meta.definition.systemverilog
       captures:
         2: entity.name.type.class.systemverilog
         3: keyword.operator.other.systemverilog
         4: keyword.control.systemverilog
-    - match: '\s*\b(virtual\s+)?(class)\s+\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\s*\b(virtual\s+)?(class)\s+\b({{id}})\b'
       scope: meta.definition.class.systemverilog
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
         3: entity.name.type.class.systemverilog
-    - match: '\b(extends)\s+(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\b(extends)\s+(?:({{id}})(::))?({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.control.systemverilog
@@ -228,9 +230,9 @@ contexts:
     - match: '\b(and|nand|nor|or|xor|xnor|buf|not|bufif[01]|notif[01]|r?[npc]mos|tran|r?tranif[01]|pullup|pulldown)\b'
       scope: support.type.systemverilog
     - include: strings
-    - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\$\b({{id}})\b'
       scope: support.function.systemverilog
-    - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)('')(?=\()'
+    - match: '\b({{id}})('')(?=\()'
       scope: meta.cast.systemverilog
       captures:
         1: storage.type.systemverilog
@@ -240,11 +242,11 @@ contexts:
       captures:
         1: keyword.other.systemverilog
         2: constant.other.systemverilog
-    - match: '^\s*(localparam|parameter)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b\s*(?=(=))'
+    - match: '^\s*(localparam|parameter)\s+({{id}})\b\s*(?=(=))'
       scope: meta.param.systemverilog
       captures:
         1: keyword.other.systemverilog
-    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(?:(var|wire)\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*\b)?\s*(?=(#\s*\([\w,\:#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*[a-zA-Z][a-zA-Z0-9_]*(\s*\[.*?\]\s*)*(;|,|=|''\{))'
+    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}}\b)?\s*(?=(#\s*\([\w,\:#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*{{id}}(\s*\[.*?\]\s*)*(;|,|=|''\{))'
       scope: meta.userdefined.systemverilog
       captures:
         1: keyword.other.systemverilog
@@ -263,11 +265,11 @@ contexts:
         1: keyword.other.systemverilog
     - match: \s*\b(rand|randc)\b
       scope: storage.type.rand.systemverilog
-    - match: '^(\s*(bind)\s+((`\w+)|([a-zA-Z_][\w\.]*)))?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=#[^#])'
+    - match: '^(\s*(bind)\s+((`\w+)|([a-zA-Z_][\w\.]*)))?\s*({{id}})\s*(?=#[^#])'
       captures:
         2: keyword.control.systemverilog
         4: constant.other.define.systemverilog
-        6: storage.module.systemverilog
+        6: storage.type.module.systemverilog
       push:
         - meta_scope: meta.module.inst.param.systemverilog
         - match: ;|(?==|:)
@@ -286,11 +288,11 @@ contexts:
         - match: \#
           scope: keyword.operator.param.systemverilog
         - include: comments
-        - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)\b(?=\s*(\(|$))'
+        - match: '\b({{id}})\b(?=\s*(\(|$))'
           scope: entity.name.type.module.systemverilog
-    - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)([a-zA-Z_][a-zA-Z0-9_]*)\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)'
+    - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)'
       captures:
-        1: storage.module.systemverilog
+        1: storage.type.module.systemverilog
         2: entity.name.type.module.systemverilog
         4: constant.numeric.systemverilog
         6: constant.numeric.systemverilog
@@ -319,7 +321,7 @@ contexts:
             - match: '(?:,|})'
               pop: true
             - include: base-grammar
-        - match: '\b([a-zA-Z_]\w*)\s*(:)(?!:)'
+        - match: '\b({{id}})\s*(:)(?!:)'
           captures:
             1: support.function.field.systemverilog
             2: keyword.operator.other.systemverilog
@@ -370,7 +372,7 @@ contexts:
     - include: operators
     - include: constants
     - include: strings
-    - match: '^\s*(?:(var|wire)\s+)?(([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
+    - match: '^\s*(?:(var|wire)\s+)?(({{id}})(::))?({{id}})\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
       captures:
         1: storage.type.userdefined.systemverilog
         3: support.type.scope.systemverilog
@@ -410,9 +412,9 @@ contexts:
         2: support.variable.systemverilog
     - match: '`(celldefine|else|elsif|endcelldefine|endif|include|line|nounconnected_drive|resetall|timescale|unconnected_drive|undef|begin_\w+|end_\w+|remove_\w+|restore_\w+)\b'
       scope: constant.other.preprocessor.systemverilog
-    - match: '``\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '``\b({{id}})\b'
       scope: variable.macro.systemverilog
-    - match: '`\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '`\b({{id}})\b'
       scope: constant.other.define.systemverilog
     - match: \b(null)\b
       scope: support.constant.systemverilog
@@ -420,18 +422,18 @@ contexts:
     - match: \b(\w+)(?=\s*\()
       scope: support.function.generic.systemverilog
   ifmodport:
-    - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\b({{id}})\.({{id}})\s+({{id}})\b'
       captures:
         1: storage.type.interface.systemverilog
         2: support.modport.systemverilog
   module-binding:
-    - match: '\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\('
+    - match: '\.({{id}})\s*\('
       captures:
         1: support.function.port.systemverilog
       push: module-binding-signal
-    - match: \w\.([a-zA-Z_][a-zA-Z0-9_]*)
+    - match: \w\.({{id}})
       # catch field => normal text
-    - match: \.([a-zA-Z_][a-zA-Z0-9_]*)\s*
+    - match: \.({{id}})\s*
       scope: support.function.port.implicit.systemverilog
   module-binding-signal:
     - match: \(
@@ -443,15 +445,15 @@ contexts:
     - include: operators
     - include: strings
     - include: constants
-    - match: '\b([a-zA-Z_]\w*)(::)'
+    - match: '\b({{id}})(::)'
       captures:
         1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
-    - match: '\b([a-zA-Z_]\w*)('')'
+    - match: '\b({{id}})('')'
       captures:
         1: storage.type.interface.systemverilog
         2: keyword.operator.cast.systemverilog
-    - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\$\b({{id}})\b'
       scope: support.function.systemverilog
     - match: \b(virtual)\b
       scope: keyword.control.systemverilog
@@ -488,14 +490,14 @@ contexts:
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
   port-dir:
-    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)?\s+(?=\[[a-zA-Z0-9_\-\+]*:[a-zA-Z0-9_\-\+]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)'
+    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:({{id}})(::))?({{id}})?\s+(?=\[[a-zA-Z0-9_\-\+]*:[a-zA-Z0-9_\-\+]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)'
       captures:
         1: support.type.systemverilog
         2: storage.type.net.systemverilog
         3: support.type.scope.systemverilog
         4: keyword.operator.scope.systemverilog
         5: storage.type.interface.systemverilog
-    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:([a-zA-Z_][a-zA-Z0-9_]*)(::))?([a-zA-Z_][a-zA-Z0-9_]*)?\s+(?=[a-zA-Z_][a-zA-Z0-9_\s]*)'
+    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:({{id}})(::))?({{id}})?\s+(?=[a-zA-Z_][a-zA-Z0-9_\s]*)'
       captures:
         1: support.type.systemverilog
         2: storage.type.net.systemverilog
@@ -504,13 +506,13 @@ contexts:
         5: storage.type.interface.systemverilog
     - match: \s*\b(output|input|inout|ref)\b
       scope: support.type.systemverilog
-    - match: '\$\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\$\b({{id}})\b'
       scope: support.function.systemverilog
   storage-modifier-systemverilog:
     - match: '\b(signed|unsigned|small|medium|large|supply[01]|strong[01]|pull[01]|weak[01]|highz[01])\b'
       scope: storage.modifier.systemverilog
   storage-scope-systemverilog:
-    - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)(::)'
+    - match: '\b({{id}})(::)'
       scope: meta.scope.systemverilog
       captures:
         1: support.type.scope.systemverilog
@@ -569,7 +571,7 @@ contexts:
       scope: keyword.control.systemverilog
       set:
         - meta_scope: "meta.typedef_decl.enum"
-        - match: '\b[a-zA-Z_][a-zA-Z0-9_]*\b'
+        - match: '\b{{id}}\b'
           scope: storage.type.systemverilog
           set:
             - meta_scope: "meta.typedef_decl.enum.list"
@@ -587,7 +589,7 @@ contexts:
             - include: constants
             - include: operators
             - include: strings
-    - match: '\b[a-zA-Z_][a-zA-Z0-9_]*\b'
+    - match: '\b{{id}}\b'
       scope: storage.type.systemverilog
       pop: true
   typedef_symbol:
@@ -606,7 +608,7 @@ contexts:
     - include: module-param
     - match: '\b(signed|unsigned)\b'
       scope: storage.modifier.systemverilog
-    - match: '\b([a-zA-Z_][a-zA-Z0-9_]*)\b'
+    - match: '\b({{id}})\b'
       scope: entity.name.type.systemverilog
       pop: true
     - match: \s*\b(typedef)\b

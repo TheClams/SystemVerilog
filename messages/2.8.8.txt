@@ -1,0 +1,4 @@
+SystemVerilog 2.8.8 Changelog:
+
+## Fix ##
+  - Highlight: fix highlight of user-defined type when variable starts with _
