@@ -1,0 +1,4 @@
+SystemVerilog 2.8.9 Changelog:
+
+## Fix ##
+  - Case template: support slice (i.e: case(cnt[1:0]) )
