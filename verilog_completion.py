@@ -81,7 +81,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion =  self.dot_completion(view,r)
         elif prev_symb=='::':
             completion =  self.scope_completion(view,prev_word)
-        elif prev_symb[-1]==')':
+        elif prev_symb.endswith(')'):
             m = re.search(r'^\s*case\s*\((.+?)\)$',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
