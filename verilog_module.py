@@ -16,6 +16,37 @@ def plugin_loaded():
 list_module_files = {}
 lmf_update_ongoing = False
 
+############################################################################
+# Helper function: retrieve type info with support for import statement
+def type_info(view,txt,varname):
+    ti = verilogutil.get_type_info(txt,varname)
+    if not ti or not ti['type']:
+        ti = type_info_from_import(view,txt,varname)
+    return ti
+
+def type_info_file(view,fname,varname):
+    ti = verilogutil.get_type_info_file(fname,varname)
+    if not ti or not ti['type']:
+        with open(fname) as f:
+            flines = f.read()
+            ti = type_info_from_import(view,flines,varname)
+    return ti
+
+def type_info_from_import(view,txt,varname):
+    ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':varname, 'tag':None, 'value':None}
+    for m in re.finditer(r'\bimport\s+(.+?);',txt,flags=re.MULTILINE):
+        for mp in re.finditer(r'\b(\w+)(\:\:[\w\*]+)+',m.groups()[0],flags=re.MULTILINE):
+            # print('Package: {0} '.format(mp.groups()[0]))
+            pi = lookup_package(view,mp.groups()[0])
+            if pi:
+                for x in pi['member']:
+                    if x['name']==varname:
+                        ti = x
+                        break
+        if ti['type']:
+            break
+    return ti
+
 ########################################
 def lookup_module(view,mname):
     mi = None
@@ -108,7 +139,7 @@ def lookup_type(view, t):
         if fname in flist_norm:
             _,_,rowcol = filelist[flist_norm.index(fname)]
             # print(t + ' defined in current file' + str(fname))
-            ti = verilogutil.get_type_info_file(fname,t)
+            ti = type_info_file(view,fname,t)
         if ti and ti['type']:
             ti['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid type definition to be the correct one
@@ -119,7 +150,7 @@ def lookup_type(view, t):
                 # Parse only systemVerilog file. Check might be a bit too restrictive ...
                 # print(t + ' defined in ' + str(fname))
                 if fname.lower().endswith(('sv','svh', 'v', 'vh')):
-                    ti = verilogutil.get_type_info_file(fname,t)
+                    ti = type_info_file(view,fname,t)
                     if ti['type']:
                         ti['fname'] = (fname,rowcol[0],rowcol[1])
                         break
@@ -144,7 +175,13 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         #  - if it exist use latest version and display panel immediately while running an update
         #  - if not display panel only when list is ready
         projname = self.window.project_file_name()
-        if projname not in list_module_files:
+        if not projname:
+            list_module_files['__NONE__'] = []
+            for v in self.window.views():
+                if v and v.file_name():
+                    list_module_files['__NONE__'].append(os.path.abspath(v.file_name()))
+            self.on_list_done('__NONE__')
+        elif projname not in list_module_files:
             sublime.set_timeout_async(functools.partial(self.get_list_file,projname,functools.partial(self.on_list_done,projname)), 0)
             sublime.status_message('Please wait while module list is being built')
         elif not lmf_update_ongoing:
@@ -448,7 +485,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                                 break;
                         if sn in signal_dict:
                             ti = signal_dict[sn]
-                        # ti = verilogutil.get_type_info(flines,sn)
+                        # ti = type_info(view,flines,sn)
                         # print('Selecting ' + sn + ' with type ' + str(ti))
                         if ti['decl'] is not None:
                             ac[p['name']] = sn
@@ -465,7 +502,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                                 break;
                         if sn in signal_dict:
                             ti = signal_dict[sn]
-                        # ti = verilogutil.get_type_info(flines,sn)
+                        # ti = type_info(view,flines,sn)
                         # print('Selecting ' + sn + ' with type ' + str(ti))
                         if ti['decl'] is not None:
                             if sn != p['name']:

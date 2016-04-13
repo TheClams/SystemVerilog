@@ -1,0 +1,10 @@
+SystemVerilog 2.9.0 Changelog:
+
+## Improvements ##
+  - Import package are now used to retrieve some type information for autocompletion and tooltip.
+  - Module instantiation now works even when there is no project, using all opened files as the list.
+
+## Fix ##
+ - Autocompletion:
+  * Module binding correctly ignore commented binding
+  * Resolve typedef to provide auto-completion

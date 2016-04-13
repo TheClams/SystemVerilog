@@ -27,6 +27,7 @@ def plugin_loaded():
     imp.reload(sublimeutil)
     imp.reload(verilog_module)
 
+############################################################################
 class VerilogAutoComplete(sublime_plugin.EventListener):
 
     # Cache latest information
@@ -162,7 +163,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         start_word = view.substr(view.word(r))
         r.a -=1
         r.b = r.a
-        r = view.word(r);
+        r = view.word(r)
         w = str.rstrip(view.substr(r))
         scope = view.scope_name(r.a)
         completion = []
@@ -183,7 +184,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             #No word before dot => check the scope
             if 'meta.module.inst' in scope:
                 r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
-                txt = view.substr(r)
+                txt = verilogutil.clean_comment(view.substr(r))
                 mname = re.findall(r'\w+',txt)[0]
                 filelist = view.window().lookup_symbol_in_index(mname)
                 if filelist:
@@ -213,7 +214,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             txt = view.substr(sublime.Region(0, view.size()))
             wa = w.split('.')
             # extract info for first word using current file (to allow unsaved change to be taken into account)
-            ti = verilogutil.get_type_info(txt,wa[0])
+            ti = verilog_module.type_info(view,txt,wa[0])
             # Type not found ? check for extended class
             # TODO: check for import
             if not ti['type'] :
@@ -221,7 +222,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 if cname:
                     ci = verilog_module.lookup_type(view,cname)
                     if ci:
-                        ti = verilogutil.get_type_info_file(ci['fname'][0],wa[0])
+                        ti = verilog_module.type_info_file(view,ci['fname'][0],wa[0])
                         # print(ti)
             for i in range(1,len(wa)):
                 # print("[SV:dot_completion] Type of {0} = {1}".format(wa[i-1],ti))
@@ -235,7 +236,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 # Lookup for the variable inside the type defined
                 if ti:
                     fname = ti['fname'][0]
-                    ti = verilogutil.get_type_info_file(fname,wa[i])
+                    ti = verilog_module.type_info_file(view,fname,wa[i])
             # print ('Type info: ' + str(ti))
             if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
                 return completion
@@ -274,8 +275,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         # Parse only verilog files. Check might be a bit too restrictive ...
                         if fname.lower().endswith(('sv','svh', 'v', 'vh')):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
-                            tti = verilogutil.get_type_info_file(fname,t)
+                            tti = verilog_module.type_info_file(view,fname,t)
                             if tti['type']:
+                                if tti['tag']=='typedef':
+                                    tti = verilog_module.lookup_type(view,tti['type'])
+                                    if tti:
+                                        fname = tti['fname'][0]
                                 break
                     # print(tti)
                     if not tti:
@@ -517,7 +522,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # get the variable name
         v = view.substr(view.word(sublime.Region(r_start-1,r_start-1)))
         txt = self.view.substr(sublime.Region(0, r_start))
-        ti = verilogutil.get_type_info(txt,v)
+        ti = verilog_module.type_info(view,txt,v)
         # print('[struct_assign_completion] ti = %s' % (ti))
         if not ti['type']:
             return []
@@ -532,7 +537,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     fname = sublimeutil.normalize_fname(f[0])
                     # Parse only systemVerilog file. Check might be a bit too restrictive ...
                     if fname.lower().endswith(('sv','svh')):
-                        tti = verilogutil.get_type_info_file(fname,t)
+                        tti = verilog_module.type_info_file(view,fname,t)
                         if tti:
                             # print('[struct_assign_completion] Type %s found in %s: %s' %(ti['type'],fname,str(tti)))
                             break
@@ -640,7 +645,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Complete enum assign/comparison with all possible value
     def enum_assign_completion(self, view, sname):
         c = []
-        ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),sname)
+        ti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),sname)
         if ti['type']:
             if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout']:
                 ti = verilog_module.lookup_type(view,ti['type'])
@@ -888,7 +893,7 @@ class VerilogHelper():
             print('[SV:get_case_template] Could not parse ' + sig_name)
             return (None,None)
         if not ti:
-            ti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),m.group('name'))
+            ti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),m.group('name'))
         if not ti['type']:
             print('[SV:get_case_template] Could not retrieve type of ' + m.group('name'))
             return (None,None)
@@ -899,14 +904,14 @@ class VerilogHelper():
         # print('[get_case_template] ti = {0}'.format(ti))
         if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
-            tti = verilogutil.get_type_info(view.substr(sublime.Region(0, view.size())),ti['type'], False)
+            tti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),ti['type'], False)
             # Not in current file ? look in index
             if not tti['type']:
                 filelist = view.window().lookup_symbol_in_index(ti['type'])
                 if filelist:
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
-                        tti = verilogutil.get_type_info_file(fname,t)
+                        tti = verilog_module.type_info_file(view,fname,t)
                         if tti:
                             break
             # print('[get_case_template] tti = {0}'.format(tti))
@@ -966,7 +971,7 @@ class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
             s = proc_indent*'\t' + s.replace('\n','\n'+proc_indent*'\t')
         self.view.insert(edit,self.view.sel()[0].a,s)
         # Check is state_next exist: if not, add it to the declaration next to state
-        ti = verilogutil.get_type_info(self.view.substr(sublime.Region(0, self.view.size())),state_next)
+        ti = verilog_module.type_info(self.view,self.view.substr(sublime.Region(0, self.view.size())),state_next)
         if not ti['type']:
             r = self.view.find(args['ti']['type']+r'.+'+sig_name,0)
             self.view.replace(edit,r,re.sub(r'\b'+sig_name+r'\b',sig_name+', '+state_next,self.view.substr(r)))

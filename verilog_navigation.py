@@ -243,7 +243,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         if '.' in var_name:
             s = var_name.split('.')
             lines = self.view.substr(sublime.Region(0, self.view.line(region).b))
-            ti = verilogutil.get_type_info(lines,s[0])
+            ti = verilog_module.type_info(self.view,lines,s[0])
             for i in range(1,len(s)):
                 #if not found check for a definition in base class if we this is an extended class
                 if not ti['type'] :
@@ -254,7 +254,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                             if s[0]=='super':
                                 ti['type'] = ci['name']
                             else:
-                                ti = verilogutil.get_type_info_file(ci['fname'][0],s[0])
+                                ti = verilog_module.type_info_file(self.view,ci['fname'][0],s[0])
                 # Get type definition
                 if ti and ti['type']:
                     if ti['type']=='module':
@@ -264,7 +264,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                 # Lookup for the variable inside the type defined
                 if ti and 'fname' in ti:
                     fname = ti['fname'][0]
-                    ti = verilogutil.get_type_info_file(fname,s[i])
+                    ti = verilog_module.type_info_file(self.view,fname,s[i])
                     if ti['type'] in ['function', 'task']:
                         with open(fname) as f:
                             flines = verilogutil.clean_comment(f.read())
@@ -327,7 +327,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             if len(vs)==2:
                 ti = verilog_module.lookup_type(self.view,vs[0])
                 if ti and ti['type']=='package':
-                    ti = verilogutil.get_type_info_file(ti['fname'][0],vs[1])
+                    ti = verilog_module.type_info_file(self.view,ti['fname'][0],vs[1])
                     if ti:
                         txt = ti['decl']
                         if 'value' in ti and ti['value']:
@@ -338,14 +338,14 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             region = self.view.line(region)
             lines = self.view.substr(sublime.Region(0, region.b))
             # Extract type
-            ti = verilogutil.get_type_info(lines,var_name)
+            ti = verilog_module.type_info(self.view,lines,var_name)
             #if not found check for a definition in base class if we this is an extended class
             if not ti['type'] :
                 cname = sublimeutil.find_closest(self.view,region,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
                 if cname:
                     ci = verilog_module.lookup_type(self.view,cname)
                     if ci:
-                        ti = verilogutil.get_type_info_file(ci['fname'][0],var_name)
+                        ti = verilog_module.type_info_file(self.view,ci['fname'][0],var_name)
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
