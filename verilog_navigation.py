@@ -47,9 +47,13 @@ def init_css():
     if int(sublime.version()) >= 3072 :
         use_tooltip = sv_settings.get('sv.tooltip',True)
         color_plist = readPlistFromBytes(sublime.load_binary_resource(pref_settings.get('color_scheme')))
-        color_dict = {x['scope']:x['settings'] for x in color_plist['settings'] if 'scope' in x}
+        color_dict = {}
+        for x in color_plist['settings'] :
+            if 'scope' in x:
+                for s in x['scope'].split(','):
+                    color_dict[s.strip()] = x['settings']
         color_dict['__GLOBAL__'] = color_plist['settings'][0]['settings'] # first settings contains global settings, without scope(hopefully)
-        #pprint.pprint(color_dict, width=200)
+        # pprint.pprint(color_dict, width=200)
         bg = int(color_dict['__GLOBAL__']['background'][1:],16)
         fg = int(color_dict['__GLOBAL__']['foreground'][1:],16)
         # Get color for keyword, support, storage, default to foreground
@@ -201,6 +205,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                                 s += self.add_info([x for x in ci['member'] if 'access' not in x])
                                 s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
+                # print(s)
                 self.view.show_popup(s,location=-1, max_width=500, on_navigate=self.on_navigate)
             else :
                 # fix hard limit to signal declaration to 128 to ensure it can be displayed
@@ -398,19 +403,25 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                     sh+='<span class="storage">{0}</span> '.format(ws[1])
             elif '.' in w:
                 ws = w.split('.')
-                if addLink:
-                    ti = verilog_module.lookup_type(self.view,ws[0])
-                if ti and 'fname' in ti:
-                    fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(fname,ws[0])
-                else:
-                    sh+='<span class="storage">{0}</span>'.format(ws[0])
-                sh+='.<span class="support">{0}</span> '.format(ws[1])
+                if ws[0] and re.match(r'^[A-Za-z_]\w+$',ws[0]):
+                    if addLink:
+                        ti = verilog_module.lookup_type(self.view,ws[0])
+                    if ti and 'fname' in ti:
+                        fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
+                        sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(fname,ws[0])
+                    else:
+                        sh+='<span class="storage">{0}</span>'.format(ws[0])
+                    sh+='.<span class="support">{0}</span> '.format(ws[1])
+                else :
+                    if '#' in ws[0]:
+                        sh += re.sub(r'(#)',r'<span class="operator">\1</span> ',ws[0])
+                    sh+='.'
+                    sh+= re.sub(r'\b(\w+)\b',r'<span class="function">\1</span> ',ws[1],count=1)
             elif '[' in w or '(' in w:
                 w = re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w)
                 sh += re.sub(r'(\#|\:)',r'<span class="operator">\1</span>',w) + ' '
             # Color type: typically just before the variable or one word earlier in case of array or parameter
-            elif (i == pos_var-1 and m) or (i == pos_var-2 and ('[' in ss[pos_var-1] or '#' in ss[pos_var-1])) :
+            elif ((i == pos_var-1 or (i>0 and ss[i-1]=='typedef')) and m) or (i == pos_var-2 and ('[' in ss[pos_var-1] or '#' in ss[pos_var-1])) :
                 if addLink:
                     ti = verilog_module.lookup_type(self.view,w)
                 # print('[SV:color_str] word={0} => ti={1}'.format(w,ti))
@@ -422,7 +433,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             elif re.match(r'\d+',w) :
                 sh += re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span> ',w)
             elif w in ['=','#'] :
-                sh += re.sub(r'(\=)',r'<span class="operator">\1</span> ',w)
+                sh += re.sub(r'(=|#)',r'<span class="operator">\1</span> ',w)
             else:
                 sh += w + ' '
         return sh,ti
