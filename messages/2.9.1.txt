@@ -1,0 +1,10 @@
+SystemVerilog 2.9.1 Changelog:
+
+## Fix ##
+ - Always template:
+  * Support uppercase name for clock
+  * Now works on module with no always statement
+ - Module instantiation:
+  * Fix regression where unnsaved project was not working anymore
+  * Fix case where wrong file could be use if a file was added or removed in the project
+ - Tooltip: better highlighting for typedef

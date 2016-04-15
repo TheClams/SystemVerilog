@@ -840,7 +840,7 @@ class VerilogHelper():
             r = view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
             if pl:
                 # Make hypothesis that all clock signals have a c in their name
-                pl_c = [x for x in pl if 'c' in x]
+                pl_c = [x for x in pl if 'c' in x.lower()]
                 # select most common one only if the name defined in settings is not in the list
                 if clk_name not in set(pl):
                     if pl_c :
@@ -850,11 +850,36 @@ class VerilogHelper():
                     pl_r = [x for x in pl if x not in pl_c]
                     if pl_r:
                         rst_name = collections.Counter(pl_r).most_common(1)[0][0]
-            nl = [] # negedge list
+            # No posedge found ? try to find a signal name that sounds like a clock
+            else:
+                mi = verilogutil.parse_module(view.substr(sublime.Region(0, view.size())))
+                if mi:
+                    # First limit search to I/O. Only check signals if no port found
+                    l = [x['name'] for x in mi['port'] if re.match(r'(?i)clk|ck|clock',x['name'])]
+                    if not l:
+                        l = [x['name'] for x in mi['signal'] if re.match(r'(?i)clk|ck|clock',x['name'])]
+                    # select most common one only if the name defined in settings is not in the list
+                    if l and clk_name not in l:
+                        clk_name = l[0]
+            # Try to find the reset active low signal name
+            #  - Select most common signal in the negedge list
+            #  - If none check port and input for reset like name
+            nl = []
             r = view.find_all(r'negedge\s+(\w+)', 0, '$1', nl)
             if nl:
                 if rst_n_name not in set(pl):
                     rst_n_name = collections.Counter(nl).most_common(1)[0][0]
+            else :
+                if not mi:
+                    mi = verilogutil.parse_module(view.substr(sublime.Region(0, view.size())))
+                if mi:
+                    # First limit search to I/O. Only check signals if no port found
+                    l = [x['name'] for x in mi['port'] if re.match(r'(?i)rst|reset',x['name'])]
+                    if not l:
+                        l = [x['name'] for x in mi['signal'] if re.match(r'(?i)rst|reset',x['name'])]
+                    # select most common one only if the name defined in settings is not in the list
+                    if l and rst_n_name not in l:
+                        rst_n_name = l[0]
         if always_ce_auto and clk_en_name != '':
             r = view.find(verilogutil.re_decl+clk_en_name,0)
             if not r :
