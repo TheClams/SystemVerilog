@@ -172,10 +172,11 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
                 return
         self.window = sublime.active_window()
         # Populate the list_module_files:
+        #  - If no folder in current project, just list open files
         #  - if it exist use latest version and display panel immediately while running an update
         #  - if not display panel only when list is ready
         projname = self.window.project_file_name()
-        if not projname:
+        if not sublime.active_window().folders():
             list_module_files['__NONE__'] = []
             for v in self.window.views():
                 if v and v.file_name():
@@ -185,8 +186,12 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
             sublime.set_timeout_async(functools.partial(self.get_list_file,projname,functools.partial(self.on_list_done,projname)), 0)
             sublime.status_message('Please wait while module list is being built')
         elif not lmf_update_ongoing:
+            # Create a copy so that the background update does not change the content of the list
+            list_module_files['__COPY__'] = list_module_files[projname][:]
+            # Start background update of the list
             sublime.set_timeout_async(functools.partial(self.get_list_file,projname), 0)
-            self.on_list_done(projname)
+            # Display quick panel
+            self.on_list_done('__COPY__')
 
     def get_list_file(self, projname, callback=None):
         global list_module_files
@@ -215,13 +220,16 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
     def on_select_file_done(self, projname, index):
         if index >= 0:
             fname = list_module_files[projname][index]
-            with open(fname, "r") as f:
-                flines = str(f.read())
-            self.ml=re.findall(r'^\s*module\s+(\w+)',flines,re.MULTILINE);
-            if len(self.ml)<2:
-                self.view.run_command("verilog_do_module_parse", {"args":{'fname': fname, 'mname':r'\w+'}})
-            else:
-                sublime.set_timeout_async(lambda: self.window.show_quick_panel(self.ml, functools.partial(self.on_select_module_done,fname)),0)
+            try:
+                with open(fname, "r") as f:
+                    flines = str(f.read())
+                self.ml=re.findall(r'^\s*module\s+(\w+)',flines,re.MULTILINE);
+                if len(self.ml)<2:
+                    self.view.run_command("verilog_do_module_parse", {"args":{'fname': fname, 'mname':r'\w+'}})
+                else:
+                    sublime.set_timeout_async(lambda: self.window.show_quick_panel(self.ml, functools.partial(self.on_select_module_done,fname)),0)
+            except FileNotFoundError:
+                print('[VerilogModule.Instance] File not found ')
 
     def on_select_module_done(self, fname, index):
         if index >= 0:
@@ -439,6 +447,9 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         # read file to be able to check existing declaration
         flines = view.substr(sublime.Region(0, view.size()))
         mi = verilogutil.parse_module(flines)
+        if not mi:
+            print('[VerilogModule.get_connect] Unable to parse current module')
+            return (decl,ac,wc)
         signal_dict = {}
         for ti in mi['port']:
             signal_dict[ti['name']] = ti
