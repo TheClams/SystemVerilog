@@ -57,22 +57,25 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.a = r.b - 1
         tmp_r = sublime.Region(r.a,r.b)
         if not view.substr(tmp_r).strip() :
-            tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
+            tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
             tmp_r.a = tmp_r.b
         if view.classify(tmp_r.b) & sublime.CLASS_PUNCTUATION_END:
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)
             prev_symb = view.substr(tmp_r).strip()
-            if not view.substr(tmp_r).strip() :
-                tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
+            if not prev_symb :
+                tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
                 tmp_r.a = tmp_r.b
             else:
+                if prev_symb[-1] == '.':
+                    prev_symb = '.'
+                    tmp_r.a = tmp_r.b - 1
                 tmp_r.b = tmp_r.a
         if view.classify(tmp_r.b) & sublime.CLASS_WORD_END:
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_WORD_START)
             prev_word = view.substr(tmp_r).strip()
             tmp_r.b = tmp_r.a
         completion = []
-        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}"'.format(prefix,prev_symb,prev_word,l,r))
+        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
         if prev_symb=='$':
             completion = self.systemtask_completion()
@@ -161,8 +164,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # select word before the dot and quit with no completion if no word found
         start_pos = r.a # save original position of the .
         start_word = view.substr(view.word(r))
-        r.a -=1
         r.b = r.a
+        r.a -=1
+        array_depth = 0
+        # Handle array case
+        while view.substr(r) == ']' :
+            r.a -=1
+            r.b = r.a
+            while view.substr(r) != '[' :
+                r.a = view.find_by_class(r.a,False,sublime.CLASS_PUNCTUATION_START)
+                r.b = r.a + 1
+            r.b = r.a
+            r.a -=1
+            array_depth += 1
         r = view.word(r)
         w = str.rstrip(view.substr(r))
         scope = view.scope_name(r.a)
@@ -241,7 +255,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
-            if ti['array']!='' :
+            if ti['array']!='' and array_depth==0:
                 completion = self.array_completion(ti['array'])
             elif ti['type']=='string':
                 completion = self.string_completion()
@@ -473,7 +487,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if m is not None:
             fti = verilogutil.get_all_type_info(m.groups()[0])
             if isAssign and not fe:
-                c.append(['all_fields\tAll fields',', '.join([f['name']+':' for f in fti])])
+                c.append(['all_fields\tAll fields',', '.join(['{0}:${1}'.format(f['name'],i+1) for i,f in enumerate(fti)])])
             for f in fti:
                 if f['name'] not in fe:
                     f_type = f['type']
@@ -484,7 +498,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if isAssign:
                         f_name += ':'
                     c.append([f['name']+'\t'+f_type,f_name])
-
         return c
 
     def struct_assign_completion(self,view,r):
@@ -516,7 +529,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # Go to the end to get the full scope
         content = view.substr(sublime.Region(r_start,r_end))
         # print('[struct_assign_completion] content = %s' % (content))
-        if not content.startswith('='):
+        if not content.startswith(('<=','=')):
             # print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
             return []
         # get the variable name

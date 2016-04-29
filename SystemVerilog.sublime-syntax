@@ -306,7 +306,7 @@ contexts:
         - include: strings
         - include: operators
         - include: constants
-    - match: '\b\s+(<?=)\s*(\''{)'
+    - match: '\s*(<?=|\?)\s*(\''{)'
       captures:
         1: keyword.operator.other.systemverilog
         2: keyword.operator.other.systemverilog

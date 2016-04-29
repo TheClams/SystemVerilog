@@ -74,7 +74,7 @@ def get_type_info(txt,var_name,search_decl=True):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m and search_decl:
-                re_str = re_decl+r'('+var_name+r'\b(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
+                re_str = re_decl+r'('+var_name+r'\b\s*(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
                 # print(re_str)
                 m = re.search(re_str, txt, flags=re.MULTILINE)
                 tag = 'decl'
@@ -85,7 +85,7 @@ def get_type_info(txt,var_name,search_decl=True):
                 if not m :
                     m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
                     tag = 'inst'
-    # print('[get_type_info] tag = %s , groups = %s' %(tag,str(m.groups())))
+    # print('[get_type_info] tag = {0} , groups = {1}, str={2}'.format(tag,m.groups(),m.group(0)))
     ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag)[0]
     return ti
 

@@ -1,0 +1,7 @@
+SystemVerilog 2.9.2 Changelog:
+
+## Fix ##
+ - Fix highlight os struct assignment in non-blocking assignment and with ternary operator
+ - Fix dot autocompletion of array object
+ - Fix tooltip of module type (now provides port/parameter information)
+ - Fix tooltip of array object when array declaration contains space

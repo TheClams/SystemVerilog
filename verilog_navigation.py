@@ -300,7 +300,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
             if ti:
                 txt = ti['decl']
         # Get Module I/O
-        elif 'storage.module' in scope:
+        elif 'storage.type.module' in scope:
             ti = verilog_module.lookup_module(self.view,var_name)
             if ti:
                 txt = ti['type'] + ' ' + var_name
