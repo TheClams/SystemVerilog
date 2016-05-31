@@ -154,9 +154,15 @@ class VerilogBeautifier():
                 #     print(line)
                 # Search for split line requiring temporary increase of the indentation level
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
-                    tmp = verilogutil.clean_comment(line).strip()
+                    # Retrieve the complete last line without verilog comment
+                    idx_eol = block.rfind('\n')
+                    last_line = line
+                    if idx_eol>-1 and idx_eol<(len(block)-2):
+                        last_line = block[idx_eol+1:]+ line
+                    tmp = verilogutil.clean_comment(last_line).strip()
+                    # print('block="{0}"" => eol={1} => last_line="{2}"'.format(block,idx_eol,last_line))
                     if tmp:
-                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^(`\w+)\b',tmp)
+                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
                         # print('[Beautify] Testing for split: "{0}" (ilvl={1} prev={2}) - split={3}'.format(tmp,ilvl,ilvl_prev,split))
                         if not m:
                             if tmp.startswith('always'):
@@ -322,7 +328,7 @@ class VerilogBeautifier():
                         block_ended = False
                     if line.strip() in ["//", "/*"] and not has_indent:
                         line = line.strip()
-                    # print('[Beautify] state={self.block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                    # print('[Beautify] state={block_state:<16}.{state:<16} -- ilvl={ilvl} -- {line_cnt:4}: "{line}" '.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
                 elif w=='"':
                     self.stateUpdate('string')
             # Handle always block_state

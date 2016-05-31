@@ -130,3 +130,7 @@ class Tests(unittest.TestCase):
     def test_beautifyAssertion(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"assertion.sv", self.path_test+"assertion_exp.sv", cfg)
+
+    def test_beautifyMacro(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"macro.sv", self.path_test+"macro.sv", cfg)

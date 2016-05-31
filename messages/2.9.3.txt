@@ -1,0 +1,5 @@
+SystemVerilog 2.9.3 Changelog:
+
+## Fix ##
+ - Fix highlight of signal declaration when bitwidth contains space
+ - Fix indentation when using macro

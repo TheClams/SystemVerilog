@@ -246,7 +246,7 @@ contexts:
       scope: meta.param.systemverilog
       captures:
         1: keyword.other.systemverilog
-    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}}\b)?\s*(?=(#\s*\([\w,\:#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*{{id}}(\s*\[.*?\]\s*)*(;|,|=|''\{))'
+    - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}}\b)?\s*(?=(#\s*\([\w,\:#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*{{id}}(\s*\[.*?\]\s*)*\s*(;|,|=|''\{))'
       scope: meta.userdefined.systemverilog
       captures:
         1: keyword.other.systemverilog
@@ -490,7 +490,7 @@ contexts:
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
   port-dir:
-    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:({{id}})(::))?({{id}})?\s+(?=\[[a-zA-Z0-9_\-\+]*:[a-zA-Z0-9_\-\+]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)'
+    - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:({{id}})(::))?({{id}})?\s+(?=\[[\w\*\(\)\/><\:\-\+`\$\s]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)'
       captures:
         1: support.type.systemverilog
         2: storage.type.net.systemverilog
