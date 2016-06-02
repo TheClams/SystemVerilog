@@ -109,20 +109,20 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         3: constant.other.define.systemverilog
-    - match: '\s*\b(begin)\b\s*((:)\s*({{id}}))?\b'
+    - match: '\s*\b(begin)\b\s*(:)\s*({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         0: meta.section.begin.systemverilog
         1: keyword.other.block.systemverilog
-        3: keyword.operator.systemverilog
-        4: entity.name.section.systemverilog
-    - match: '\s*\b(fork)\b\s*((:)\s*({{id}}))?\b'
+        2: keyword.operator.systemverilog
+        3: entity.name.section.systemverilog
+    - match: '\s*\b(fork)\b\s*(:)\s*({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         0: meta.section.fork.systemverilog
         1: keyword.control.systemverilog
-        3: keyword.operator.systemverilog
-        4: entity.name.section.systemverilog
+        2: keyword.operator.systemverilog
+        3: entity.name.section.systemverilog
     - match: \b(property)\s+(\w+)
       captures:
         1: keyword.sva.systemverilog
@@ -178,7 +178,7 @@ contexts:
     - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
-    - match: \s*\b(initial|always|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|forkjoin|unique|unique0|priority)\b
+    - match: \s*\b(initial|always|begin|fork|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|dist|clocking|cover|coverpoint|property|bins|binsof|illegal_bins|ignore_bins|randcase|modport|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|forkjoin|unique|unique0|priority)\b
       captures:
         1: keyword.control.systemverilog
     - match: \s*\b(end)\b(\s*(:)\s*(\w+))?

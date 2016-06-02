@@ -1,0 +1,5 @@
+SystemVerilog 2.9.4 Changelog:
+
+## Fix ##
+ - Fix FSM template when state is defined locally
+ - Prevent begin block to appear in the symbol list if unnamed

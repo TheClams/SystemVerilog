@@ -942,7 +942,7 @@ class VerilogHelper():
         # print('[get_case_template] ti = {0}'.format(ti))
         if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
-            tti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),ti['type'], False)
+            tti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),ti['type'])
             # Not in current file ? look in index
             if not tti['type']:
                 filelist = view.window().lookup_symbol_in_index(ti['type'])
