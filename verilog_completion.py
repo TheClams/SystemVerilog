@@ -540,6 +540,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if not ti['type']:
             return []
         t = ti['type']
+        tti = None
         if t == 'struct':
             tti = ti
         else :
@@ -851,6 +852,7 @@ class VerilogHelper():
         if always_name_auto :
             pl = [] # posedge list
             r = view.find_all(r'posedge\s+(\w+)', 0, '$1', pl)
+            mi = None
             if pl:
                 # Make hypothesis that all clock signals have a c in their name
                 pl_c = [x for x in pl if 'c' in x.lower()]

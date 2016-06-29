@@ -22,7 +22,7 @@ class VerilogBeautifier():
             self.indent = self.indentSpace
         self.states = []
         self.state = ''
-        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(\[(?P<array>'+verilogutil.re_bw+r')\])*[ \t]*(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
+        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
 
     def getIndentLevel(self,txt):
@@ -956,13 +956,22 @@ class VerilogBeautifier():
         for l in lines:
             m = self.re_decl.search(l)
             if m:
-                # print('[alignDecl] {0}'.format(m.groups()))
+                # print('[alignDecl] {0} => {1}'.format(l,m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
-                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':0,'name':0,'array':0,'sig_list':0,'comment':0, 'init':0}
+                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':0,'name':0,'array':[], 'array_sum':0, 'sig_list':0,'comment':0, 'init':0}
                 for k,g in m.groupdict().items():
                     if g:
-                        if len(g.strip()) > len_max[ilvl][k]:
+                        # extract all bitwidth, to get each length individually
+                        if k=='array':
+                            port_bw_l  = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',g))
+                            for i,y in enumerate(port_bw_l):
+                                if i>=len(len_max[ilvl][k]):
+                                    len_max[ilvl][k].append(len(y))
+                                elif len_max[ilvl][k][i]<len(y):
+                                    len_max[ilvl][k][i] = len(y)
+                        # Get max length for each possible element of the regexp
+                        elif len(g.strip()) > len_max[ilvl][k]:
                             len_max[ilvl][k] = len(g.strip())
                         if k=='sig_list' and one_decl_per_line:
                             for s in g.split(','):
@@ -971,7 +980,11 @@ class VerilogBeautifier():
             else:
                 ilvl = 0
             lines_match.append((l,m,ilvl))
-        # print(len_max)
+        # Get total length for array
+        for k,x in len_max.items():
+            x['array_sum'] = 0
+            for y in x['array']:
+                x['array_sum'] += 2 + y
         # Update alignement of each line
         txt_new = ''
         for line,m,ilvl in lines_match:
@@ -1006,7 +1019,7 @@ class VerilogBeautifier():
                     l += m.group('name')
                     # No alignement for array/init in case of signal list
                     if m.group('array'):
-                        l += '[' + m.group('array').strip().rjust(len_max[ilvl]['array']) + ']'
+                        l += re.sub(r'\s*','',m_port.group('bw')).rjust(len_max[ilvl]['array_sum']) + ']'
                     if m.group('init'):
                         l += ' = ' + m.group('init').strip().ljust(len_max[ilvl]['init'])
                     if one_decl_per_line:
@@ -1018,11 +1031,13 @@ class VerilogBeautifier():
                 else :
                     l += m.group('name').ljust(len_max[ilvl]['name'])
                     # Align array definition
-                    if len_max[ilvl]['array']>0:
+                    if len_max[ilvl]['array_sum']>0:
+                        s = ''
                         if m.group('array'):
-                            l += '[' + m.group('array').strip().rjust(len_max[ilvl]['array']) + ']'
-                        else:
-                            l += ''.rjust(len_max[ilvl]['array']+2)
+                            bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m.group('array')))
+                            for i,bw in enumerate(bw_a):
+                                s += '[' + bw.rjust(len_max[ilvl]['array'][i]) + ']'
+                        l += s.ljust(len_max[ilvl]['array_sum'])
                     # Align init value (if available)
                     if len_max[ilvl]['init']>0:
                         if m.group('init'):
