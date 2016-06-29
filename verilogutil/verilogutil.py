@@ -250,6 +250,8 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             signal_list += re.findall(re_str, s, flags=re.MULTILINE)
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
+    if not signal_list:
+        return [ti_not_found]
     # print("[SV:get_type_info_from_match] signal_list = " + str(signal_list) + ' for line ' + line)
     #Concat the first 5 word if not None (basically all signal declaration until signal list)
     for i in range(0,idx_max):

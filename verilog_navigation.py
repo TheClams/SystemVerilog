@@ -107,11 +107,11 @@ def init_css():
 
 ############################################################################
 # Display type of the signal/variable under the cursor into the status bar #
-class VerilogTypeCommand(sublime_plugin.TextCommand):
+class VerilogTypePopup :
+    def __init__(self,view):
+        self.view = view
 
-    def run(self,edit):
-        if len(self.view.sel())==0 : return;
-        region = self.view.sel()[0]
+    def show(self,region,location):
         # If nothing is selected expand selection to word
         if region.empty() :
             region = self.view.word(region)
@@ -206,7 +206,7 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
                                 s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 # print(s)
-                self.view.show_popup(s,location=-1, max_width=500, on_navigate=self.on_navigate)
+                self.view.show_popup(s,location=location, max_width=500, on_navigate=self.on_navigate)
             else :
                 # fix hard limit to signal declaration to 128 to ensure it can be displayed
                 if s and len(s) > 128:
@@ -442,6 +442,34 @@ class VerilogTypeCommand(sublime_plugin.TextCommand):
         href_s = href.split('@')
         pos = sublime.Region(0,0)
         v = self.view.window().open_file(href_s[1], sublime.ENCODED_POSITION)
+
+# Manual command to display the popup
+class VerilogTypeCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        if len(self.view.sel())==0 : return;
+        popup = VerilogTypePopup(self.view)
+        popup.show(self.view.sel()[0],-1)
+
+# Event onHover to display the popup
+class VerilogShowTypeHover(sublime_plugin.EventListener):
+    def on_hover(self, view, point, hover_zone):
+        # Popup only on text
+        if hover_zone != sublime.HOVER_TEXT:
+            return
+        # Check file size to optionnaly disable the feature (finding the information can be quite long)
+        threshold = view.settings().get('sv.hover_max_size',-1)
+        if view.size() > threshold and threshold!=-1 :
+            return
+        # Only show a popup for systemVerilog, when not in a string of a comment
+        scope = view.scope_name(point)
+        if 'source.systemverilog' not in scope:
+            return
+        if any(w in scope for w in ['comment', 'string', 'keyword']):
+            return
+        popup = VerilogTypePopup(view)
+        sublime.set_timeout_async(lambda r=view.word(point), p=point: popup.show(r,p))
+
 
 ###################################################################
 # Move cursor to the declaration of the signal currently selected #

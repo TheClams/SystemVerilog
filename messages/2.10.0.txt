@@ -1,0 +1,10 @@
+SystemVerilog 2.10.0 Changelog:
+
+## Improvement ##
+ - Tooltip on signal can now be displayed when hovering the mouse on the code.
+ This is controlled with the settings "sv.hover_max_size": -1 for any size, 0 to disable the features.
+ /!\ This is available only for SublimeText 3116 (dev channel) and future version
+
+## Fix ##
+ - Alignement: fix alignement for multi-dimensionnal unpacked array signal
+ - Completion: Avoid generating error in console for some cases where no completion is available.
