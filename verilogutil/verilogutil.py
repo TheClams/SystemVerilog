@@ -167,7 +167,7 @@ def get_all_type_info(txt):
     # Look for signal declaration
     # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
-    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"]+)\s*)?(?=;|,|\)\s*;)'
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;\[\]]*?\]\s*)*)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"]+)\s*)?(?=;|,|\)\s*;)'
     # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
     for m in r.finditer(txt):
@@ -240,14 +240,17 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
-        re_str = r'(\w+)\b\s*(\[(.*?)\]\s*)?(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
+        re_str = r'(\w+)\b\s*(\[(.*)\]\s*)?(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
         if m.groups()[idx_max]:
             signal_list = re.findall(re_str, m.groups()[idx_max], flags=re.MULTILINE)
+            # print("[SV:get_type_info_from_match] idxmax => signal_list = " + str(signal_list))
         if m.groups()[idx_max+1]:
             s = m.groups()[idx_max+1]
+            # print("[SV:get_type_info_from_match] idxmax+1 => s = " + str(s))
             if idx_val > 0 and len(m.groups())>idx_val and m.groups()[idx_val]:
                 s += ' = ' + m.groups()[idx_val]
             signal_list += re.findall(re_str, s, flags=re.MULTILINE)
+            # print("[SV:get_type_info_from_match] idxmax+1 => signal_list = " + str(signal_list))
     # remove reserved keyword that could end up in the list
     signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
     if not signal_list:
@@ -273,6 +276,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         return [ti_not_found]
     ti = []
     for signal in signal_list :
+        # print("signal: " + str(signal) )
         fts = ft + signal[0]
         # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
         at = ""

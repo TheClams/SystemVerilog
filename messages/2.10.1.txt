@@ -1,0 +1,4 @@
+SystemVerilog 2.10.1 Changelog:
+
+## Fix ##
+ - Parsing: fix issue where port type could be incorrect when using implicit type
