@@ -56,10 +56,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.b -= len(prefix)
         r.a = r.b - 1
         tmp_r = sublime.Region(r.a,r.b)
+        # print('[SV:on_query_completions] tmp_r={0} => "{1}" . Class = {2}'.format(tmp_r,view.substr(tmp_r),view.classify(tmp_r.b)))
         if not view.substr(tmp_r).strip() :
             tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
             tmp_r.a = tmp_r.b
-        if view.classify(tmp_r.b) & sublime.CLASS_PUNCTUATION_END:
+        if view.classify(tmp_r.b) & (sublime.CLASS_PUNCTUATION_END | 8192):
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)
             prev_symb = view.substr(tmp_r).strip()
             if not prev_symb :
@@ -70,10 +71,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     prev_symb = '.'
                     tmp_r.a = tmp_r.b - 1
                 tmp_r.b = tmp_r.a
+            # print('[SV:on_query_completions] (punct end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
         if view.classify(tmp_r.b) & sublime.CLASS_WORD_END:
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_WORD_START)
             prev_word = view.substr(tmp_r).strip()
             tmp_r.b = tmp_r.a
+            # print('[SV:on_query_completions] (word end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
         completion = []
         # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
