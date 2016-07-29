@@ -205,7 +205,7 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         2: entity.name.type.class.systemverilog
-    - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\s+({{id}})'
+    - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\s+([A-Za-z_][A-Za-z_0-9\.]*)'
       scope: meta.definition.systemverilog
       captures:
         2: entity.name.type.class.systemverilog

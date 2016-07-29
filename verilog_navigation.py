@@ -167,11 +167,12 @@ class VerilogTypePopup :
                         txt = self.view.substr(sublime.Region(0, self.view.size()))
                         ci = verilogutil.parse_class(txt,ti['name'])
                     s,_ = self.color_str(s='class {0}'.format(ti['name']), addLink=True,ti_var=ti)
-                    if ci['extend']:
-                        s+=' <span class="keyword">extends</span> '
-                        s+='<span class="storage">{0}</span>'.format(ci['extend'])
-                    s += self.add_info([x for x in ci['member'] if 'access' not in x])
-                    s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
+                    if ci:
+                        if ci['extend']:
+                            s+=' <span class="keyword">extends</span> '
+                            s+='<span class="storage">{0}</span>'.format(ci['extend'])
+                        s += self.add_info([x for x in ci['member'] if 'access' not in x])
+                        s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
                     # print(ci)
                 elif ti and ti['type']=='package':
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)

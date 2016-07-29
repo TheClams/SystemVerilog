@@ -3,3 +3,5 @@ SystemVerilog 2.10.1 Changelog:
 ## Fix ##
  - Parsing: fix issue where port type could be incorrect when using implicit type
  - Completion: dot completion was not available if followed immediately by another punctuation character like a parenthesis
+ - Highlight: fix coverpoint highlight when using interface
+ - Alignement: now can be called on bind module

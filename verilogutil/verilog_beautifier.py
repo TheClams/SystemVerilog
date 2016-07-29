@@ -816,7 +816,7 @@ class VerilogBeautifier():
     # Alignement for module instance
     def alignInstance(self,txt,ilvl):
         # Check if parameterized module
-        m = re.search(r'(?s)(?P<emptyline>\n*)(?P<mtype>^[ \t]*\w+)\s*(?P<paramsfull>#\s*\((?P<params>.*)\s*\))?\s*(?P<mname>\w+)\s*\(\s*(?P<ports>.*)\s*\)\s*;(?P<comment>.*)$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<emptyline>\n*)(?P<mtype>^[ \t]*(bind\s+[\w\.]+\s+)?\w+)\s*(?P<paramsfull>#\s*\((?P<params>.*)\s*\))?\s*(?P<mname>\w+)\s*\(\s*(?P<ports>.*)\s*\)\s*;(?P<comment>.*)$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         # Add module type
