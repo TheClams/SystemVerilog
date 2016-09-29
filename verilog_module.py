@@ -140,7 +140,7 @@ def lookup_type(view, t):
             _,_,rowcol = filelist[flist_norm.index(fname)]
             # print(t + ' defined in current file' + str(fname))
             ti = type_info_file(view,fname,t)
-        if ti and ti['type']:
+        if ti and ti['type'] and ti['tag']!='typedef' :
             ti['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid type definition to be the correct one
         else:
@@ -151,7 +151,7 @@ def lookup_type(view, t):
                 # print(t + ' defined in ' + str(fname))
                 if fname.lower().endswith(('sv','svh', 'v', 'vh')):
                     ti = type_info_file(view,fname,t)
-                    if ti['type']:
+                    if ti['type'] and ti['tag']!='typedef' :
                         ti['fname'] = (fname,rowcol[0],rowcol[1])
                         break
     # print('[SV:lookup_type] {0}'.format(ti))

@@ -17,7 +17,7 @@
            "tag": "decl",
            "type": "input signed",
            "value": ""},
-          {"array": "fixed",
+          {"array": "multidimension",
            "bw": "[3:0]",
            "decl": "input [3:0] i_data_mod[0:pq_ports-1][2]",
            "name": "i_data_mod",

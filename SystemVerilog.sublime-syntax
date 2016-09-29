@@ -290,12 +290,13 @@ contexts:
         - include: comments
         - match: '\b({{id}})\b(?=\s*(\(|$))'
           scope: entity.name.type.module.systemverilog
-    - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*(\[(\d+)(\:(\d+))?\])?\s*(\(|$)'
+    - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*((?:\[(\d+)(\s*(\:)\s*(\d+))?\])|(?:\[([^\]]+)\]))?\s*(\(|$)'
       captures:
         1: storage.type.module.systemverilog
         2: entity.name.type.module.systemverilog
         4: constant.numeric.systemverilog
-        6: constant.numeric.systemverilog
+        6: keyword.operator.range.systemverilog
+        7: constant.numeric.systemverilog
       push:
         - meta_scope: meta.module.inst.systemverilog
         - match: ;

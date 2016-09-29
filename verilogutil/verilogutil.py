@@ -74,7 +74,7 @@ def get_type_info(txt,var_name,search_decl=True):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m and search_decl:
-                re_str = re_decl+r'('+var_name+r'\b\s*(\[[^=\^\&\|,;]*?\]\s*)?)(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
+                re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
                 # print(re_str)
                 m = re.search(re_str, txt, flags=re.MULTILINE)
                 tag = 'decl'
@@ -235,12 +235,12 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     ft = ''
     bw = ''
     if var_name!='':
-        signal_list = re.findall(r'('+var_name + r')\b\s*(\[(.*?)\]\s*)?', m.groups()[idx_max+1], flags=re.MULTILINE)
+        signal_list = re.findall(r'('+var_name + r')\b\s*((?:\[(.*?)\]\s*)*)', m.groups()[idx_max+1], flags=re.MULTILINE)
         if idx_val > 0 and len(m.groups())>idx_val and m.groups()[idx_val]:
             value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
-        re_str = r'(\w+)\b\s*(\[(.*)\]\s*)?(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
+        re_str = r'(\w+)\b\s*((?:\[(.*)\]\s*)*)(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
         if m.groups()[idx_max]:
             signal_list = re.findall(re_str, m.groups()[idx_max], flags=re.MULTILINE)
             # print("[SV:get_type_info_from_match] idxmax => signal_list = " + str(signal_list))
@@ -281,8 +281,10 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
         at = ""
         if signal[1]!='':
-            fts += '[' + signal[2] + ']'
-            if signal[2] =="":
+            fts += signal[1].strip()
+            if signal[1].count('[')>1:
+                at='multidimension'
+            elif signal[2] =="":
                 at='dynamic'
             elif signal[2]=='$':
                 at='queue'
@@ -458,7 +460,8 @@ def parse_class(flines,cname=r'\w+'):
 def get_all_function(txt,funcname=r'\w+'):
     fil = [] # Function Info list
     fl = re.findall(r'(?s)(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*\((.*?)\s*\)\s*;(.*?)\bend\3\b',txt,flags=re.MULTILINE)
-    for (f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
+    fl += re.findall(r'(?s)extern\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*\((.*?)\s*\)\s*;()',txt,flags=re.MULTILINE)
+    for ( f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
         if f_args:
             pi = get_all_type_info(f_args + ';')
         else:

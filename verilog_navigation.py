@@ -280,15 +280,23 @@ class VerilogTypePopup :
         # Extract type info from module if we are on port connection
         elif 'support.function.port' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
-            txt = self.view.substr(region)
-            mname = re.search(r'\w+',txt).group(0)
+            s = self.view.substr(region)
+            mname = re.search(r'\w+',s).group(0)
             #print('[get_type] Find module with name {0}'.format(mname))
             mi = verilog_module.lookup_module(self.view,mname)
             if mi:
+                found = False
                 for p in mi['port']:
                     if p['name']==var_name:
                         txt = p['decl']
+                        found = True
                         break
+                # Check parameters if this was not found in port name
+                if not found:
+                    for p in mi['param']:
+                        if p['name']==var_name:
+                            txt = 'parameter {0} {1} = {2}'.format(p['decl'],p['name'],p['value'])
+                            break
         # Get function I/O
         elif 'support.function.generic' in scope or 'entity.name.function' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)

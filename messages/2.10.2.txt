@@ -1,0 +1,9 @@
+SystemVerilog 2.10.2 Changelog:
+
+## Fix ##
+ - Parsing: now extract all class member marked as extern (previously ignored)
+ - Completion: Fix other cases where completion does not show because of punctuation characters
+ - Tooltip:
+  * Now handle properly parameters with no type defined
+  * Support multi-dimensionnal arrays
+ - Highlight: support instances array with non-numerical value for the range
