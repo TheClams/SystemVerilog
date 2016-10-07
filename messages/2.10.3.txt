@@ -1,0 +1,5 @@
+SystemVerilog 2.10.3 Changelog:
+
+## Fix ##
+ - Parsing: Allow no space between type and range in signal/port declaration
+ - Alignement: "extern virtual" properly recognized as extern declaration

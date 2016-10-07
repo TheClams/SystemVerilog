@@ -134,3 +134,7 @@ class Tests(unittest.TestCase):
     def test_beautifyMacro(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"macro.sv", self.path_test+"macro.sv", cfg)
+
+    def test_extern(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"extern.sv", self.path_test+"extern.sv", cfg)

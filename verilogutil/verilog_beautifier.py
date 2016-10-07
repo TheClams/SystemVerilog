@@ -77,7 +77,7 @@ class VerilogBeautifier():
     def beautifyText(self,txt):
         # Variables
         self.states = [] # block indent list
-        w_d = ['\n','\n'] # previous word
+        w_d = ['\n','\n','\n','\n'] # previous word
         line = '' # current line
         block = '' # block of text to align
         self.block_state = ''
@@ -393,6 +393,8 @@ class VerilogBeautifier():
                 block_handled = False
             # Keep previous words
             if w.strip() or w_d[-1]!='\n':
+                w_d[-4] = w_d[-3]
+                w_d[-3] = w_d[-2]
                 w_d[-2] = w_d[-1]
                 w_d[-1] = w
         # Check that there is no reminding stuff todo:
@@ -426,7 +428,7 @@ class VerilogBeautifier():
         kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
         if w in kw_block:
             # Handle case where this is an external declaration (meaning no block following)
-            if w_prev[-2] in ['extern','cover','assert']:
+            if w_prev[-2] in ['extern','cover','assert'] or (w_prev[-4]=='extern' and w_prev[-2]=='virtual') :
                 return ""
             self.stateUpdate(w)
             # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
