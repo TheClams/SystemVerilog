@@ -1,0 +1,6 @@
+SystemVerilog 2.10.4 Changelog:
+
+## Fix ##
+ - Completion:
+  * System Task/function: Add $monitor and all math function
+  * Fix completion not showing when $,` or . are used right after a parenthesis

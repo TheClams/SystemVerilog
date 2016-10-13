@@ -79,6 +79,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             prev_word = view.substr(tmp_r).strip()
             tmp_r.b = tmp_r.a
             # print('[SV:on_query_completions] (word end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
+        # Extract only last character for some symbol (typically to handle a pranthesis just before the operator)
+        if prev_symb and prev_symb[-1] in ['$','`','.']:
+            prev_symb = prev_symb[-1]
         completion = []
         # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
@@ -412,6 +415,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def systemtask_completion(self):
         c = []
         c.append(['display\t$display()'              , 'display("$0",);'         ])
+        c.append(['monitor\t$monitor()'              , 'monitor("$0",);'         ])
+        c.append(['monitoron\t$monitoron'            , 'monitoron;'              ])
+        c.append(['monitoroff\t$monitoroff'          , 'monitoroff;'             ])
         c.append(['sformatf\t$sformatf()'            , 'sformatf("$0",)'         ])
         c.append(['test$plusargs\t$test$plusargs()'  , 'test\$plusargs("$0")'    ])
         c.append(['value$plusargs\t$value$plusargs()', 'value\$plusargs("$1",$2)'])
@@ -443,10 +449,32 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['onehot0\t$onehot0()'              , 'onehot0($0)'             ])
         #utility
         c.append(['size\t$size()'                    , 'size($0)'                ])
-        c.append(['clog2\t$clog2()'                  , 'clog2($0)'               ])
         c.append(['countones\t$countones()'          , 'countones($0)'           ])
         c.append(['high\t$high()'                    , 'high($0)'                ])
         c.append(['low\t$low()'                      , 'low($0)'                 ])
+        #math
+        c.append(['clog2\t$clog2()'                  , 'clog2($0)'               ])
+        c.append(['log\t$log()'                      , 'ln($0)'                  ])
+        c.append(['log10\t$log10()'                  , 'log10($0)'               ])
+        c.append(['exp\t$exp()'                      , 'exp($0)'                 ])
+        c.append(['sqrt\t$sqrt()'                    , 'sqrt($0)'                ])
+        c.append(['pow\t$pow()'                      , 'pow($1,$2)'              ])
+        c.append(['floor\t$floor()'                  , 'floor($0)'               ])
+        c.append(['ceil\t$ceil()'                    , 'ceil($0)'                ])
+        c.append(['sin\t$sin()'                      , 'sin($0)'                 ])
+        c.append(['cos\t$cos()'                      , 'cos($0)'                 ])
+        c.append(['tan\t$tan()'                      , 'tan($0)'                 ])
+        c.append(['asin\t$asin()'                    , 'asin($0)'                ])
+        c.append(['acos\t$acos()'                    , 'acos($0)'                ])
+        c.append(['atan\t$atan()'                    , 'atan($0)'                ])
+        c.append(['atan2\t$atan2()'                  , 'atan2($1,$2)'            ])
+        c.append(['hypot\t$hypot()'                  , 'hypot($1,$2)'            ])
+        c.append(['sinh\t$sinh()'                    , 'sinh($0)'                ])
+        c.append(['cosh\t$cosh()'                    , 'cosh($0)'                ])
+        c.append(['tanh\t$tanh()'                    , 'tanh($0)'                ])
+        c.append(['asinh\t$asinh()'                  , 'asinh($0)'               ])
+        c.append(['acosh\t$acosh()'                  , 'acosh($0)'               ])
+        c.append(['atanh\t$atanh()'                  , 'atanh($0)'               ])
         #file
         c.append(['fopen\t$fopen()'                  , 'fopen($0,"r")'           ])
         c.append(['fclose\t$fclose()'                , 'fclose($0);'             ])
