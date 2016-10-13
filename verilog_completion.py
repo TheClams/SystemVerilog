@@ -131,6 +131,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def always_completion(self):
         c = []
         (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
+        if self.settings.get('sv.always_label',True):
+            begin_end = 'begin : proc_$0\n\nend'
+        else:
+            begin_end = 'begin\n\nend'
         #Provide completion specific to the file type
         fname = self.view.file_name()
         if fname:
@@ -140,15 +144,15 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if is_sv :
             c.append(['always_ff\talways_ff Async','always_ff '+a_l])
             c.append(['always_ffh\talways_ff Async high','always_ff '+a_h])
-            c.append(['always_c\talways_comb','always_comb begin : proc_$0\n\nend'])
-            c.append(['always_l\talways_latch','always_latch begin : proc_$0\n\nend'])
+            c.append(['always_c\talways_comb','always_comb '+ begin_end])
+            c.append(['always_l\talways_latch','always_latch '+ begin_end])
             c.append(['always_ff_nr\talways_ff No reset','always_ff '+a_nr])
             c.append(['always_ffs\talways_ff Sync','always_ff '+re.sub(r' or negedge \w+','',a_l)])
             c.append(['always_ffsh\talways_ff Sync high','always_ff '+re.sub(r' or posedge \w+','',a_h)])
         if not is_sv or not self.settings.get('sv.always_sv_only') :
             c.append(['always\talways Async','always '+a_l])
             c.append(['alwaysh\talways Async high','always '+a_h])
-            c.append(['alwaysc\talways *','always @(*) begin : proc_$0\n\nend'])
+            c.append(['alwaysc\talways *','always @(*) '+ begin_end])
             c.append(['always_nr\talways NoReset','always_ff '+a_nr])
             c.append(['alwayss\talways sync','always '+re.sub(r' or negedge \w+','',a_l)])
             c.append(['alwayssh\talways sync high','always '+re.sub(r' or posedge \w+','',a_h)])
@@ -366,28 +370,28 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     def string_completion(self):
         c = []
-        c.append(['len\tlen()'          , 'len($0)'     ])
-        c.append(['substr\tsubstr()'    , 'substr($0)'  ])
-        c.append(['putc\tputc()'        , 'putc($0)'    ])
-        c.append(['getc\tgetc()'        , 'getc($0)'    ])
-        c.append(['toupper\ttoupper()'  , 'toupper($0)' ])
-        c.append(['tolower\ttolower()'  , 'tolower($0)' ])
-        c.append(['compare\tcompare()'  , 'compare($0)' ])
-        c.append(['icompare\ticompare()', 'icompare($0)'])
-        c.append(['atoi\tatoi()'        , 'atoi($0)'    ])
-        c.append(['atohex\tatohex()'    , 'atohex($0)'  ])
-        c.append(['atobin\tatobin()'    , 'atobin($0)'  ])
-        c.append(['atoreal\tatoreal()'  , 'atoreal($0)' ])
-        c.append(['itoa\titoa()'        , 'itoa($0)'    ])
-        c.append(['hextoa\thextoa()'    , 'hextoa($0)'  ])
-        c.append(['octoa\toctoa()'      , 'octoa($0)'   ])
-        c.append(['bintoa\tbintoa()'    , 'bintoa($0)'  ])
-        c.append(['realtoa\trealtoa()'  , 'realtoa($0)' ])
+        c.append(['len\tlen()'          , 'len()'        ])
+        c.append(['substr\tsubstr()'    , 'substr($1,$2)'])
+        c.append(['putc\tputc()'        , 'putc($0)'     ])
+        c.append(['getc\tgetc()'        , 'getc($0)'     ])
+        c.append(['toupper\ttoupper()'  , 'toupper()'    ])
+        c.append(['tolower\ttolower()'  , 'tolower()'    ])
+        c.append(['compare\tcompare()'  , 'compare($0)'  ])
+        c.append(['icompare\ticompare()', 'icompare($0)' ])
+        c.append(['atoi\tatoi()'        , 'atoi()'       ])
+        c.append(['atohex\tatohex()'    , 'atohex()'     ])
+        c.append(['atobin\tatobin()'    , 'atobin()'     ])
+        c.append(['atoreal\tatoreal()'  , 'atoreal()'    ])
+        c.append(['itoa\titoa()'        , 'itoa($0)'     ])
+        c.append(['hextoa\thextoa()'    , 'hextoa($0)'   ])
+        c.append(['octoa\toctoa()'      , 'octoa($0)'    ])
+        c.append(['bintoa\tbintoa()'    , 'bintoa($0)'   ])
+        c.append(['realtoa\trealtoa()'  , 'realtoa($0)'  ])
         return c
 
     def mailbox_completion(self):
         c = []
-        c.append(['num\tnum()'          , 'num($0)'     ])
+        c.append(['num\tnum()'          , 'num()'       ])
         c.append(['get\tget()'          , 'get($0)'     ])
         c.append(['try_get\ttry_get()'  , 'try_get($0)' ])
         c.append(['peek\tpeek()'        , 'peek($0)'    ])
@@ -872,14 +876,16 @@ class VerilogHelper():
 
     def get_always_template(view):
         settings = view.settings()
-        clk_name         = settings.get('sv.clk_name','clk')
-        rst_name         = settings.get('sv.rst_name','rst')
-        rst_n_name       = settings.get('sv.rst_n_name','rst_n')
-        clk_en_name      = settings.get('sv.clk_en_name','clk_en')
-        always_name_auto = settings.get('sv.always_name_auto',True)
-        always_ce_auto   = settings.get('sv.always_ce_auto',True)
-        always_label     = settings.get('sv.always_label',True)
-        indent_style     = settings.get('sv.indent_style','1tbs')
+        clk_name          = settings.get('sv.clk_name','clk')
+        rst_name          = settings.get('sv.rst_name','rst')
+        rst_n_name        = settings.get('sv.rst_n_name','rst_n')
+        clk_en_name       = settings.get('sv.clk_en_name','clk_en')
+        always_name_auto  = settings.get('sv.always_name_auto',True)
+        always_ce_auto    = settings.get('sv.always_ce_auto',True)
+        always_label      = settings.get('sv.always_label',True)
+        always_begin_end  = settings.get('sv.always_ff_begin_end',True)
+        always_one_cursor = settings.get('sv.always_one_cursor',True)
+        indent_style      = settings.get('sv.indent_style','1tbs')
         beautifier = verilog_beautifier.VerilogBeautifier(useTab=True, indentSyle=indent_style)
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
         if always_name_auto :
@@ -933,32 +939,43 @@ class VerilogHelper():
             if not r :
                 clk_en_name = ''
         # define basic always block with asynchronous reset
-        a_l = '@(posedge '+clk_name+' or negedge ' + rst_n_name +') begin'
-        if always_label :
-            a_l +=  ' : proc_$1\n'
-        else :
-            a_l +=  '\n'
-        a_l += '\tif(~'+rst_n_name + ') begin\n'
-        a_l += '\t\t$1 <= 0;'
-        a_l += '\n\tend else '
+        a_l = 'always @(posedge '+clk_name+' or negedge ' + rst_n_name +')'
+        if always_begin_end:
+            a_l +=  ' begin'
+            if always_label :
+                a_l +=  ' : proc_$1'
+        a_l +=  '\n'
+        a_l += 'if(~'+rst_n_name + ') begin\n'
+        a_l += '$1 <= 0;'
+        a_l += '\nend else '
         if clk_en_name != '':
             a_l += 'if(' + clk_en_name + ') '
         a_l+= 'begin\n'
-        a_l += '\t\t$1 <= $2;'
-        a_l+= '\n\tend\nend'
-        a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
-        a_nr = '@(posedge '+clk_name +') begin'
-        if always_label :
-            a_nr +=  ' : proc_$1\n\t'
-        else :
-            a_nr +=  '\n\t'
+        if not always_one_cursor:
+            a_l += '$1 <= $2;'
+        a_l+= '\nend\n'
+        if always_begin_end:
+            a_l+= 'end'
+        # define basic always block with no reset
+        a_nr = 'always @(posedge '+clk_name +')'
+        if always_begin_end or clk_en_name=='':
+            a_nr +=  ' begin'
+            if always_label :
+                a_nr +=  ' : proc_$1'
+        a_nr +=  '\n'
         if clk_en_name != '':
-            a_nr += 'if(' + clk_en_name + ')'
-        a_nr+= 'begin\n\t\t$1 <= $2;\n\tend\nend'
+            a_nr += 'if(' + clk_en_name + ') begin\n'
+        a_nr += '$1'
+        if not always_one_cursor:
+            a_nr += ' <= $2'
+        a_nr+= ';\nend\n'
+        if always_begin_end and clk_en_name:
+            a_nr+= 'end'
         a_l = beautifier.beautifyText(a_l)
-        a_h = beautifier.beautifyText(a_h)
-        a_nr = beautifier.beautifyText(a_nr)
-        return (a_l,a_h,a_nr)
+        # define basic always block with asynchronous reset active high
+        a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
+        a_nr = beautifier.beautifyText(a_nr).replace('$1;','$1') #the ; was just here for proper indentation
+        return (a_l[7:],a_h[7:],a_nr[7:])
 
     def get_case_template(view, sig_name, ti=None):
         m = re.search(r'(?P<name>\w+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)

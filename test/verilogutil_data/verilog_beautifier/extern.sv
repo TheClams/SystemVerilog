@@ -4,4 +4,3 @@ class myclass extends baseclass;
     extern virtual function func2 ();
 
 endclass
-

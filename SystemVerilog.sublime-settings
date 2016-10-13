@@ -6,41 +6,43 @@
 
 	"sv.tooltip" : true, // True to display information in a tooltip (sublime 3072+), false to use the status bar instead
 	// SystemVerilog Alignment configuration
-	"sv.one_bind_per_line" : true, // When aligning module instantiation force only one binding per line
+	"sv.one_bind_per_line" : true,  // When aligning module instantiation force only one binding per line
 	"sv.one_decl_per_line" : false, // When aligning signal declaration force only one signal per line
-	"sv.max_line_length" : 120, // Use by alignment plugin to split one line into multiple if too long
-	"sv.strip_empty_line" : true, // Strip empty line inside Module declaration/alignement
+	"sv.max_line_length"   : 120,   // Use by alignment plugin to split one line into multiple if too long
+	"sv.strip_empty_line"  : true,  // Strip empty line inside Module declaration/alignement
 	// SystemVerilog always block completion configuration
-	"sv.clk_name": "clk",     // Default clock name
-	"sv.rst_name": "rst",     // Default reset active high
-	"sv.rst_n_name": "rst_n", // Default reset active low
-	"sv.always_name_auto": true, // Look for existing always block in the file to retrieve name of clk/reset
-	"sv.always_label": true, // Enable label for always block
-	"sv.always_sv_only" : true, // In .sv file only display completion for always_comb, always_ff or always_latch (no simple always)
-	"sv.clk_en_name": "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
-	"sv.always_ce_auto" : true, // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
-	"sv.indent_style": "1tbs", // Indentation style used by autocompletion and beautifier when force is enabled. Options are 1tbs or gnu
+	"sv.clk_name"           : "clk",    // Default clock name
+	"sv.rst_name"           : "rst",    // Default reset active high
+	"sv.rst_n_name"         : "rst_n",  // Default reset active low
+	"sv.always_name_auto"   : true,     // Look for existing always block in the file to retrieve name of clk/reset
+	"sv.always_ff_begin_end": true,     // Enclose the whole always block with begin/end
+	"sv.always_one_cursor"  : false,    // Enclose the whole always block with begin/end
+	"sv.always_label"       : true,     // Enable label for always block (only if begin/end are present)
+	"sv.always_sv_only"     : true,     // In .sv file only display completion for always_comb, always_ff or always_latch (no simple always)
+	"sv.clk_en_name"        : "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
+	"sv.always_ce_auto"     : true,     // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
+	"sv.indent_style"       : "1tbs",   // Indentation style used by autocompletion and beautifier when force is enabled. Options are 1tbs or gnu
 	// SystemVerilog Module instantiation configuration
-	"sv.fillparam": true,             // On module instantiation with parameter user is asked a value for each parameter
-	"sv.param_oneline": true,         // On module instantiation with parameter, check if paramter binding can fit on one line
-	"sv.inst_oneline": true,          // On module instantiation check if complete instantiation can fit on one line
-	"sv.autoconnect": true,           // Control if signals are created and connected in module instantiation
-	"sv.param_explicit": false,       // Control if parameter setting is explicit (appears in module instantiation even when default is used)
-	"sv.param_propagate": false,      // Control if parameter setting is explicit (appear in module instantiation even when default is used)
-	"sv.param_port_alignment": true,  // Control if parameters/ports are align together
-	"sv.autoconnect_allow_prefix": true, // True to expand search for signal to \w+_port
-	"sv.autoconnect_allow_suffix": true, // True to expand search for signal to port_\w+
-	"sv.autoconnect_port_prefix": [], // List of prefix to remove from the port before looking for a signal connection
-	"sv.autoconnect_port_suffix": [], // List of suffix to remove from the port before looking for a signal connection
-	"sv.instance_prefix": "i_", // Prefix to the module instantiation name
-	"sv.instance_suffix": "",   // Suffix to the module instantiation name
-	"sv.decl_start": "Signals declaration", // Pattern to find for start of signals auto-declaration . Empty string to get declaration just above instantiation.
-	"sv.decl_end": "/*----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
-	"sv.decl_indent": 1, // Number of indentation level for signal declaration
-	"sv.proc_indent": 1, // Number of indentation level for process
+	"sv.fillparam"               : true,  // On module instantiation with parameter user is asked a value for each parameter
+	"sv.param_oneline"           : true,  // On module instantiation with parameter, check if paramter binding can fit on one line
+	"sv.inst_oneline"            : true,  // On module instantiation check if complete instantiation can fit on one line
+	"sv.autoconnect"             : true,  // Control if signals are created and connected in module instantiation
+	"sv.param_explicit"          : false, // Control if parameter setting is explicit (appears in module instantiation even when default is used)
+	"sv.param_propagate"         : false, // Control if parameter setting is explicit (appear in module instantiation even when default is used)
+	"sv.param_port_alignment"    : true,  // Control if parameters/ports are align together
+	"sv.autoconnect_allow_prefix": true,  // True to expand search for signal to \w+_port
+	"sv.autoconnect_allow_suffix": true,  // True to expand search for signal to port_\w+
+	"sv.autoconnect_port_prefix" : [],    // List of prefix to remove from the port before looking for a signal connection
+	"sv.autoconnect_port_suffix" : [],    // List of suffix to remove from the port before looking for a signal connection
+	"sv.instance_prefix"         : "i_",  // Prefix to the module instantiation name
+	"sv.instance_suffix"         : "",    // Suffix to the module instantiation name
+	"sv.decl_start"              : "Signals declaration", // Pattern to find for start of signals auto-declaration . Empty string to get declaration just above instantiation.
+	"sv.decl_end"                : "/*----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
+	"sv.decl_indent"             : 1, // Number of indentation level for signal declaration
+	"sv.proc_indent"             : 1, // Number of indentation level for process
 	// Popup config
 	"sv.hover_max_size" : -1, // Max size of the file (in byte) to display popup info. Set to -1 to disable the limit (default), 0 to disable feature.
 	// Debug option
-	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 leve;) , -1 for no limit
+	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
 	"sv.disable_autocomplete": false
 }

@@ -133,7 +133,7 @@ class VerilogBeautifier():
                     ilvl_tmp = ilvl+split_always
                     for i,x in split.items() :
                         ilvl_tmp += x[0]
-                    # print('[Beautify] split={split} states={s} block={b} => ilvl = {i}'.format(split=split,i=ilvl_tmp,s=self.states, b=self.block_state))
+                    # print('[Beautify] split={split} states={s} block={b} => ilvl = {it}={i}+{sa}'.format(split=split,it=ilvl_tmp,i=ilvl,sa=split_always,s=self.states, b=self.block_state))
                     line = ilvl_tmp * self.indent
             # Handle end of split
             if ilvl in split:
@@ -162,7 +162,7 @@ class VerilogBeautifier():
                     tmp = verilogutil.clean_comment(last_line).strip()
                     # print('block="{0}"" => eol={1} => last_line="{2}"'.format(block,idx_eol,last_line))
                     if tmp:
-                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*\w+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
+                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*[\w\$]+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
                         # print('[Beautify] Testing for split: "{0}" (ilvl={1} prev={2}) - split={3}'.format(tmp,ilvl,ilvl_prev,split))
                         if not m:
                             if tmp.startswith('always'):

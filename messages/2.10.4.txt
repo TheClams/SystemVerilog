@@ -1,6 +1,14 @@
 SystemVerilog 2.10.4 Changelog:
 
+## Improvements ##
+ - Always block configuration
+  * New option "sv.always_ff_begin_end" to enable/disable the begin end for the whole always block (true by default)
+  * New option "sv.always_one_cursor" to disable/enable the multiple cursor in the snippets (false by default)
+  * Better handling of begin/end for the always with no reset and no clock enable
+ - Add $monitor and all math function to syetm task auto completion
+
 ## Fix ##
  - Completion:
-  * System Task/function: Add $monitor and all math function
   * Fix completion not showing when $,` or . are used right after a parenthesis
+  * Always snippet: the label configuration now also apply properly to combinatorial block (comb,latch, @(*))
+  * Fix string methods snippets arguments (a few have none, and substr has 2)
