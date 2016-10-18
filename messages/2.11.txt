@@ -1,0 +1,26 @@
+SystemVerilog 2.11 Changelog:
+
+## New feature ##
+Add command to move cursor (or select text) between start/end of block surrounding current cursor.
+This is similar to the native command ctrl+m/ctrl+shift+m but works also with begin/end, module/endmodule, ...
+
+Here is key binding example that you can copy-paste in your user keybinding file:
+
+	{
+		"keys": ["ctrl+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"move"},
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["ctrl+shift+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"select"},
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	}
+
+
+## Fix ##
+ - Tooltip: fix for field in an object array, or from a struct

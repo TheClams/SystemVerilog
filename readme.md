@@ -19,6 +19,7 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * Goto driver : select a signal a go to the driver (port, assignement, connection)
  * Find Instances: find all instance of a module inside a project
  * Show hierarchy of a module (all its sub-module)
+ * Move cursor / select text between start/end of block (like [], {}, begin/end, function/endfunction, ...)
 
 ####Code Completion :
 
@@ -127,3 +128,17 @@ To map key to the different feature, simply add the following to your user .subl
 		"args": {"file": "Packages/SystemVerilog/beginend.sublime-macro"},
 		"context": [{ "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }]
 	},
+	{
+		"keys": ["ctrl+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"move"},
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{
+		"keys": ["ctrl+shift+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"select"},
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	}

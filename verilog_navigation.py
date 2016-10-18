@@ -129,13 +129,12 @@ class VerilogTypePopup :
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
             region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         v = self.view.substr(region)
-        if re.match(r'^([A-Za-z_]\w*::|([A-Za-z_]\w*\.)+)?[A-Za-z_]\w*$',v): # Check this is valid a valid word
+        if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
             s,ti = self.get_type(v,region)
             if not s:
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
-                # print(ti)
                 s_func = '<br><span class="extra-info">{0}<span class="keyword">function </span><span class="function">{1}</span>()</span>' # tempalte for printing function info
                 if ti and (ti['type'] in ['module','interface','function','task']):
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
@@ -249,7 +248,10 @@ class VerilogTypePopup :
         if '.' in var_name:
             s = var_name.split('.')
             lines = self.view.substr(sublime.Region(0, self.view.line(region).b))
-            ti = verilog_module.type_info(self.view,lines,s[0])
+            s0 = s[0]
+            if '[' in s0:
+                s0 = s0.split('[')[0]
+            ti = verilog_module.type_info(self.view,lines,s0)
             for i in range(1,len(s)):
                 #if not found check for a definition in base class if we this is an extended class
                 if not ti['type'] :
@@ -260,7 +262,8 @@ class VerilogTypePopup :
                             if s[0]=='super':
                                 ti['type'] = ci['name']
                             else:
-                                ti = verilog_module.type_info_file(self.view,ci['fname'][0],s[0])
+                                # TODO: handle case of multi-dimension array
+                                ti = verilog_module.type_info_file(self.view,ci['fname'][0],s0)
                 # Get type definition
                 if ti and ti['type']:
                     if ti['type']=='module':
@@ -268,7 +271,15 @@ class VerilogTypePopup :
                     else:
                         ti = verilog_module.lookup_type(self.view,ti['type'])
                 # Lookup for the variable inside the type defined
-                if ti and 'fname' in ti:
+                if ti and ti['type']=='struct' :
+                    m = re.search(r'\{(.*)\}', ti['decl'])
+                    til = verilogutil.get_all_type_info(m.groups()[0])
+                    ti = None
+                    for e in til:
+                        if e['name']==s[i]:
+                            ti = e
+                            break
+                elif ti and 'fname' in ti:
                     fname = ti['fname'][0]
                     ti = verilog_module.type_info_file(self.view,fname,s[i])
                     if ti['type'] in ['function', 'task']:
@@ -574,6 +585,68 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         # Everything failed
         sublime.status_message("Could not find driver of " + v)
 
+
+##########################################################
+# Move cursor to the begin/end, [], {}, case/endcase ... #
+class VerilogGotoBlockBoundary(sublime_plugin.TextCommand):
+
+    def run(self,edit, cmd="move"):
+        if len(self.view.sel())==0 : return;
+        token_begin = ['begin','(','[','{','module','function','task','class','covergroup','fork','generate','case']
+        token_end   = ['end'  ,')',']','}','endmodule','endfunction','endtask','endclass','endgroup','join','join_none','join_any','endgenerate','endcase']
+        re_token = r'\(|\[|\{|\)|\]|\}|\bbegin\b|\bend\b|'
+        re_token += r'\bmodule\b|\bendmodule\b|\bcase\b|\bendcase\b|\bfunction\b|\bendfunction\b|'
+        re_token += r'\btask\b|\bendtask\b|\bgenerate\b|\bendgenerate\b|\bclass\b|\bendclass\b|'
+        re_token += r'\bcovergroup\b|\bendgroup\b|\bfork\b|\bjoin\b|\bjoin_any\b|\bjoin_none\b'
+        pt = self.view.sel()[0].b
+        tl = []
+        rl = self.view.find_all(re_token,0,r'$0',tl)
+        i = 0
+        while i<len(rl) and rl[i].a < pt:
+            i=i+1
+        if i==len(rl):
+            return
+        si = i-1 # start index
+        ei = i # end index
+        cnt = 0
+        # Search for token start before pt, ignoring pairs and token inside comment or string
+        scope = self.view.scope_name(rl[si].a)
+        while si>0 and (tl[si] not in token_begin or cnt>0 or 'comment' in scope or 'string' in scope):
+            if 'comment' not in scope and 'string' not in scope:
+                if tl[si] in token_end:
+                    cnt = cnt + 1
+                else:
+                    cnt = cnt - 1
+            si = si - 1
+            scope = self.view.scope_name(rl[si].a)
+        if cnt!=0:
+            # print('[SV.GotoBlockBoundary] Pairs not balanced toward start')
+            return
+        # Search for token end after pt, ignoring pairs and token inside comment or string
+        scope = self.view.scope_name(rl[ei].a)
+        while ei<len(tl) and (tl[ei] not in token_end or cnt>0 or 'comment' in scope or 'string' in scope):
+            if 'comment' not in scope and 'string' not in scope:
+                if tl[ei] in token_begin:
+                    cnt = cnt + 1
+                else:
+                    cnt = cnt - 1
+            ei = ei + 1
+            if ei==len(tl):
+                # print('[SV.GotoBlockBoundary] Pairs not balanced toward end')
+                return
+            scope = self.view.scope_name(rl[ei].a)
+        # Select text
+        # print('[SV.GotoBlockBoundary] Cursor at {0} - surrounded by "{1}" ({2}=>{3}) and "{4}" ({5}=>{6})'.format(pt,tl[si],rl[si].a,self.view.rowcol(rl[si].a),tl[ei],rl[ei].a,self.view.rowcol(rl[ei].a)))
+        if cmd=='select':
+            self.view.sel().clear()
+            self.view.sel().add(sublime.Region(rl[si].a,rl[ei].b))
+        else :
+            # Move cursor to the end token if not already at the end. Otherwise move it to the start one
+            if pt<rl[ei].a:
+                pos = rl[ei].a
+            else:
+                pos = rl[si].b
+            sublimeutil.move_cursor(self.view,pos)
 
 ############################################################################
 # Helper function to retrieve current module name based on cursor position #
