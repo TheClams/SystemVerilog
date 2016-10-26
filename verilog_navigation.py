@@ -592,17 +592,18 @@ class VerilogGotoBlockBoundary(sublime_plugin.TextCommand):
 
     def run(self,edit, cmd="move"):
         if len(self.view.sel())==0 : return;
-        token_begin = ['begin','(','[','{','module','function','task','class','covergroup','fork','generate','case']
-        token_end   = ['end'  ,')',']','}','endmodule','endfunction','endtask','endclass','endgroup','join','join_none','join_any','endgenerate','endcase']
+        token_begin = ['begin','(','[','{','module','function','task','class','covergroup','fork','generate','case','interface','clocking']
+        token_end   = ['end'  ,')',']','}','endmodule','endfunction','endtask','endclass','endgroup','join','join_none','join_any','endgenerate','endcase','endinterface','endclocking']
         re_token = r'\(|\[|\{|\)|\]|\}|\bbegin\b|\bend\b|'
         re_token += r'\bmodule\b|\bendmodule\b|\bcase\b|\bendcase\b|\bfunction\b|\bendfunction\b|'
         re_token += r'\btask\b|\bendtask\b|\bgenerate\b|\bendgenerate\b|\bclass\b|\bendclass\b|'
+        re_token += r'\binterface\b|\bendinterface\b|\bclocking\b|\bendclocking\b|'
         re_token += r'\bcovergroup\b|\bendgroup\b|\bfork\b|\bjoin\b|\bjoin_any\b|\bjoin_none\b'
-        pt = self.view.sel()[0].b
+        sel = self.view.sel()[0]
         tl = []
         rl = self.view.find_all(re_token,0,r'$0',tl)
         i = 0
-        while i<len(rl) and rl[i].a < pt:
+        while i<len(rl) and rl[i].a < sel.b:
             i=i+1
         if i==len(rl):
             return
@@ -639,10 +640,13 @@ class VerilogGotoBlockBoundary(sublime_plugin.TextCommand):
         # print('[SV.GotoBlockBoundary] Cursor at {0} - surrounded by "{1}" ({2}=>{3}) and "{4}" ({5}=>{6})'.format(pt,tl[si],rl[si].a,self.view.rowcol(rl[si].a),tl[ei],rl[ei].a,self.view.rowcol(rl[ei].a)))
         if cmd=='select':
             self.view.sel().clear()
-            self.view.sel().add(sublime.Region(rl[si].a,rl[ei].b))
+            if sel.a != rl[si].b or sel.b != rl[ei].a :
+                self.view.sel().add(sublime.Region(rl[si].b,rl[ei].a))
+            else :
+                self.view.sel().add(sublime.Region(rl[si].a,rl[ei].b))
         else :
             # Move cursor to the end token if not already at the end. Otherwise move it to the start one
-            if pt<rl[ei].a:
+            if sel.b<rl[ei].a:
                 pos = rl[ei].a
             else:
                 pos = rl[si].b

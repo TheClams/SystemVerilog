@@ -1,0 +1,6 @@
+SystemVerilog 2.11.1 Changelog:
+
+## Improvement ##
+ - Selection for block content:
+  * now stops before delimiter, and include them only if the selection start and stop right at the limit.
+  * Add interface and clocking block support
