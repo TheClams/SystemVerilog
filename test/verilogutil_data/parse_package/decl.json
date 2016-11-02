@@ -1,0 +1,29 @@
+[
+	{
+		"value": "16",
+		"decl": "localparam int WIDTH",
+		"type": "int",
+		"name": "WIDTH",
+		"array" : "",
+		"bw" : "",
+		"tag" : "decl"
+	},
+	{
+		"value": "WIDTH+1",
+		"decl": "localparam int WIDTH_P1",
+		"type": "int",
+		"name": "WIDTH_P1",
+		"array" : "",
+		"bw" : "",
+		"tag" : "decl"
+	},
+	{
+		"value": "2'b10",
+		"decl": "localparam logic [1:0] VECT2B",
+		"type": "logic",
+		"name": "VECT2B",
+		"array" : "",
+		"bw" : "[1:0]",
+		"tag" : "decl"
+	}
+]

@@ -167,7 +167,7 @@ def get_all_type_info(txt):
     # Look for signal declaration
     # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
-    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;\[\]]*?\]\s*)*)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"]+)\s*)?(?=;|,|\)\s*;)'
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;\[\]]*?\]\s*)*)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"\+\*\-\$\(\)]+)\s*)?(?=;|,|\)\s*;)'
     # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
     for m in r.finditer(txt):
@@ -240,7 +240,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
-        re_str = r'(\w+)\b\s*((?:\[(.*)\]\s*)*)(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"]+)\s*)?,?'
+        re_str = r'(\w+)\b\s*((?:\[(.*)\]\s*)*)(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"\+\*\-\$\(\)]+)\s*)?,?'
         if m.groups()[idx_max]:
             signal_list = re.findall(re_str, m.groups()[idx_max], flags=re.MULTILINE)
             # print("[SV:get_type_info_from_match] idxmax => signal_list = " + str(signal_list))
@@ -405,7 +405,7 @@ def parse_package_file_cache(fname, pname, fdate):
     return minfo
 
 def parse_package(flines,pname=r'\w+'):
-    # print("Parsing for module " + pname + ' in \n' + flines)
+    # print("Parsing for package " + pname + ' in \n' + flines)
     m = re.search(r"(?s)(?P<type>package)\s+(?P<name>"+pname+")\s*;\s*(?P<content>.+?)(?P<ending>endpackage)", flines, re.MULTILINE)
     if m is None:
         return None

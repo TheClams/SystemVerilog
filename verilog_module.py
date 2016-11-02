@@ -36,8 +36,8 @@ def type_info_from_import(view,txt,varname):
     ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':varname, 'tag':None, 'value':None}
     for m in re.finditer(r'\bimport\s+(.+?);',txt,flags=re.MULTILINE):
         for mp in re.finditer(r'\b(\w+)(\:\:[\w\*]+)+',m.groups()[0],flags=re.MULTILINE):
-            # print('Package: {0} '.format(mp.groups()[0]))
             pi = lookup_package(view,mp.groups()[0])
+            # print('Package: {0} : {1}'.format(mp.groups()[0],pi))
             if pi:
                 for x in pi['member']:
                     if x['name']==varname:
