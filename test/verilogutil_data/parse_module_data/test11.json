@@ -1,7 +1,7 @@
 {"inst": [],
  "name": "mux",
- "param": [{"decl": "", "name": "pq_ports", "value": "2"},
-           {"decl": "", "name": "pw_data", "value": "8"}],
+ "param": [{"decl": "", "name": "pq_ports", "position": 0, "value": "2"},
+           {"decl": "", "name": "pw_data", "position": 1, "value": "8"}],
  "port": [
           {"array": "",
            "bw": "[$clog2(pq_ports+1)-1:0]",

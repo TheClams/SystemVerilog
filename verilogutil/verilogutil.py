@@ -205,13 +205,13 @@ def get_all_type_info(txt):
 # Get type info from a match object
 def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag':tag, 'value':None}
-    # print("[SV:get_type_info_from_match] varname={0} m={1} idx_type={2} idx_bw={3} idx_max={4},idx_val={5} tag={6}".format(var_name,m.groups(),idx_type,idx_bw,idx_max,idx_val,tag))
     #return a tuple of None if not found
     if not m:
         return [ti_not_found]
     if not m.groups()[idx_type]:
         return [ti_not_found]
     line = m.group(0).strip()
+    # print("[SV:get_type_info_from_match] varname={0} str='{7}' m={1} idx_type={2} idx_bw={3} idx_max={4},idx_val={5} tag={6}".format(var_name,m.groups(),idx_type,idx_bw,idx_max,idx_val,tag,line))
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
     t = str.rstrip(m.groups()[idx_type]).split('.')[0]
     if t=="unsigned" or t=="signed": # TODO check if other cases might happen
@@ -275,36 +275,43 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     if not ft.strip():
         return [ti_not_found]
     ti = []
-    for signal in signal_list :
-        # print("signal: " + str(signal) )
-        fts = ft + signal[0]
-        # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
-        at = ""
-        if signal[1]!='':
-            fts += signal[1].strip()
-            if signal[1].count('[')>1:
-                at='multidimension'
-            elif signal[2] =="":
-                at='dynamic'
-            elif signal[2]=='$':
-                at='queue'
-            elif signal[2]=='*':
-                at='associative'
-            else:
-                ma= re.match(r'[A-Za-z_][\w]*$',signal[2])
-                if ma:
+    if t=='class' and len(signal_list)==1 :
+        ti.append(parse_class(line+'\nendclass'))
+        if ti[0]:
+            ti[0]['tag'] = 'decl'
+        else:
+            ti[0] = ti_not_found
+    else :
+        for signal in signal_list :
+            # print("signal: " + str(signal) )
+            fts = ft + signal[0]
+            # Check if the variable is an array and the type of array (fixed, dynamic, queue, associative)
+            at = ""
+            if signal[1]!='':
+                fts += signal[1].strip()
+                if signal[1].count('[')>1:
+                    at='multidimension'
+                elif signal[2] =="":
+                    at='dynamic'
+                elif signal[2]=='$':
+                    at='queue'
+                elif signal[2]=='*':
                     at='associative'
                 else:
-                    at='fixed'
-        if not value and len(signal)>=4:
-            value = signal[3]
-        d = {'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value}
-        ft0 = ft.split()[0]
-        if ft0 in ['local','protected']:
-            d['access'] = ft0
-        # TODO: handle init value inside list
-        # print("Array: " + str(m) + "=>" + str(at))
-        ti.append(d)
+                    ma= re.match(r'[A-Za-z_][\w]*$',signal[2])
+                    if ma:
+                        at='associative'
+                    else:
+                        at='fixed'
+            if not value and len(signal)>=4:
+                value = signal[3]
+            d = {'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value}
+            ft0 = ft.split()[0]
+            if ft0 in ['local','protected']:
+                d['access'] = ft0
+            # TODO: handle init value inside list
+            # print("Array: " + str(m) + "=>" + str(at))
+            ti.append(d)
     return ti
 
 
@@ -331,38 +338,11 @@ def parse_module(flines,mname=r'\w+'):
         return None
     mname = m.group('name')
     # Extract parameter name
-    params = []
-    param_type = ''
-    ## Parameter define in ANSI style
-    r = re.compile(r"(parameter\s+)?(?P<decl>\b\w+\b\s*(\[[\w\:\-\+`\s]+\]\s*)?)?(?P<name>\w+)\s*=\s*(?P<value>[^,;\n]+)")
-    if m.group('param'):
-        s = clean_comment(m.group('param'))
-        for mp in r.finditer(s):
-            params.append(mp.groupdict())
-            if not params[-1]['decl']:
-                params[-1]['decl'] = param_type;
-            else :
-                params[-1]['decl'] = params[-1]['decl'].strip();
-                param_type = params[-1]['decl']
-    ## look for parameter not define in the module declaration
-    if m.group('content'):
-        s = clean_comment(m.group('content'))
-        r_param_list = re.compile(re_param,flags=re.MULTILINE)
-        for mpl in r_param_list.finditer(s):
-            param_type = ''
-            for mp in r.finditer(mpl.group(0)):
-                params.append(mp.groupdict())
-                if not params[-1]['decl']:
-                    params[-1]['decl'] = param_type;
-                else :
-                    params[-1]['decl'] = params[-1]['decl'].strip();
-                    param_type = params[-1]['decl']
-    ## Cleanup param value
+    params = extract_params(m)
+    ## Extract list of param if any
     params_name = []
     if params:
-        for param in params:
-            param['value'] = param['value'].strip()
-            params_name.append(param['name'])
+        params_name = [param['name'] for param in params]
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     ati = get_all_type_info(clean_comment(m.group(0)))
     # print('[SV.parse_module] ati = ')
@@ -388,6 +368,43 @@ def parse_module(flines,mname=r'\w+'):
     # print('[SV.parse_module] minfo = ')
     # pprint.pprint(minfo,width=200)
     return minfo
+
+# Extract params using a matching group already containg group for params and content
+def extract_params(m):
+    params = []
+    param_type = ''
+    pos = 0
+    ## Parameter define in ANSI style
+    r = re.compile(r"(parameter\s+)?(?P<decl>\b\w+\b\s*(\[[\w\:\-\+`\s]+\]\s*)?)?(?P<name>\w+)\s*=\s*(?P<value>[^,;\n]+)")
+    if m.group('param'):
+        s = clean_comment(m.group('param'))
+        for mp in r.finditer(s):
+            params.append(mp.groupdict())
+            if not params[-1]['decl']:
+                params[-1]['decl'] = param_type;
+            else :
+                params[-1]['decl'] = params[-1]['decl'].strip();
+                param_type = params[-1]['decl']
+            params[-1]['value'] = params[-1]['value'].strip()
+            params[-1]['position'] = pos
+            pos = pos + 1
+    ## look for parameter defined inline
+    if m.group('content'):
+        s = clean_comment(m.group('content'))
+        r_param_list = re.compile(re_param,flags=re.MULTILINE)
+        for mpl in r_param_list.finditer(s):
+            param_type = ''
+            for mp in r.finditer(mpl.group(0)):
+                params.append(mp.groupdict())
+                if not params[-1]['decl']:
+                    params[-1]['decl'] = param_type;
+                else :
+                    params[-1]['decl'] = params[-1]['decl'].strip();
+                    param_type = params[-1]['decl']
+                params[-1]['value'] = params[-1]['value'].strip()
+                params[-1]['position'] = pos
+                pos = pos + 1
+    return params
 
 # Parse a package for port information
 def parse_package_file(fname,pname=r'\w+'):
@@ -447,8 +464,12 @@ def parse_class(flines,cname=r'\w+'):
     txt = clean_comment(m.group('content'))
     # print('Matched class in :\n'+txt)
     ci = {'type':'class', 'name': m.group('name'), 'extend': None if 'extend' not in m.groupdict() else m.group('extend'), 'function' : []}
+    ci['decl'] = 'class {name} {param}{extend}'.format(\
+        name=ci['name'],\
+        param='' if not m.group('param') else '#({0}) '.format(m.group('param')),\
+        extend='' if not ci['extend'] else 'extends {0}'.format(ci['extend']) )
     # print('Init ci:\n'+str(ci))
-    # TODO: handle parameters ...
+    ci['param'] = extract_params(m)
     # Extract all functions
     ci['function'] = get_all_function(txt)
     # print('ci after function extract\n'+str(ci))

@@ -195,12 +195,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         completion = []
         # print ('previous word: ' + w)
         if w == 'this':
-            cname = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
+            cname,_ = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
             if cname :
                 txt = self.view.substr(sublime.Region(0,self.view.size()))
                 return self.class_completion('',cname,txt,False)
         elif w == 'super':
-            cname = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
+            cname,_ = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+(.*?);')
             if cname :
                 if cname:
                     ci = verilog_module.lookup_type(self.view,cname)
@@ -224,13 +224,15 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             else :
                 return completion
         else :
+            fname = ''
+            cdecl = ''
             modport_only = False
             # Check for multiple level of hierarchy
             cnt = 1
             autocomplete_max_lvl = self.settings.get("sv.autocomplete_max_lvl",4)
             while r.a>1 and self.view.substr(sublime.Region(r.a-1,r.a))=='.' and (cnt < autocomplete_max_lvl or autocomplete_max_lvl<0):
                 if 'support.function.port' not in self.view.scope_name(r.a):
-                    r.a = self.view.find_by_class(r.a-3,False,sublime.CLASS_WORD_START)
+                    r.a = self.view.find_by_class(r.a-2,False,sublime.CLASS_WORD_START)
                 cnt += 1
             if (cnt >= autocomplete_max_lvl and autocomplete_max_lvl>=0):
                 print("[SV:dot_completion] Reached max hierarchy level for autocompletion. You can change setting sv.autocomplete_max_lvl")
@@ -241,15 +243,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             wa = w.split('.')
             # extract info for first word using current file (to allow unsaved change to be taken into account)
             ti = verilog_module.type_info(view,txt,wa[0])
+            # print ('Word array: {0}'.format(wa))
+            # print ('Initial Type info: ' + str(ti))
             # Type not found ? check for extended class
-            # TODO: check for import
             if not ti['type'] :
-                cname = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
-                if cname:
-                    ci = verilog_module.lookup_type(view,cname)
-                    if ci:
-                        ti = verilog_module.type_info_file(view,ci['fname'][0],wa[0])
-                        # print(ti)
+                bti = verilog_module.type_info_from_base(view,r,wa[0])
+                if bti:
+                    ti = bti
+            # TODO: check for import
             for i in range(1,len(wa)):
                 # print("[SV:dot_completion] Type of {0} = {1}".format(wa[i-1],ti))
                 if not ti or not ti['type']:
@@ -259,11 +260,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     ti = verilog_module.lookup_module(self.view,ti['name'])
                 else:
                     ti = verilog_module.lookup_type(self.view,ti['type'])
+                    # print('Lookup type {0} '.format(fname,ti))
                 # Lookup for the variable inside the type defined
                 if ti:
                     fname = ti['fname'][0]
                     ti = verilog_module.type_info_file(view,fname,wa[i])
-            # print ('Type info: ' + str(ti))
+                    # print('Defined in file {0} => {1}'.format(fname,ti))
+            # print ('Final Type info: ' + str(ti))
             if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
@@ -291,11 +294,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     t = w
                 else:
                     t = ti['type']
+
+                tti = None
                 t = re.sub(r'\w+\:\:','',t) # remove scope from type. TODO: use the scope instead of rely on global lookup
                 filelist = view.window().lookup_symbol_in_index(t)
                 # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
-                    tti = None
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
                         # Parse only verilog files. Check might be a bit too restrictive ...
@@ -308,19 +312,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                                     if tti:
                                         fname = tti['fname'][0]
                                 break
-                    # print(tti)
-                    if not tti:
-                        return completion
-                    if tti['type']=='interface':
-                        return self.interface_completion(fname,tti['name'], modport_only)
-                    elif tti['type'] == 'class':
-                        return self.class_completion(fname,tti['name'])
-                    elif tti['type']=='enum':
-                        completion = self.enum_completion()
-                    elif tti['type'] in ['struct','union']:
-                        completion = self.struct_completion(tti['decl'])
-                    elif tti['type']=='module':
-                        return self.module_completion(fname,tti['name'])
+                # print(tti)
+                if not tti:
+                    return completion
+                if tti['type']=='interface':
+                    return self.interface_completion(fname,tti['name'], modport_only)
+                elif tti['type'] == 'class':
+                    return self.class_completion(fname,tti['name'])
+                elif tti['type']=='enum':
+                    completion = self.enum_completion()
+                elif tti['type'] in ['struct','union']:
+                    completion = self.struct_completion(tti['decl'])
+                elif tti['type']=='module':
+                    return self.module_completion(fname,tti['name'])
             #Add randomize function for rand variable
             if ti['decl']:
                 if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:

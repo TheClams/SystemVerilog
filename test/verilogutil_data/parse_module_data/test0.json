@@ -1,6 +1,6 @@
 {"inst": [],
  "name": "test",
- "param": [{"name": "pq_channels", "decl":"" ,"value": "10"}],
+ "param": [{"name": "pq_channels", "decl":"" , "position": 0, "value": "10"}],
  "port": [{"array": "",
            "bw": "[pq_channels-1:0][1:0]",
            "decl": "input [pq_channels-1:0][1:0] k",

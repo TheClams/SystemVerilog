@@ -47,6 +47,51 @@ def type_info_from_import(view,txt,varname):
             break
     return ti
 
+def type_info_from_base(view,r,varname):
+    ti = None
+    cname,cdecl = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+(.*?);')
+    if cname:
+        ci = lookup_type(view,cname)
+        # print ('Extend class {0} : {1}'.format(cdecl,ci))
+        if varname=='super':
+            ti = ci
+        elif ci:
+            fname = ci['fname'][0]
+            ti = type_info_file(view,fname,varname)
+            # print ('From base class, variable definition of "{0}" in file {1} : {2}'.format(varname,fname,ti))
+            # Check if the type is defined in the same file we found the signal declaration
+            if ti['type']:
+                tti = type_info_file(view,fname,ti['type'])
+                # print ('From base class, type definition of "{0}" in file {1} : {2}'.format(ti['type'],fname,tti))
+                if tti and tti['decl'] and tti['decl'].startswith('parameter'):
+                    # print('Default value = {0}'.format(tti['value']))
+                    # Check for parameter settings
+                    m = re.search(r'#\s*\((.*)\)',cdecl)
+                    param_set = m.groups()[0]
+                    new_type = ''
+                    if param_set:
+                        # by named connection
+                        m = re.search(r'\.'+ti['type']+r'\((.*?)\)',param_set)
+                        if m:
+                            # print('Found parameter affectation by name: {0}'.format(m.groups()[0]))
+                            new_type = m.groups()[0]
+                        # if not by name check by position
+                        else :
+                            pos = -1
+                            for p in ci['param']:
+                                if p['name']==ti['type']:
+                                    pos = p['position']
+                                    # print('found parameter {0} at position {1}'.format(ti['type'],pos))
+                                    break
+                            pl = re.sub(r'\(.*?\)','',param_set).split(',')
+                            if pos >= 0 and pos <len(pl):
+                                new_type = pl[pos]
+                        # Update type and declaration with the found type instead of the parameter name
+                        if new_type:
+                            ti['decl'] = ti['decl'].replace(ti['type'],new_type)
+                            ti['type'] = new_type
+    return ti
+
 ########################################
 def lookup_module(view,mname):
     mi = None

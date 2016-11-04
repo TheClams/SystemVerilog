@@ -1,6 +1,6 @@
   {"inst": [],
    "name": "arithm_op_port",
-   "param": [{"decl": "", "name": "pq_symbols", "value": "4"}],
+   "param": [{"decl": "", "name": "pq_symbols", "position": 0, "value": "4"}],
    "port": [{"array": "",
            "bw": "[(pq_symbols<<1)-1:0]",
            "decl": "output logic [(pq_symbols<<1)-1:0] name3",

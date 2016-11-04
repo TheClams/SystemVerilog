@@ -124,11 +124,12 @@ class VerilogTypePopup :
         # Optionnaly extend selection to parent object (parent.var)
         if 'support.function.port' not in self.view.scope_name(region.a):
             while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
-                region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
+                region.a = self.view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
         # Optionnaly extend selection to scope specifier
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
             region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         v = self.view.substr(region)
+        # print('[VerilogTypePopup] Word to show = {0}'.format(v))
         if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
             s,ti = self.get_type(v,region)
             if not s:
@@ -179,6 +180,7 @@ class VerilogTypePopup :
                 else :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
+                        # print(ti)
                         if 'tag' in ti and ti['tag'] == 'enum':
                             m = re.search(r'\{(.*)\}', ti['decl'])
                             if m:
@@ -253,22 +255,17 @@ class VerilogTypePopup :
                 s0 = s0.split('[')[0]
             ti = verilog_module.type_info(self.view,lines,s0)
             for i in range(1,len(s)):
+                # print ('[get_type] Dot inside | previous type info = {0}'.format(ti))
                 #if not found check for a definition in base class if we this is an extended class
                 if not ti['type'] :
-                    cname = sublimeutil.find_closest(self.view,region,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
-                    if cname:
-                        ci = verilog_module.lookup_type(self.view,cname)
-                        if ci:
-                            if s[0]=='super':
-                                ti['type'] = ci['name']
-                            else:
-                                # TODO: handle case of multi-dimension array
-                                ti = verilog_module.type_info_file(self.view,ci['fname'][0],s0)
+                    bti = verilog_module.type_info_from_base(self.view,region,ti['name'])
+                    if bti:
+                        ti = bti
                 # Get type definition
                 if ti and ti['type']:
                     if ti['type']=='module':
                         ti = verilog_module.lookup_module(self.view,ti['name'])
-                    else:
+                    elif ti['type']!='class':
                         ti = verilog_module.lookup_type(self.view,ti['type'])
                 # Lookup for the variable inside the type defined
                 if ti and ti['type']=='struct' :
@@ -366,11 +363,9 @@ class VerilogTypePopup :
             ti = verilog_module.type_info(self.view,lines,var_name)
             #if not found check for a definition in base class if we this is an extended class
             if not ti['type'] :
-                cname = sublimeutil.find_closest(self.view,region,r'\bclass\s+.*?\bextends\s+([\w\:]+)\b')
-                if cname:
-                    ci = verilog_module.lookup_type(self.view,cname)
-                    if ci:
-                        ti = verilog_module.type_info_file(self.view,ci['fname'][0],var_name)
+                bti = verilog_module.type_info_from_base(self.view,region,var_name)
+                if bti:
+                    ti = bti
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
