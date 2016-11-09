@@ -123,4 +123,7 @@ module my_module (
       return -value;
   endfunction : abs
 
+  class testclass;
+  endclass
+
 endmodule

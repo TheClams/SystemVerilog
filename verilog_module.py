@@ -55,7 +55,7 @@ def type_info_from_base(view,r,varname):
         # print ('Extend class {0} : {1}'.format(cdecl,ci))
         if varname=='super':
             ti = ci
-        elif ci:
+        elif ci and 'fname' in ci:
             fname = ci['fname'][0]
             ti = type_info_file(view,fname,varname)
             # print ('From base class, variable definition of "{0}" in file {1} : {2}'.format(varname,fname,ti))

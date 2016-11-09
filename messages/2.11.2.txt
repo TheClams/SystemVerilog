@@ -3,3 +3,4 @@ SystemVerilog 2.11.2 Changelog:
 ## Fix ##
  - Parsing: Correctly extract info from package containing localparam with arithmetic operation
  - Type info (completion/tooltip): works parameterized type
+ - Alignement: handle class properly when inside module/package

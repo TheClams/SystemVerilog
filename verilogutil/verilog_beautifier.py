@@ -281,7 +281,7 @@ class VerilogBeautifier():
                                     block_tmp = block_tmp.replace(inst_block,inst_block_aligned)
                                     # print('[Beautify] Align block inst in generate : ilvl={0} \n{1}'.format(inst_ilvl,inst_block))
                     block = block_tmp
-                elif w in ['endtask', 'endfunction', 'endsequence', 'endproperty']:
+                elif w in ['endtask', 'endfunction', 'endsequence', 'endproperty','endclass']:
                     if self.settings['reindentOnly']:
                         block = block+line
                     else:

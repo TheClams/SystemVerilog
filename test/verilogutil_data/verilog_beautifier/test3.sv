@@ -123,4 +123,7 @@ my_param_submodule #(.PARAM0(1), .P4(my_pkg::P4)) i_param_sub  (.input_0(din[1:0
          return -value;
    endfunction : abs
 
+class testclass;
+endclass
+
 endmodule
