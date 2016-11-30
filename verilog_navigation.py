@@ -26,6 +26,7 @@ TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 use_tooltip = False
 sv_settings = None
 tooltip_css = ''
+tooltip_flag = 0
 
 def plugin_loaded():
     imp.reload(verilogutil)
@@ -44,8 +45,13 @@ def plugin_loaded():
 def init_css():
     global use_tooltip
     global tooltip_css
+    global tooltip_flag
     if int(sublime.version()) >= 3072 :
         use_tooltip = sv_settings.get('sv.tooltip',True)
+        if sv_settings.get('sv.tooltip_hide_on_move',True):
+            tooltip_flag = sublime.HIDE_ON_MOUSE_MOVE_AWAY
+        else:
+            tooltip_flag = 0
         color_plist = readPlistFromBytes(sublime.load_binary_resource(pref_settings.get('color_scheme')))
         color_dict = {}
         for x in color_plist['settings'] :
@@ -208,7 +214,7 @@ class VerilogTypePopup :
                                 s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 # print(s)
-                self.view.show_popup(s,location=location, max_width=500, on_navigate=self.on_navigate)
+                self.view.show_popup(s,location=location, flags=tooltip_flag, max_width=500, on_navigate=self.on_navigate)
             else :
                 # fix hard limit to signal declaration to 128 to ensure it can be displayed
                 if s and len(s) > 128:
@@ -248,41 +254,7 @@ class VerilogTypePopup :
         # print ('[get_type] var={0} scope="{1}"'.format(var_name,scope))
         # In case of field, retrieve parent type
         if '.' in var_name:
-            s = var_name.split('.')
-            lines = self.view.substr(sublime.Region(0, self.view.line(region).b))
-            s0 = s[0]
-            if '[' in s0:
-                s0 = s0.split('[')[0]
-            ti = verilog_module.type_info(self.view,lines,s0)
-            for i in range(1,len(s)):
-                # print ('[get_type] Dot inside | previous type info = {0}'.format(ti))
-                #if not found check for a definition in base class if we this is an extended class
-                if not ti['type'] :
-                    bti = verilog_module.type_info_from_base(self.view,region,ti['name'])
-                    if bti:
-                        ti = bti
-                # Get type definition
-                if ti and ti['type']:
-                    if ti['type']=='module':
-                        ti = verilog_module.lookup_module(self.view,ti['name'])
-                    elif ti['type']!='class':
-                        ti = verilog_module.lookup_type(self.view,ti['type'])
-                # Lookup for the variable inside the type defined
-                if ti and ti['type']=='struct' :
-                    m = re.search(r'\{(.*)\}', ti['decl'])
-                    til = verilogutil.get_all_type_info(m.groups()[0])
-                    ti = None
-                    for e in til:
-                        if e['name']==s[i]:
-                            ti = e
-                            break
-                elif ti and 'fname' in ti:
-                    fname = ti['fname'][0]
-                    ti = verilog_module.type_info_file(self.view,fname,s[i])
-                    if ti['type'] in ['function', 'task']:
-                        with open(fname) as f:
-                            flines = verilogutil.clean_comment(f.read())
-                        ti = verilogutil.parse_function(flines,s[i])
+            ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
             if ti:
                 txt = ti['decl']
         # Extract type info from module if we are on port connection

@@ -79,7 +79,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             prev_word = view.substr(tmp_r).strip()
             tmp_r.b = tmp_r.a
             # print('[SV:on_query_completions] (word end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
-        # Extract only last character for some symbol (typically to handle a pranthesis just before the operator)
+        # Extract only last character for some symbol (typically to handle a parenthesis just before the operator)
         if prev_symb and prev_symb[-1] in ['$','`','.']:
             prev_symb = prev_symb[-1]
         completion = []
@@ -240,33 +240,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             w = str.rstrip(view.substr(r))
             # get type information on the variable
             txt = view.substr(sublime.Region(0, view.size()))
-            wa = w.split('.')
-            # extract info for first word using current file (to allow unsaved change to be taken into account)
-            ti = verilog_module.type_info(view,txt,wa[0])
-            # print ('Word array: {0}'.format(wa))
-            # print ('Initial Type info: ' + str(ti))
-            # Type not found ? check for extended class
-            if not ti['type'] :
-                bti = verilog_module.type_info_from_base(view,r,wa[0])
-                if bti:
-                    ti = bti
-            # TODO: check for import
-            for i in range(1,len(wa)):
-                # print("[SV:dot_completion] Type of {0} = {1}".format(wa[i-1],ti))
-                if not ti or not ti['type']:
-                    print("[SV:dot_completion] Cound not find type of {0} in {1}".format(wa[i-1],wa))
-                    return completion
-                if ti['type']=='module':
-                    ti = verilog_module.lookup_module(self.view,ti['name'])
-                else:
-                    ti = verilog_module.lookup_type(self.view,ti['type'])
-                    # print('Lookup type {0} '.format(fname,ti))
-                # Lookup for the variable inside the type defined
-                if ti:
-                    fname = ti['fname'][0]
-                    ti = verilog_module.type_info_file(view,fname,wa[i])
-                    # print('Defined in file {0} => {1}'.format(fname,ti))
-            # print ('Final Type info: ' + str(ti))
+            ti = verilog_module.type_info_on_hier(view,w,txt,r)
             if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
@@ -569,14 +543,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             r_end = start_pos
         # Go to the end to get the full scope
         content = view.substr(sublime.Region(r_start,r_end))
-        # print('[struct_assign_completion] content = %s' % (content))
+        # print('[struct_assign_completion] content = "{0}"'.format(content))
         if not content.startswith(('<=','=')):
-            # print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
+            print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
             return []
         # get the variable name
-        v = view.substr(view.word(sublime.Region(r_start-1,r_start-1)))
-        txt = self.view.substr(sublime.Region(0, r_start))
-        ti = verilog_module.type_info(view,txt,v)
+        start_line = view.line(sublime.Region(r_start-1,r_start-1)).a
+        l = view.substr(sublime.Region(start_line,r_start-1)).strip()
+        m = re.search(r'\b(?P<varname>[\w\[\]\.\(\)\+\-\*]+)$',l)
+        if not m:
+            return []
+        v = m.group('varname')
+        ti = verilog_module.type_info_on_hier(view,v,region=sublime.Region(0, start_line))
         # print('[struct_assign_completion] ti = %s' % (ti))
         if not ti['type']:
             return []

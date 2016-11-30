@@ -1,0 +1,8 @@
+SystemVerilog 2.12.0 Changelog:
+
+## Features ##
+ - Add new option to auto-hide tooltip when cursor move away (sv.tooltip_hide_on_move, default True)
+
+## Fix ##
+ - Auto-completion: Improve completion for structure assignment (now works for array of struct, and when the structure is part of interface or other struct)
+ - Syntax highlight: modport are now recognize as symbol

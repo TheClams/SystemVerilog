@@ -92,6 +92,46 @@ def type_info_from_base(view,r,varname):
                             ti['type'] = new_type
     return ti
 
+
+def type_info_on_hier(view,varname,txt=None,region=None):
+    va = varname.split('.')
+    ti = None
+    if not txt and region:
+        txt = view.substr(sublime.Region(0, view.line(region).b))
+    for i in range(0,len(va)):
+        v = va[i].split('[')[0] # retrieve name without array part
+        # Get type definition: first iteration is done inside current file
+        if i==0:
+            ti = type_info(view,txt,v)
+            #if not found check for a definition in base class if this is an extended class
+            if not ti['type'] and region:
+                bti = type_info_from_base(view,region,ti['name'])
+                if bti:
+                    ti = bti
+        elif ti and ti['type']:
+            if ti['type']=='module':
+                ti = lookup_module(view,ti['name'])
+            elif ti['type']!='class':
+                ti = lookup_type(view,ti['type'])
+        # Lookup for the variable inside the type defined
+        if ti and ti['type']=='struct' :
+            m = re.search(r'\{(.*)\}', ti['decl'])
+            til = verilogutil.get_all_type_info(m.groups()[0])
+            ti = None
+            for e in til:
+                if e['name']==v:
+                    ti = e
+                    break
+        elif ti and 'fname' in ti:
+            fname = ti['fname'][0]
+            ti = type_info_file(view,fname,v)
+            if ti['type'] in ['function', 'task']:
+                with open(fname) as f:
+                    flines = verilogutil.clean_comment(f.read())
+                ti = verilogutil.parse_function(flines,v)
+        # print ('[type_info_on_hier] => type info of {0} = {1}'.format(v,ti))
+    return ti
+
 ########################################
 def lookup_module(view,mname):
     mi = None
