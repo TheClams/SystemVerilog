@@ -130,4 +130,4 @@ def print_to_panel(txt,name):
 def move_cursor(view,pos):
     view.sel().clear()
     view.sel().add(sublime.Region(pos,pos))
-    view.show(pos)
+    view.show_at_center(pos)

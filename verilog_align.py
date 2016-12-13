@@ -37,7 +37,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
         if not use_space:
             char_space = '\t'
         region = self.view.sel()[0]
-        region_start = region
+        row,col = self.view.rowcol(region.a)
         scope = self.view.scope_name(region.a)
         if region.b > region.a :
             if self.view.scope_name(region.b) != scope :
@@ -76,6 +76,6 @@ class VerilogAlign(sublime_plugin.TextCommand):
             txt = beautifier.beautifyText(txt)
         if txt:
             self.view.replace(edit,region,txt)
-            sublimeutil.move_cursor(self.view,region_start.a)
+            sublimeutil.move_cursor(self.view,self.view.text_point(row,col))
         else :
             sublime.status_message('No alignement support for this block of code.')

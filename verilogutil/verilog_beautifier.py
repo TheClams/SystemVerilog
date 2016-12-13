@@ -614,7 +614,7 @@ class VerilogBeautifier():
         len_type = 0
         len_type_user = 0
         for x in decl:
-            if x[1] == '' and x[3]=='' and x[4]=='' and x[2] not in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
+            if x[3]=='' and x[4]=='' and x[2] not in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
                 if len_type_user < len(x[2]) :
                     len_type_user = len(x[2])
             else :
@@ -646,6 +646,8 @@ class VerilogBeautifier():
             max_len = len_if-len_dir-1
         if len_type_user < max_len:
             len_type_user = max_len
+        if len_var > 0 :
+            len_type_user -= len_var+1
         # print('Len:  dir=' + str(len_dir) + ' if=' + str(len_if) + ' type=' + str(len_type) + ' sign=' + str(len_sign) + ' bw=' + str(len_bw) + ' type_user=' + str(len_type_user) + ' port=' + str(max_port_len) + ' max_len=' + str(max_len) + ' len_type_full=' + str(len_type_full))
         # Rewrite block line by line with padding for alignment
         lines = txt_port.splitlines()
@@ -663,13 +665,13 @@ class VerilogBeautifier():
                     # For standard i/o
                     if m_port.group('dir') in verilogutil.port_dir :
                         l_new += m_port.group('dir').ljust(len_dir)
+                        if len_var>0:
+                            if m_port.group('var'):
+                                l_new += ' ' + m_port.group('var')
+                            else:
+                                l_new += ' '.ljust(len_var+1)
                         # Align userdefined type differently from the standard type
-                        if m_port.group('var') or m_port.group('sign') or m_port.group('bw') or m_port.group('type') in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
-                            if len_var>0:
-                                if m_port.group('var'):
-                                    l_new += ' ' + m_port.group('var')
-                                else:
-                                    l_new += ' '.ljust(len_var+1)
+                        if m_port.group('sign') or m_port.group('bw') or m_port.group('type') in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
                             if len_type>0:
                                 if m_port.group('type'):
                                     if m_port.group('type') not in ['signed','unsigned']:
