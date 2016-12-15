@@ -1,0 +1,9 @@
+SystemVerilog 2.12.1 Changelog:
+
+## Fix ##
+ - Auto-completion: for module Binding, do not add the signal connection if already existing, and do not add the comma when on last line
+ - Parsing:
+  * Better handling of signal declaration with continuous assignement (e.g. : wire c = (a+b); )
+  * Fix module parsing with parameters where first port could be ignored
+ - Module connection: type check properly handle mixed use of scope between port and signal
+ - Alignement: Cursor now stays on the same line (could still be weird if some line are removed, but better than before)

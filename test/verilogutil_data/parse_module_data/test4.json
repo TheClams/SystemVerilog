@@ -1,6 +1,6 @@
 {"inst": [],
  "name": "m1",
- "param": [],
+ "param": [{"decl": "", "name": "X", "position": 0, "value": "2"}],
  "port": [{"array": "",
            "bw": "",
            "decl": "input a",

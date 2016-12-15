@@ -167,7 +167,7 @@ def get_all_type_info(txt):
     # Look for signal declaration
     # print('[get_all_type_info] Look for signal declaration')
     # TODO: handle init value
-    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;\[\]]*?\]\s*)*)\s*(?:\=\s*(\'\{.+\}|[\w\.\:\'\"\+\*\-\$\(\)]+)\s*)?(?=;|,|\)\s*;)'
+    re_str = re_decl+r'(\w+\b(\s*\[[^=\^\&\|,;\[\]]*?\]\s*)*)\s*(?:\=\s*(\'\{.+\}|[^;,]+)\s*)?(?=;|,|\)\s*;)'
     # print('[get_all_type_info] decl re="{0}"'.format(re_str))
     r = re.compile(re_str,flags=re.MULTILINE)
     for m in r.finditer(txt):
@@ -240,7 +240,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             value = str.rstrip(m.groups()[idx_val])
     else:
         signal_list = []
-        re_str = r'(\w+)\b\s*((?:\[(.*)\]\s*)*)(?:\=\s*(\'\{.+?\}|[\w\.\:\'\"\+\*\-\$\(\)]+)\s*)?,?'
+        re_str = r'(\w+)\b\s*((?:\[(.*)\]\s*)*)(?:\=\s*(\'\{.+?\}|[^;,]+)\s*)?,?'
         if m.groups()[idx_max]:
             signal_list = re.findall(re_str, m.groups()[idx_max], flags=re.MULTILINE)
             # print("[SV:get_type_info_from_match] idxmax => signal_list = " + str(signal_list))
@@ -344,7 +344,10 @@ def parse_module(flines,mname=r'\w+'):
     if params:
         params_name = [param['name'] for param in params]
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
-    ati = get_all_type_info(clean_comment(m.group(0)))
+    txt = m.group(0)
+    if m.group('param'):
+        txt = txt.replace(m.group('param'),'')
+    ati = get_all_type_info(txt)
     # print('[SV.parse_module] ati = ')
     # pprint.pprint(ati,width=200)
     # Extract port name

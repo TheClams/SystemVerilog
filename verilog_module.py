@@ -654,7 +654,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     ds = re.sub(r'\b(wire|reg)\b','logic',ds.strip())
                     d  = re.sub(r'\b(wire|reg)\b','logic',d.strip())
                     # Remove scope if not available in both type
-                    if (':' in ds and ':' not in d) or (':' not in ds and ':' in d) :
+                    if ('::' in ds and '::' not in d) or ('::' not in ds and '::' in d) :
                         ds = re.sub(r'\w+\:\:','',ds)
                         d = re.sub(r'\w+\:\:','',d)
                     # In case of smart autoconnect replace the signal name by the port name

@@ -830,7 +830,8 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
 
     # Remove all signals kept in the input panel
     def on_prompt_done(self, content):
-        self.view.run_command("verilog_delete_signal", {"args":{'signals':content, 'sid':self.sid}})
+        if content.strip():
+            self.view.run_command("verilog_delete_signal", {"args":{'signals':content, 'sid':self.sid}})
         self.print_result()
 
     # Display in a panel all linting result

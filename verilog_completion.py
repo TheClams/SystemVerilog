@@ -220,7 +220,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         if mi:
                             break
                     is_param = 'meta.module-param' in scope
-                    completion = self.module_binding_completion(txt, mi,start_pos-r.a,is_param)
+                    completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
             else :
                 return completion
         else :
@@ -640,7 +640,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Provide completion for module binding:
     # Extract all parameter and ports from module definition
     # and filter based on position (parameter or ports) and existing binding
-    def module_binding_completion(self,txt,minfo,pos, is_param):
+    def module_binding_completion(self,txt_raw,txt,minfo,pos, is_param):
         c = []
         if not minfo:
             return c
@@ -655,6 +655,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return c
         # print('[module_binding_completion] Port/param : ' + str(l))
         len_port = max([len(p['name']) for p in l])
+        # Check current line to see if the connection is already done and if we are
+        eot = verilogutil.clean_comment(txt_raw[pos:])
+        has_binding = re.match(r'^\.\w*\s*\(',eot) is not None
+        if not has_binding:
+            is_last = re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*;',eot,flags=re.MULTILINE) is not None
+        # print('End text = \n{0}\nHas_bonding={1}, is_last={2}'.format(eot,has_binding,is_last))
         # TODO: find a way to know if the comma need to be inserted or not
         for x in l:
             if x['name'] not in b:
@@ -664,7 +670,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 else:
                     tips = '\t' + str(x['type'])
                     def_val = x['name']
-                c.append([x['name']+tips,x['name'].ljust(len_port)+'(${0:' + def_val + '}),'])
+                s = x['name']
+                if not has_binding:
+                    s = s.ljust(len_port)+'(${0:' + def_val + '})'
+                    if not is_last:
+                        s = s+','
+                c.append([x['name']+tips,s])
         return c
 
     # Complete case for an enum with all possible value
