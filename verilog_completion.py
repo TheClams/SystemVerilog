@@ -86,9 +86,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
         if prev_symb=='$':
-            completion = self.systemtask_completion()
+            completion = self.listbased_completion('systemtask')
         elif prev_symb=='`':
-            completion =  self.tick_completion()
+            completion =  self.listbased_completion('tick')
         elif prev_symb=='.':
             completion =  self.dot_completion(view,r)
         elif prev_symb=='::':
@@ -106,7 +106,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif prefix:
             # Provide completion for most used uvm function
             if(prefix.startswith('u')):
-                completion = self.uvm_completion()
+                completion =  self.listbased_completion('uvm')
             # Provide completion for most always block
             elif(prefix.startswith('a')):
                 completion = self.always_completion()
@@ -117,16 +117,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             elif(prefix.startswith('end')):
                 completion = self.end_completion(view,r,prefix)
         return (completion, flag)
-
-    def uvm_completion(self):
-        c = []
-        c.append(['uvm_config_db_get' , 'uvm_config_db#()::get(this, "$1", "$0", $0);' ])
-        c.append(['uvm_config_db_set' , 'uvm_config_db#()::set(this, "$1", "$0", $0);' ])
-        c.append(['uvm_report_info'   , 'uvm_report_info("$1", "$0", UVM_NONE);' ])
-        c.append(['uvm_report_warning', 'uvm_report_warning("$1", "$0");' ])
-        c.append(['uvm_report_error'  , 'uvm_report_error("$1", "$0");' ])
-        c.append(['uvm_report_fatal'  , 'uvm_report_fatal("$1", "$0");' ])
-        return c
 
     def always_completion(self):
         c = []
@@ -394,98 +384,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['suspend\tsuspend()' , 'suspend($0)'])
         return c
 
-    def systemtask_completion(self):
-        c = []
-        c.append(['display\t$display()'              , 'display("$0",);'         ])
-        c.append(['monitor\t$monitor()'              , 'monitor("$0",);'         ])
-        c.append(['monitoron\t$monitoron'            , 'monitoron;'              ])
-        c.append(['monitoroff\t$monitoroff'          , 'monitoroff;'             ])
-        c.append(['sformatf\t$sformatf()'            , 'sformatf("$0",)'         ])
-        c.append(['test$plusargs\t$test$plusargs()'  , 'test\$plusargs("$0")'    ])
-        c.append(['value$plusargs\t$value$plusargs()', 'value\$plusargs("$1",$2)'])
-        c.append(['finish\t$finish'                  , 'finish;'                 ])
-        #variable
-        c.append(['time\t$time'                      , 'time()'                  ])
-        c.append(['realtime\t$realtime()'            , 'realtime()'              ])
-        c.append(['random\t$random()'                , 'random()'                ])
-        c.append(['urandom_range\t$urandom_range()'  , 'urandom_range($1,$2)'    ])
-        #cast
-        c.append(['cast\t$cast()'                    , 'cast($0)'                ])
-        c.append(['unsigned\t$unsigned()'            , 'unsigned($0)'            ])
-        c.append(['signed\t$signed()'                , 'signed($0)'              ])
-        c.append(['itor\t$itor()'                    , 'itor($0)'                ])
-        c.append(['rtoi\t$rtoi()'                    , 'rtoi($0)'                ])
-        c.append(['bitstoreal\t$bitstoreal()'        , 'bitstoreal($0)'          ])
-        c.append(['realtobits\t$realtobits()'        , 'realtobits($0)'          ])
-        #assertion
-        c.append(['assertoff\t$assertoff()'          , 'assertoff($0,)'          ])
-        c.append(['info\t$info()'                    , 'info("$0");'             ])
-        c.append(['error\t$error()'                  , 'error("$0");'            ])
-        c.append(['warning\t$warning()'              , 'warning("$0");'          ])
-        c.append(['stable\t$stable()'                , 'stable($0)'              ])
-        c.append(['fell\t$fell()'                    , 'fell($0)'                ])
-        c.append(['rose\t$rose()'                    , 'rose($0)'                ])
-        c.append(['past\t$past()'                    , 'past($0)'                ])
-        c.append(['isunknown\t$isunknown()'          , 'isunknown($0)'           ])
-        c.append(['onehot\t$onehot()'                , 'onehot($0)'              ])
-        c.append(['onehot0\t$onehot0()'              , 'onehot0($0)'             ])
-        #utility
-        c.append(['size\t$size()'                    , 'size($0)'                ])
-        c.append(['countones\t$countones()'          , 'countones($0)'           ])
-        c.append(['high\t$high()'                    , 'high($0)'                ])
-        c.append(['low\t$low()'                      , 'low($0)'                 ])
-        #math
-        c.append(['clog2\t$clog2()'                  , 'clog2($0)'               ])
-        c.append(['log\t$log()'                      , 'ln($0)'                  ])
-        c.append(['log10\t$log10()'                  , 'log10($0)'               ])
-        c.append(['exp\t$exp()'                      , 'exp($0)'                 ])
-        c.append(['sqrt\t$sqrt()'                    , 'sqrt($0)'                ])
-        c.append(['pow\t$pow()'                      , 'pow($1,$2)'              ])
-        c.append(['floor\t$floor()'                  , 'floor($0)'               ])
-        c.append(['ceil\t$ceil()'                    , 'ceil($0)'                ])
-        c.append(['sin\t$sin()'                      , 'sin($0)'                 ])
-        c.append(['cos\t$cos()'                      , 'cos($0)'                 ])
-        c.append(['tan\t$tan()'                      , 'tan($0)'                 ])
-        c.append(['asin\t$asin()'                    , 'asin($0)'                ])
-        c.append(['acos\t$acos()'                    , 'acos($0)'                ])
-        c.append(['atan\t$atan()'                    , 'atan($0)'                ])
-        c.append(['atan2\t$atan2()'                  , 'atan2($1,$2)'            ])
-        c.append(['hypot\t$hypot()'                  , 'hypot($1,$2)'            ])
-        c.append(['sinh\t$sinh()'                    , 'sinh($0)'                ])
-        c.append(['cosh\t$cosh()'                    , 'cosh($0)'                ])
-        c.append(['tanh\t$tanh()'                    , 'tanh($0)'                ])
-        c.append(['asinh\t$asinh()'                  , 'asinh($0)'               ])
-        c.append(['acosh\t$acosh()'                  , 'acosh($0)'               ])
-        c.append(['atanh\t$atanh()'                  , 'atanh($0)'               ])
-        #file
-        c.append(['fopen\t$fopen()'                  , 'fopen($0,"r")'           ])
-        c.append(['fclose\t$fclose()'                , 'fclose($0);'             ])
-        c.append(['fflush\t$fflush()'                , 'fflush;'                 ])
-        c.append(['fgetc\t$fgetc()'                  , 'fgetc($0,)'              ])
-        c.append(['fgets\t$fgets()'                  , 'fgets($0,)'              ])
-        c.append(['fwrite\t$fwrite()'                , 'fwrite($0,"")'           ])
-        c.append(['readmemb\t$readmemb()'            , 'readmemb("$1",$2)'       ])
-        c.append(['readmemh\t$readmemh()'            , 'readmemh("$1",$2)'       ])
-        c.append(['sscanf\t$sscanf()'                , 'sscanf($1,"$2",$3)'      ])
-        return c
-
-    def tick_completion(self):
-        c = []
-        c.append(['include\t`include ...'         , 'include "$0"'                ])
-        c.append(['define\t`define ...'           , 'define $0'                   ])
-        c.append(['ifdef\t`ifdef ...'             , 'ifdef $0'                    ])
-        c.append(['ifndef\t`ifndef ...'           , 'ifndef $0'                   ])
-        c.append(['else\t`else '                  , 'else '                       ])
-        c.append(['elsif\t`elsif ...'             , 'elsif $0'                    ])
-        c.append(['endif\t`endif'                 , 'endif'                       ])
-        c.append(['celldefine\t`celldefine ...'   , 'celldefine $0 endcelldefine' ])
-        c.append(['endcelldefine\t`endcelldefine ', 'endcelldefine '              ])
-        c.append(['line\t`line '                  , 'line '                       ])
-        c.append(['resetall\t`resetall '          , 'resetall'                    ])
-        c.append(['timescale\t`timescale ...'     , 'timescale $0'                ])
-        c.append(['undef\t`undef ...'             , 'undef $0'                    ])
-        return c
-
     def enum_completion(self):
         c = []
         c.append(['first\tfirst()', 'first()'])
@@ -495,6 +393,19 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['num\tnum()'  , 'num()'  ])
         c.append(['name\tname()' , 'name()' ])
         return c
+
+    def listbased_completion(self, name):
+        lname = 'sv.completion.' + name
+        l = self.settings.get(lname)
+        l_user = self.settings.get(lname+'.user',None)
+        if l_user:
+            d = { x[0]:i for i,x in enumerate(l)}
+            for x in l_user :
+                if x[0] in d:
+                    l[d[x[0]]] = x
+                else :
+                    l.append(x)
+        return [['{0}\t{1}'.format(x[0],x[1]),x[2]] for x in l]
 
     def struct_completion(self,decl, isAssign=False, fe=[]):
         c = []
@@ -514,6 +425,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         f_name += ':'
                     c.append([f['name']+'\t'+f_type,f_name])
         return c
+
 
     def struct_assign_completion(self,view,r):
         start_pos = r.a # save original position of caret

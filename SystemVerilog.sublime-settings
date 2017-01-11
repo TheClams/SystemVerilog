@@ -45,5 +45,109 @@
 	"sv.hover_max_size" : -1, // Max size of the file (in byte) to display popup info. Set to -1 to disable the limit (default), 0 to disable feature.
 	// Debug option
 	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
-	"sv.disable_autocomplete": false
+	"sv.disable_autocomplete": false,
+	// Completion list :
+	//  - the first list element is the completion trigger
+	//  - the second list element is the description appearing the completion list
+	//  - the third list element is the code snippets corresponding to the completion
+	// Redefine each sv.completion.xxx in the user sublime-settings file for a complete replacement
+	// Define sv.completion.xxx.user to just add/update to the original xxx list
+	"sv.completion.systemtask" : [
+		// Messaging
+		["display"       ,"$display()",        "display(\"$0\",);"           ],
+		["monitor"       ,"$monitor()",        "monitor(\"$0\",);"           ],
+		["monitoron"     ,"$monitoron",        "monitoron;"                  ],
+		["monitoroff"    ,"$monitoroff",       "monitoroff;"                 ],
+		["sformatf"      ,"$sformatf()",       "sformatf(\"$0\",)"           ],
+		["testplusargs"  ,"$test$plusargs()",  "test\\$plusargs(\"$0\")"     ],
+		["valueplusargs" ,"$value$plusargs()", "value\\$plusargs(\"$1\",$2)" ],
+		["finish"        ,"$finish",           "finish;"                     ],
+		// variable
+		["time"          ,"$time",             "time()"                      ],
+		["realtime"      ,"$realtime()",       "realtime()"                  ],
+		["random"        ,"$random()",         "random()"                    ],
+		["urandom_range" ,"$urandom_range()",  "urandom_range($1,$2)"        ],
+		// cast
+		["cast"          ,"$cast()",           "cast($0)"                    ],
+		["unsigned"      ,"$unsigned()",       "unsigned($0)"                ],
+		["signed"        ,"$signed()",         "signed($0)"                  ],
+		["itor"          ,"$itor()",           "itor($0)"                    ],
+		["rtoi"          ,"$rtoi()",           "rtoi($0)"                    ],
+		["bitstoreal"    ,"$bitstoreal()",     "bitstoreal($0)"              ],
+		["realtobits"    ,"$realtobits()",     "realtobits($0)"              ],
+		// assertion
+		["assertoff"     ,"$assertoff()",      "assertoff($0,)"              ],
+		["info"          ,"$info()",           "info(\"$0\");"               ],
+		["error"         ,"$error()",          "error(\"$0\");"              ],
+		["warning"       ,"$warning()",        "warning(\"$0\");"            ],
+		["stable"        ,"$stable()",         "stable($0)"                  ],
+		["fell"          ,"$fell()",           "fell($0)"                    ],
+		["rose"          ,"$rose()",           "rose($0)"                    ],
+		["past"          ,"$past()",           "past($0)"                    ],
+		["isunknown"     ,"$isunknown()",      "isunknown($0)"               ],
+		["onehot"        ,"$onehot()",         "onehot($0)"                  ],
+		["onehot0"       ,"$onehot0()",        "onehot0($0)"                 ],
+		// utility
+		["size"          ,"$size()",           "size($0)"                    ],
+		["countones"     ,"$countones()",      "countones($0)"               ],
+		["high"          ,"$high()",           "high($0)"                    ],
+		["low"           ,"$low()",            "low($0)"                     ],
+		// math
+		["clog2"         ,"$clog2()",          "clog2($0)"                   ],
+		["log"           ,"$log()",            "ln($0)"                      ],
+		["log10"         ,"$log10()",          "log10($0)"                   ],
+		["exp"           ,"$exp()",            "exp($0)"                     ],
+		["sqrt"          ,"$sqrt()",           "sqrt($0)"                    ],
+		["pow"           ,"$pow()",            "pow($1,$2)"                  ],
+		["floor"         ,"$floor()",          "floor($0)"                   ],
+		["ceil"          ,"$ceil()",           "ceil($0)"                    ],
+		["sin"           ,"$sin()",            "sin($0)"                     ],
+		["cos"           ,"$cos()",            "cos($0)"                     ],
+		["tan"           ,"$tan()",            "tan($0)"                     ],
+		["asin"          ,"$asin()",           "asin($0)"                    ],
+		["acos"          ,"$acos()",           "acos($0)"                    ],
+		["atan"          ,"$atan()",           "atan($0)"                    ],
+		["atan2"         ,"$atan2()",          "atan2($1,$2)"                ],
+		["hypot"         ,"$hypot()",          "hypot($1,$2)"                ],
+		["sinh"          ,"$sinh()",           "sinh($0)"                    ],
+		["cosh"          ,"$cosh()",           "cosh($0)"                    ],
+		["tanh"          ,"$tanh()",           "tanh($0)"                    ],
+		["asinh"         ,"$asinh()",          "asinh($0)"                   ],
+		["acosh"         ,"$acosh()",          "acosh($0)"                   ],
+		["atanh"         ,"$atanh()",          "atanh($0)"                   ],
+		// file
+		["fopen"         ,"$fopen()",          "fopen($0,\"r\")"             ],
+		["fclose"        ,"$fclose()",         "fclose($0);"                 ],
+		["fflush"        ,"$fflush()",         "fflush;"                     ],
+		["fgetc"         ,"$fgetc()",          "fgetc($0,)"                  ],
+		["fgets"         ,"$fgets()",          "fgets($0,)"                  ],
+		["fwrite"        ,"$fwrite()",         "fwrite($0,\"\")"                 ],
+		["readmemb"      ,"$readmemb()",       "readmemb(\"$1\",$2)"         ],
+		["readmemh"      ,"$readmemh()",       "readmemh(\"$1\",$2)"         ],
+		["sscanf"        ,"$sscanf()",         "sscanf($1,\"$2\",$3)"        ]
+	],
+	"sv.completion.tick" :[
+		["include"       , "`include …"        , "include \"$0\""                   ],
+		["define"        , "`define …"         , "define $0"                        ],
+		["ifdef"         , "`ifdef …"          , "ifdef $0"                         ],
+		["ifndef"        , "`ifndef …"         , "ifndef $0\n\n`endif"              ],
+		["ifndef"        , "`ifndef … `define" , "ifndef ${1/([A-Za-z0-9_]+).*/$1/}\n\t`define ${1:SYMBOL} ${2:value}\n`endif"],
+		["else"          , "`else "            , "else "                            ],
+		["elsif"         , "`elsif …"          , "elsif $0"                         ],
+		["endif"         , "`endif"            , "endif"                            ],
+		["celldefine"    , "`celldefine …"     , "celldefine\n\t$0\n`endcelldefine" ],
+		["endcelldefine" , "`endcelldefine "   , "endcelldefine "                   ],
+		["line"          , "`line "            , "line "                            ],
+		["resetall"      , "`resetall "        , "resetall"                         ],
+		["timescale"     , "`timescale …"      , "timescale $0"                     ],
+		["undef"         , "`undef …"          , "undef $0"                         ]
+	],
+	"sv.completion.uvm" :[
+        ["uvm_config_db_get" , "uvm_config_db_get" , "uvm_config_db#()::get(this, \"$1\", \"$0\", $0);" ],
+        ["uvm_config_db_set" , "uvm_config_db_set" , "uvm_config_db#()::set(this, \"$1\", \"$0\", $0);" ],
+        ["uvm_report_info"   , "uvm_report_info"   , "uvm_report_info(\"$1\", \"$0\", UVM_NONE);" ],
+        ["uvm_report_warning", "uvm_report_warning", "uvm_report_warning(\"$1\", \"$0\");" ],
+        ["uvm_report_error"  , "uvm_report_error"  , "uvm_report_error(\"$1\", \"$0\");" ],
+        ["uvm_report_fatal"  , "uvm_report_fatal"  , "uvm_report_fatal(\"$1\", \"$0\");" ],
+	]
 }

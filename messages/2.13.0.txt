@@ -1,0 +1,12 @@
+SystemVerilog 2.13.0 Changelog:
+
+## Enhancement ##
+Add configurability for system task, compiler directive and uvm snippets.
+Completion is define as a list with 3 elements:
+  - the first list element correspond to the completion trigger
+  - the second list element is the description appearing the completion list
+  - the third list element is the code snippets corresponding to the completion
+To modify or add new completion, define the list sv.completion.xxx.user
+ (where xxx can be systemtask, tick (for compiler directive) or uvm)
+ in the user sublime-settings file
+To remove some element, a complete list can be provided in the variable sv.completion.xxx
