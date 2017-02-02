@@ -114,7 +114,25 @@ def get_all_type_info(txt):
     txt = re.sub(r'(?s)^[ \t\w]*(import|export)[ \t\w]*(\".*?\"[ \t\w]*)?(pure)?[ \t\w]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
     # Cleanup constraint definition
     # print('[get_all_type_info] Cleanup constraint')
-    txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*(?:[^\{\}]+?(?:\{[^\{\}]*?\})?)*?\s*\}','',txt,  flags=re.MULTILINE)
+    # txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*(?:[^\{\}]+(?:\{[^\{\}]*\})?)*?\s*\}','',txt,  flags=re.MULTILINE)
+    constraint = [(m.group('name'),m.start(),m.end()) for m in re.finditer(r'(?s)constraint\s+(?P<name>\w+)\s*\{',txt)]
+    for name,start,end in reversed(constraint):
+        cnt = 1
+        pos = end+1
+        while cnt > 0 and cnt < 64:
+            m = re.search(r'{|}',txt[pos:])
+            if not m:
+                print('[SV] Error parsing constraint {}, unbalanced curly bracket !'.format(name))
+                cnt = -1
+            else:
+                pos = pos + m.end()+1
+                cnt = cnt + 1 if m.group(0)=='{' else cnt - 1
+                if cnt > 64 :
+                    print('[SV] Too many nested bracket in constraint {} !'.format(name))
+                    cnt = -1
+        # print('Constraint {} going from {} to {} (cnt={})'.format(name,start,pos,cnt))
+        if pos>start and cnt==0:
+            txt = txt[0:start]+txt[pos:]
     # print('[get_all_type_info] \n'+txt)
     # Suppose text has already been cleaned
     ti = []
