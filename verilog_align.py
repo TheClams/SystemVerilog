@@ -33,7 +33,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
         instAlign = self.settings.get('sv.param_port_alignment',True)
         indentStyle = self.settings.get('sv.indent_style',True)
         stripEmptyLine = self.settings.get('sv.strip_empty_line',True)
-        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle, False, stripEmptyLine,instAlign)
+        ignoreTick = self.settings.get('sv.alignment_ignore_tick',False)
+        beautifier = verilog_beautifier.VerilogBeautifier(tab_size, not use_space, oneBindPerLine, oneDeclPerLine, paramOneLine, indentStyle, False, stripEmptyLine,instAlign,ignoreTick)
         if not use_space:
             char_space = '\t'
         region = self.view.sel()[0]

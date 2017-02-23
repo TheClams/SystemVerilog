@@ -7,10 +7,11 @@
 	"sv.tooltip" : true, // True to display information in a tooltip (sublime 3072+), false to use the status bar instead
 	"sv.tooltip_hide_on_move" : true, // True to hide the tooltip when the mouse move away from the tooltip
 	// SystemVerilog Alignment configuration
-	"sv.one_bind_per_line" : true,  // When aligning module instantiation force only one binding per line
-	"sv.one_decl_per_line" : false, // When aligning signal declaration force only one signal per line
-	"sv.max_line_length"   : 120,   // Use by alignment plugin to split one line into multiple if too long
-	"sv.strip_empty_line"  : true,  // Strip empty line inside Module declaration/alignement
+	"sv.one_bind_per_line"     : true,  // When aligning module instantiation force only one binding per line
+	"sv.one_decl_per_line"     : false, // When aligning signal declaration force only one signal per line
+	"sv.max_line_length"       : 120,   // Use by alignment plugin to split one line into multiple if too long
+	"sv.strip_empty_line"      : true,  // Strip empty line inside Module declaration/alignement
+	"sv.alignment_ignore_tick" : false, // Ignore line identation for every line starting with `ifdef,`elsif,...
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
 	"sv.rst_name"           : "rst",    // Default reset active high

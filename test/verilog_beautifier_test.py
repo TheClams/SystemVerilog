@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
 import verilog_beautifier
 class BeautifyConfig():
 
-    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True):
+    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True,ignoreTick=False):
         self.nbSpace        = nbSpace
         self.useTab         = useTab
         self.oneBindPerLine = oneBindPerLine
@@ -17,6 +17,7 @@ class BeautifyConfig():
         self.reindentOnly   = reindentOnly
         self.stripEmptyLine = stripEmptyLine
         self.instAlignPort  = instAlignPort
+        self.ignoreTick     = ignoreTick
 
 class Tests(unittest.TestCase):
 
@@ -35,7 +36,8 @@ class Tests(unittest.TestCase):
                                                  paramOneLine=cfg.paramOneLine,
                                                  reindentOnly=cfg.reindentOnly,
                                                  stripEmptyLine=cfg.stripEmptyLine,
-                                                 instAlignPort=cfg.instAlignPort
+                                                 instAlignPort=cfg.instAlignPort,
+                                                 ignoreTick=cfg.ignoreTick
                                                  )
         with open(fname_in) as f:
             txt = f.read()
@@ -110,6 +112,10 @@ class Tests(unittest.TestCase):
     def test_beautifyText13(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"test13.sv", self.path_test+"test13_expected.sv", cfg)
+
+    def test_beautifyText13ign(self):
+        cfg = BeautifyConfig(ignoreTick=True)
+        self.runBeautifyTest(self.path_test+"test13.sv", self.path_test+"test13_ignore_expected.sv", cfg)
 
     def test_beautifyPortArray(self):
         cfg = BeautifyConfig()

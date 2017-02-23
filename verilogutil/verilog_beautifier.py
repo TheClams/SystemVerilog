@@ -5,7 +5,7 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True):
         self.settings = {'nbSpace': nbSpace, \
                         'useTab':useTab, \
                         'oneBindPerLine':oneBindPerLine, \
@@ -14,7 +14,8 @@ class VerilogBeautifier():
                         'indentSyle' : indentSyle,\
                         'reindentOnly' : reindentOnly,\
                         'stripEmptyLine': stripEmptyLine,\
-                        'instAlignPort' : instAlignPort }
+                        'instAlignPort' : instAlignPort ,
+                        'ignoreTick' : ignoreTick}
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -24,6 +25,9 @@ class VerilogBeautifier():
         self.state = ''
         self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
+        self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence', 'fork', 'begin', '{', '(']
+        if not ignoreTick:
+            self.kw_block += ['`ifdef', '`ifndef', '`elsif', '`else']
 
     def getIndentLevel(self,txt):
         line = txt[:txt.find('\n')]
@@ -80,6 +84,7 @@ class VerilogBeautifier():
         w_d = ['\n','\n','\n','\n'] # previous word
         line = '' # current line
         block = '' # block of text to align
+        original_indent = ''
         self.block_state = ''
         block_handled = False
         block_ended = False
@@ -126,18 +131,21 @@ class VerilogBeautifier():
                         txt_new += self.alignDecl(block)
                     block = ''
                     self.block_state = ''
-                if not has_indent and self.state.startswith('`'):
+                if self.settings['ignoreTick'] and w in ['`ifdef','`ifndef', '`elsif', '`else', '`endif']:
+                    self.stateUpdate('ignore_line')
+                    line += original_indent
+                elif not has_indent and self.state.startswith('`'):
                     has_indent = True
                 # Insert indentation except for comment_block without initial indentation and module declaration
-                if self.block_state not in ['module'] and (self.state!='comment_block' or has_indent) and w.strip():
+                if self.block_state not in ['module'] and w.strip() and (self.state!='comment_block' or has_indent) and self.state!= 'ignore_line':
                     ilvl_tmp = ilvl+split_always
                     for i,x in split.items() :
                         ilvl_tmp += x[0]
-                    # print('[Beautify] split={split} states={s} block={b} => ilvl = {it}={i}+{sa}'.format(split=split,it=ilvl_tmp,i=ilvl,sa=split_always,s=self.states, b=self.block_state))
                     line = ilvl_tmp * self.indent
+                    # print('[Beautify] line {line_cnt}: split={split} states={s} block={b} => ilvl = {it}={i}+{sa} : "{line}"'.format(line_cnt=line_cnt,split=split,it=ilvl_tmp,i=ilvl,sa=split_always,s=self.states, b=self.block_state,line=line))
             # Handle end of split
             if ilvl in split:
-                if self.state not in ['comment_line','comment_block','string'] and w in [';','end','endcase'] :
+                if self.state not in ['comment_line','ignore_line','comment_block','string'] and w in [';','end','endcase'] :
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     last_split = split.pop(ilvl,0)
                     split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
@@ -145,7 +153,7 @@ class VerilogBeautifier():
             if w=='\n':
                 block_ended = False
                 # Pop comment line
-                if self.state=='comment_line':
+                if self.state in ['comment_line','ignore_line']:
                     self.stateUpdate()
                     if not self.block_state:
                         block_handled = True
@@ -193,10 +201,15 @@ class VerilogBeautifier():
                 # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
                 block += line.rstrip() + '\n'
                 line = ''
+                original_indent = ''
+                has_indent = False
                 line_cnt+=1
-            # else:
-            elif not w_d[-1]=='\n' or w.strip():
-                if self.state not in ['comment_line','comment_block','string'] and self.settings['indentSyle']=='gnu':
+            # Original indentation
+            elif w_d[-1]=='\n' and not w.strip():
+                original_indent += w
+            # elif not w_d[-1]=='\n' or w.strip():
+            else :
+                if self.state not in ['comment_line','ignore_line','comment_block','string'] and self.settings['indentSyle']=='gnu':
                     if w == 'begin' and line.strip()!='':
                         ilvl_tmp = ilvl+split_always+1
                         for i,x in split.items() :
@@ -213,12 +226,12 @@ class VerilogBeautifier():
                         for i,x in split.items() :
                             ilvl_tmp += x[0]
                         line += '\n' + ilvl_tmp * self.indent
-                # Insert line return after a block ended if this is no a comment
+                # Insert line return after a block ended if this is not a comment
                 if block_ended and w.strip() and (w != '/' or w_d[-1] != '/'):
                     line = line.rstrip() + '\n'
                     block_ended = False
                 line += w
-                if self.state not in ['comment_line','comment_block','string']:
+                if self.state not in ['comment_line','ignore_line','comment_block','string']:
                     # print('State={0}.{1} -- Testing "{2}"'.format(self.state,self.block_state,block+line))
                     action = self.processWord(w,w_d, state_end, block + line)
                     if action.startswith("incr_ilvl"):
@@ -228,7 +241,7 @@ class VerilogBeautifier():
                             block = line
                             line = ''
             # Handle the self.block_state and call appropriate alignement function
-            if w==';' and self.state not in ['comment_line','comment_block','string', '(']:
+            if w==';' and self.state not in ['comment_line','ignore_line','comment_block','string', '(']:
                 if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
@@ -298,11 +311,6 @@ class VerilogBeautifier():
                         last_split = split.pop(ilvl,0)
                         split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
             # Comment: do not try to recognise words, just end of the comment
-            elif self.state=='comment_line':
-                if w=='\n':
-                    self.stateUpdate()
-                    if not self.block_state:
-                        block_handled = True
             elif self.state=='comment_block':
                 if w_d[-1]=='*' and w=='/':
                     self.stateUpdate()
@@ -318,7 +326,7 @@ class VerilogBeautifier():
                     if not self.block_state:
                         block_handled = True
             # Identify start of comments/string
-            else :
+            elif self.state not in ['comment_line','ignore_line'] :
                 if w_d[-1]=='/':
                     if w=='/':
                         self.stateUpdate('comment_line')
@@ -425,8 +433,7 @@ class VerilogBeautifier():
         return txt_new
 
     def processWord(self,w, w_prev, state_end, txt):
-        kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence', 'fork', 'begin', '{', '(', '`ifdef', '`elsif', '`else']
-        if w in kw_block:
+        if w in self.kw_block:
             # Handle case where this is an external declaration (meaning no block following)
             if w_prev[-2] in ['extern','cover','assert'] or (w_prev[-4]=='extern' and w_prev[-2]=='virtual') :
                 return ""
@@ -656,7 +663,9 @@ class VerilogBeautifier():
             # Remove leading and trailing space.
             l = line.strip()
             # ignore empty line at the begining and the end of the connection
-            if (i!=(len(lines)-1) and i!=0 and (not self.settings['stripEmptyLine'] or l !='') ) or l !='':
+            if self.settings['ignoreTick'] and l.startswith('`'):
+                txt_new += line + '\n'
+            elif (i!=(len(lines)-1) and i!=0 and (not self.settings['stripEmptyLine'] or l !='') ) or l !='':
                 m_port = re.search(re_str,l)
                 l_new = self.indent*(ilvl+1)
                 if self.settings['reindentOnly']:
