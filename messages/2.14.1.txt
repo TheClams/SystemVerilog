@@ -1,0 +1,6 @@
+SystemVerilog 2.14.1 Changelog:
+
+## Bug Fix ##
+ - Module instantiation:
+  * Fix module connection check when system function are used
+  * Fix module reconnect on single line instances (missing comma)

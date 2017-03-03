@@ -544,7 +544,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         signal_dict_text = ''
         for (name,ti) in signal_dict.items():
             signal_dict_text += name+'\n'
-        # print ('Signal Dict = ' + signal_dict_text)
+        # print ('Signal name list = ' + signal_dict_text)
         if pm['param']:
             param_dict = {p['name']:p['value'] for p in pm['param']}
         else:
@@ -631,6 +631,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     decl += indent_level*'\t' + d + ';\n'
                 # Else check signal coherence
                 else :
+                    # print('[get_connect] signal={} -- port={}'.format(ti['decl'],p['decl']))
                     # Check port direction
                     if ti['decl'].startswith('input') and not p['decl'].startswith('input'):
                         wc[p['name']] = 'Incompatible port direction (not an input)'
@@ -644,7 +645,8 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     ds = re.sub(r'var |signed |unsigned ','',ds.strip())
                     d  = re.sub(r'signed |unsigned ','',d)
                     # remove () for interface
-                    d = re.sub(r'\(|\)','',d)
+                    if '$' not in d:
+                        d = re.sub(r'\(|\)','',d)
                     if ti['type'].startswith(('input','output','inout')) :
                         ds = sig_type + ' ' + ds
                     elif '.' in ds: # For interface remove modport
@@ -665,6 +667,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                     if ds!=d :
                         wc[p['name']] = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
                         wc[p['name']] = re.sub(r'\b'+p['name']+r'\b','',wc[p['name']]) # do not display port name
+                        # print(wc[p['name']])
         return (decl,ac,wc)
 
 ##########################################
@@ -806,7 +809,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         apl = [x for x in mpl if x not in ipl]
         if apl:
             (decl,ac,wc) = VerilogDoModuleInstCommand.get_connect(self, self.view, settings, mi)
-            b = ''
+            b = '\n' if (self.view.substr(sublime.Region(r.b-3,r.b-2))!='\n') else ''
             for p in apl:
                 b+= "." + p + "("
                 if p in ac.keys():
