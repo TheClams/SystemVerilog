@@ -1,0 +1,4 @@
+SystemVerilog 2.14.2 Changelog:
+
+## Optimization ##
+ - Very large performance increase in showHierarchy command (more than 20 times faster on large design)

@@ -651,7 +651,7 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         mname = getModuleName(self.view)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
-        mi = verilogutil.parse_module(txt,mname)
+        mi = verilogutil.parse_module(txt,mname,True)
         if not mi:
             print('[VerilogShowHierarchyCommand] Not inside a module !')
             return
@@ -673,12 +673,12 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                     if filelist:
                         for f in filelist:
                             fname = sublimeutil.normalize_fname(f[0])
-                            mi = verilogutil.parse_module_file(fname,i)
+                            mi = verilogutil.parse_module_file(fname,i,True)
                             if mi:
                                 break
                     # Not in project ? try in current file
                     else :
-                        mi = verilogutil.parse_module(txt,i)
+                        mi = verilogutil.parse_module(txt,i,True)
                     if mi:
                         li_next += [x['type'] for x in mi['inst']]
                         self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
@@ -686,7 +686,7 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
         txt = top_level + '\n'
         txt += self.printSubmodule(top_level,1)
 
-        v = sublime.active_window().new_file()
+        v = w.new_file()
         v.set_name(top_level + ' Hierarchy')
         v.set_syntax_file('Packages/SystemVerilog/Find Results SV.hidden-tmLanguage')
         v.set_scratch(True)
@@ -697,9 +697,13 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
         if name in self.d:
             # print('printSubmodule ' + str(self.d[name]))
             for x in self.d[name]:
-                txt += '    '*lvl+'+ '+x[1]+'    ('+x[0]+')\n'
-                # txt += '    '*lvl+'+ '+x[0]+' '+x[1]+'\n'
-                txt += self.printSubmodule(x[0],lvl+1)
+                txt += '  '*lvl
+                if x[0] in self.d :
+                    txt += '+ {name}    ({type})\n'.format(name=x[1],type=x[0])
+                    if lvl<20 :
+                        txt += self.printSubmodule(x[0],lvl+1)
+                else:
+                    txt += '- {name}    ({type})\n'.format(name=x[1],type=x[0])
         return txt
 
 ###########################################################

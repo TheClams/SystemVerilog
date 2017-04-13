@@ -332,37 +332,44 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             ti.append(d)
     return ti
 
-
-# Parse a module for port information
-def parse_module_file(fname,mname=r'\w+'):
+###############################################################################
+# Parse a module for port/signal/instance/... information
+def parse_module_file(fname,mname=r'\w+',inst_only=False):
     # print("Parsing file " + fname + " for module " + mname)
     fdate = os.path.getmtime(fname)
-    minfo = parse_module_file_cache(fname, mname, fdate)
+    minfo = parse_module_file_cache(fname, mname, fdate,inst_only)
     # print(parse_module_file_cache.cache_info())
     return minfo
 
 @functools.lru_cache(maxsize=32)
-def parse_module_file_cache(fname, mname, fdate):
+def parse_module_file_cache(fname, mname, fdate,inst_only=False):
     with open(fname) as f:
         flines = f.read()
-        minfo = parse_module(flines, mname)
+        minfo = parse_module(flines, mname,inst_only)
     return minfo
 
-def parse_module(flines,mname=r'\w+'):
+def parse_module(flines,mname=r'\w+',inst_only=False):
     # print("Parsing for module " + mname + ' in \n' + flines)
     flines = clean_comment(flines)
     m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+r")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')
-    # Extract parameter name
-    params = extract_params(m)
-    ## Extract list of param if any
+    txt = m.group(0)
+    if inst_only:
+        minfo = {'name': mname, 'param':[], 'port':[], 'inst':[], 'type':m.group('type'), 'signal' : []}
+        re_str  = r'^[ \t]*(\w+)\s*(?:#\s*\([^;]+\))?\s*\b(\w+)\b(?:\s*\[[^=\^\&\|,;]*?\]\s*)?\s*\('
+        li = re.findall(re_str,txt,flags=re.MULTILINE)
+        for l in li:
+            if l[0] not in ['module', 'class','interface', 'begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover','generate']:
+                minfo['inst'].append({'type':l[0],'name':l[1]})
+        return minfo
+    # Extract list of param if any
     params_name = []
+    params = extract_params(m)
     if params:
         params_name = [param['name'] for param in params]
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
-    txt = m.group(0)
     if m.group('param'):
         txt = txt.replace(m.group('param'),'')
     ati = get_all_type_info(txt)
@@ -372,7 +379,7 @@ def parse_module(flines,mname=r'\w+'):
     ports = []
     ports_name = []
     if m.group('port'):
-        s = clean_comment(m.group('port'))
+        s = m.group('port')
         ports_name = re.findall(r"(\w+)\s*(?=,|$|\[[^=\^\&\|,;]*?\]\s*(?=,|$))",s)
         # get type for each port
         ports = []

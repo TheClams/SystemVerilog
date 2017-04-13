@@ -1,4 +1,5 @@
 [
+	// Keymap to prevent auto insertion of matching single quote since it is never useful in systemVerilog
 	{ "keys": ["'"], "command": "insert_snippet", "args": {"contents": "'"}, "context":
 		[
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog", "match_all": true }
