@@ -660,7 +660,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                         ds = re.sub(r'\w+\:\:','',ds)
                         d = re.sub(r'\w+\:\:','',d)
                     # In case of smart autoconnect replace the signal name by the port name
-                    if pname in ac.keys():
+                    if p['name'] in ac.keys():
                         ds = re.sub(r'\b' + ac[p['name']] + r'\b', pname,ds)
                     if pname != p['name']:
                         ds = re.sub(r'\b' + pname + r'\b', p['name'],ds)

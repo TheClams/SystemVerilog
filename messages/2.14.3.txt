@@ -1,0 +1,4 @@
+SystemVerilog 2.14.3 Changelog:
+
+## Optimization ##
+ - Very large performance increase in always template (more than 10 times faster on large files)
