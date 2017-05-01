@@ -106,12 +106,12 @@ def get_macro(txt, name):
     return macro,param_list
 
 # Extract all signal declaration
-def get_all_type_info(txt):
+def get_all_type_info(txt,no_inst=False):
     # print('[get_all_type_info] \n'+txt)
     # Cleanup function contents since this can contains some signal declaration
     # print('[get_all_type_info] Cleanup functions/task')
-    txt = re.sub(r'(?s)^[ \t\w]*(protected|local)?[ \t\w]*(virtual)?[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
-    txt = re.sub(r'(?s)^[ \t\w]*(import|export)[ \t\w]*(\".*?\"[ \t\w]*)?(pure)?[ \t\w]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t]*(import|export)[ \t]*(\".*?\"[ \t]*)?(pure)?[ \t]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
     # Cleanup constraint definition
     # print('[get_all_type_info] Cleanup constraint')
     # txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*(?:[^\{\}]+(?:\{[^\{\}]*\})?)*?\s*\}','',txt,  flags=re.MULTILINE)
@@ -193,14 +193,15 @@ def get_all_type_info(txt):
         # print('[get_all_type_info] decl groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
         ti += [x for x in ti_tmp if x['type']]
     # Look for interface instantiation
-    # print('[get_all_type_info] Look for interface instantiation')
-    re_str = re_inst+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*\('
-    r = re.compile(re_str,flags=re.MULTILINE)
-    # print('[get_all_type_info] inst re="{0}"'.format(re_str))
-    for m in r.finditer(txt):
-        ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'inst')
-        # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
-        ti += [x for x in ti_tmp if x['type']]
+    if not no_inst:
+        # print('[get_all_type_info] Look for interface instantiation')
+        re_str = re_inst+r'(\w+\b(\s*\[[^=\^\&\|,;]*?\]\s*)?)\s*\('
+        r = re.compile(re_str,flags=re.MULTILINE)
+        # print('[get_all_type_info] inst re="{0}"'.format(re_str))
+        for m in r.finditer(txt):
+            ti_tmp = get_type_info_from_match('',m,3,4,5,-1,'inst')
+            # print('[get_all_type_info] inst groups=%s => ti=%s' %(str(m.groups()),str(ti_tmp)))
+            ti += [x for x in ti_tmp if x['type']]
     # print('[get_all_type_info] {0}'.format(ti))
     # Look for non-ansi declaration where a signal is declared twice (I/O then reg/wire) and merge it into one declaration
     ti_dict = {}
@@ -334,21 +335,21 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
 
 ###############################################################################
 # Parse a module for port/signal/instance/... information
-def parse_module_file(fname,mname=r'\w+',inst_only=False):
+def parse_module_file(fname,mname=r'\w+',inst_only=False,no_inst=False):
     # print("Parsing file " + fname + " for module " + mname)
     fdate = os.path.getmtime(fname)
-    minfo = parse_module_file_cache(fname, mname, fdate,inst_only)
+    minfo = parse_module_file_cache(fname, mname, fdate,inst_only,no_inst)
     # print(parse_module_file_cache.cache_info())
     return minfo
 
 @functools.lru_cache(maxsize=32)
-def parse_module_file_cache(fname, mname, fdate,inst_only=False):
+def parse_module_file_cache(fname, mname, fdate,inst_only=False,no_inst=False):
     with open(fname) as f:
         flines = f.read()
-        minfo = parse_module(flines, mname,inst_only)
+        minfo = parse_module(flines, mname,inst_only,no_inst)
     return minfo
 
-def parse_module(flines,mname=r'\w+',inst_only=False):
+def parse_module(flines,mname=r'\w+',inst_only=False,no_inst=False):
     # print("Parsing for module " + mname + ' in \n' + flines)
     flines = clean_comment(flines)
     m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+r")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
@@ -372,7 +373,7 @@ def parse_module(flines,mname=r'\w+',inst_only=False):
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     if m.group('param'):
         txt = txt.replace(m.group('param'),'')
-    ati = get_all_type_info(txt)
+    ati = get_all_type_info(txt,no_inst)
     # print('[SV.parse_module] ati = ')
     # pprint.pprint(ati,width=200)
     # Extract port name
@@ -456,7 +457,7 @@ def parse_package(flines,pname=r'\w+'):
         return None
     txt = clean_comment(m.group('content'))
     ti = get_all_function(txt)
-    ti += get_all_type_info(txt)
+    ti += get_all_type_info(txt,no_inst=True)
     # print(ti)
     return ti
 
@@ -502,7 +503,7 @@ def parse_class(flines,cname=r'\w+'):
     ci['function'] = get_all_function(txt)
     # print('ci after function extract\n'+str(ci))
     # Extract members
-    ci['member'] = get_all_type_info(txt)
+    ci['member'] = get_all_type_info(txt,no_inst=True)
     # print('Final ci:\n'+str(ci))
     return ci
 

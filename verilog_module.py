@@ -326,7 +326,7 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
         self.fname = args['fname']
         #TODO: check for multiple module in the file
         settings = self.view.settings()
-        self.pm = verilogutil.parse_module_file(self.fname, args['mname'])
+        self.pm = verilogutil.parse_module_file(self.fname, args['mname'],no_inst=True)
         self.param_explicit = settings.get('sv.param_explicit',False)
         self.param_propagate = settings.get('sv.param_propagate',False)
         # print(self.pm)
@@ -531,7 +531,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                 sig_type = 'wire'
         # read file to be able to check existing declaration
         flines = view.substr(sublime.Region(0, view.size()))
-        mi = verilogutil.parse_module(flines)
+        mi = verilogutil.parse_module(flines,no_inst=True)
         if not mi:
             print('[VerilogModule.get_connect] Unable to parse current module')
             return (decl,ac,wc)
@@ -571,40 +571,25 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             # Check for extended match : prefix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_prefix',False):
-                    sl = re.findall(r'\b(\w+)_'+pname+r'\b', signal_dict_text, flags=re.MULTILINE)
-                    if sl :
-                        # print('Found signals for port ' + pname + ' with matching prefix: ' + str(set(sl)))
-                        sn = sl[0] + '_' + pname # select first by default
-                        for s in set(sl):
-                            if s in pm['name']:
-                                sn = s+'_' +pname
-                                break;
-                        if sn in signal_dict:
-                            ti = signal_dict[sn]
-                        # ti = type_info(view,flines,sn)
-                        # print('Selecting ' + sn + ' with type ' + str(ti))
-                        if ti['decl'] is not None:
-                            ac[p['name']] = sn
+                    for m in re.finditer(r'\b(\w+_'+pname+r')\b', signal_dict_text, flags=re.MULTILINE):
+                        if m.group(0) in signal_dict:
+                            ti = signal_dict[m.group(0)]
+                            # TODO: do a coherence check , don't just select first one
+                            if ti['decl']:
+                                if m.group(0) != p['name']:
+                                    ac[p['name']] = m.group(0)
+                                break
             # Check for extended match : suffix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_suffix',False):
-                    sl = re.findall(r'\b'+pname+r'_(\w+)', signal_dict_text, flags=re.MULTILINE)
-                    if sl :
-                        # print('Found signals for port ' + pname + ' with matching suffix: ' + str(set(sl)))
-                        sn = pname+'_' + sl[0] # select first by default
-                        for s in set(sl):
-                            if s in pm['name']:
-                                sn = pname+'_' + s
-                                break;
-                        if sn in signal_dict:
-                            ti = signal_dict[sn]
-                        # ti = type_info(view,flines,sn)
-                        # print('Selecting ' + sn + ' with type ' + str(ti))
-                        if ti['decl'] is not None:
-                            if sn != p['name']:
-                                ac[p['name']] = sn
-                            elif p['name'] in ac.keys():
-                                ac.pop(p['name'],None)
+                    for m in re.finditer(r'\b('+pname+r'_\w+)\b', signal_dict_text, flags=re.MULTILINE):
+                        if m.group(0) in signal_dict:
+                            ti = signal_dict[m.group(0)]
+                            # TODO: do a coherence check , don't just select first one
+                            if ti['decl']:
+                                if m.group(0) != p['name']:
+                                    ac[p['name']] = m.group(0)
+                                break
             # Get declaration of signal for connecteion
             if p['decl'] :
                 d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
@@ -694,7 +679,7 @@ class VerilogDoToggleDotStarCommand(sublime_plugin.TextCommand):
                 return
             for f in filelist:
                 fname = sublimeutil.normalize_fname(f[0])
-                mi = verilogutil.parse_module_file(fname,mname)
+                mi = verilogutil.parse_module_file(fname,mname,no_inst=True)
                 if mi:
                     break
             if not mi:
@@ -775,7 +760,7 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             return
         for f in filelist:
             fname = sublimeutil.normalize_fname(f[0])
-            mi = verilogutil.parse_module_file(fname,mname)
+            mi = verilogutil.parse_module_file(fname,mname,no_inst=True)
             if mi:
                 break
         if not mi:

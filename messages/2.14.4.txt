@@ -1,0 +1,4 @@
+SystemVerilog 2.14.4 Changelog:
+
+## Optimization ##
+ - Large performance increase on module instantiation (more than 5 times faster on large files)
