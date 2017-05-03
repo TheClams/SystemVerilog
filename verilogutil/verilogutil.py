@@ -247,7 +247,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         t = m.groups()[1]
         idx_bw = 3
     # Remove potential false positive
-    if t in ['begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover']:
+    if t in ['begin', 'end', 'endcase', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover']:
         return [ti_not_found]
     # print("[SV:get_type_info_from_match] Group => " + str(m.groups()))
     value = None
@@ -271,7 +271,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             signal_list += re.findall(re_str, s, flags=re.MULTILINE)
             # print("[SV:get_type_info_from_match] idxmax+1 => signal_list = " + str(signal_list))
     # remove reserved keyword that could end up in the list
-    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
+    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'casex', 'casez', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
     if not signal_list:
         return [ti_not_found]
     # print("[SV:get_type_info_from_match] signal_list = " + str(signal_list) + ' for line ' + line)
@@ -362,7 +362,7 @@ def parse_module(flines,mname=r'\w+',inst_only=False,no_inst=False):
         re_str  = r'^[ \t]*(\w+)\s*(?:#\s*\([^;]+\))?\s*\b(\w+)\b(?:\s*\[[^=\^\&\|,;]*?\]\s*)?\s*\('
         li = re.findall(re_str,txt,flags=re.MULTILINE)
         for l in li:
-            if l[0] not in ['module', 'class','interface', 'begin', 'end', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover','generate']:
+            if l[0] not in ['module', 'class','interface', 'begin', 'end', 'endcase', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover','generate']:
                 minfo['inst'].append({'type':l[0],'name':l[1]})
         return minfo
     # Extract list of param if any
