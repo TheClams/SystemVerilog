@@ -424,6 +424,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if isAssign:
                         f_name += ':'
                     c.append([f['name']+'\t'+f_type,f_name])
+        print(c)
         return c
 
 
@@ -457,7 +458,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         content = view.substr(sublime.Region(r_start,r_end))
         # print('[struct_assign_completion] content = "{0}"'.format(content))
         if not content.startswith(('<=','=')):
-            print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
+            #print('[struct_assign_completion] Unexpected char at start of struct assign : ' + content)
             return []
         # get the variable name
         start_line = view.line(sublime.Region(r_start-1,r_start-1)).a

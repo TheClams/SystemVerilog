@@ -144,3 +144,7 @@ class Tests(unittest.TestCase):
     def test_extern(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"extern.sv", self.path_test+"extern.sv", cfg)
+
+    def test_always_nobegin(self):
+        cfg = BeautifyConfig()
+        self.runBeautifyTest(self.path_test+"always_nobegin.sv", self.path_test+"always_nobegin_exp.sv", cfg)

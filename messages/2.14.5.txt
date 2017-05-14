@@ -1,0 +1,5 @@
+SystemVerilog 2.14.5 Changelog:
+
+## Bug Fix ##
+ - Fix always_comb being picked up as signal declaration
+ - Fix issue with instance detection (words following endcase)
