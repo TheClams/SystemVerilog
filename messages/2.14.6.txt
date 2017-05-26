@@ -1,0 +1,4 @@
+SystemVerilog 2.14.6 Changelog:
+
+## Bug Fix ##
+ - Fix highlight issue on array of instances of paramterized modules
