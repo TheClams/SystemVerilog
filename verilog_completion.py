@@ -424,7 +424,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if isAssign:
                         f_name += ':'
                     c.append([f['name']+'\t'+f_type,f_name])
-        print(c)
         return c
 
 

@@ -24,13 +24,13 @@ port_dir = ['input', 'output','inout', 'ref']
 def clean_comment(text):
     def replacer(match):
         s = match.group(0)
-        if s.startswith('/'):
+        if s.startswith('/') or s.startswith('('):
             return " " # note: a space and not an empty string
         else:
             return s
 
     pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|"(?:\\.|[^\\"])*"',
+        r'//.*?$|/\*.*?\*/|\(\*.*?\*\)|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
     )
     # do we need trim whitespaces?
@@ -232,7 +232,11 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
     line = m.group(0).strip()
     # print("[SV:get_type_info_from_match] varname={0} str='{7}' m={1} idx_type={2} idx_bw={3} idx_max={4},idx_val={5} tag={6}".format(var_name,m.groups(),idx_type,idx_bw,idx_max,idx_val,tag,line))
     # Extract the type itself: should be the mandatory word, except if is a sign qualifier
-    t = str.rstrip(m.groups()[idx_type]).split('.')[0]
+    t = str.rstrip(m.groups()[idx_type])
+    # Remove potential false positive
+    if t in ['begin', 'end', 'endcase', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover', 'always_comb'] or t.endswith('.'):
+        return [ti_not_found]
+    t = t.split('.')[0] # Handle interface with portmod (maybe add more checks)
     if t=="unsigned" or t=="signed": # TODO check if other cases might happen
         if m.groups()[2] is not None:
             t = str.rstrip(m.groups()[2]) + ' ' + t
@@ -246,9 +250,6 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             return [ti_not_found]
         t = m.groups()[1]
         idx_bw = 3
-    # Remove potential false positive
-    if t in ['begin', 'end', 'endcase', 'endspecify', 'else', 'posedge', 'negedge', 'timeunit', 'timeprecision','assign', 'disable', 'property', 'initial', 'assert', 'cover', 'always_comb']:
-        return [ti_not_found]
     # print("[SV:get_type_info_from_match] Group => " + str(m.groups()))
     value = None
     ft = ''

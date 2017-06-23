@@ -1,0 +1,10 @@
+SystemVerilog 2.15.0 Changelog:
+
+## Improvement ##
+ - Better autoconnect: When looking for non-perfect name match, now check type is at least matching
+
+## Fix ###
+ - Reconnect: prevent adding extra blank line in some conditions
+ - Autocompletion: Remove some debug print
+ - Parsing: Properly ignore attribute definition (i.e. (* do_not_optimize * ) ) when parsing a file
+ - Alignment: works for module parameter with complex expression

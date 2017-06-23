@@ -568,92 +568,109 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':pname, 'tag':''}
             if pname in signal_dict:
                 ti = signal_dict[pname]
+            # Get signal declaration for the port
+            if p['decl'] :
+                p['declSig'] = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
+                p['declSig'] = re.sub(r'var ','',p['declSig']) # remove var indication
+                if p['type'].startswith(('input','output','inout')) :
+                    p['declSig'] = sig_type + ' ' + p['declSig']
+                elif '.' in p['declSig']: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
+                    p['declSig'] = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',p['declSig'])
+                for (k,v) in param_dict.items():
+                    if k in p['declSig']:
+                        p['declSig'] = re.sub(r'\b'+k+r'\b',v,p['declSig'])
+                # try to cleanup the array size: [16-1:0] should give a proper [15:0]
+                # Still very basic, but should be ok for most cases
+                fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',p['declSig'])
+                for f in fa:
+                    if f[3]=='+':
+                        value = int(f[2])+int(f[4])
+                    else:
+                        value = int(f[2])-int(f[4])
+                    p['declSig'] = p['declSig'].replace(f[0],f[1]+str(value))
             # Check for extended match : prefix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_prefix',False):
                     for m in re.finditer(r'\b(\w+_'+pname+r')\b', signal_dict_text, flags=re.MULTILINE):
                         if m.group(0) in signal_dict:
                             ti = signal_dict[m.group(0)]
-                            # TODO: do a coherence check , don't just select first one
                             if ti['decl']:
-                                if m.group(0) != p['name']:
-                                    ac[p['name']] = m.group(0)
-                                break
+                                # Do a coherence check and reset the declaration if it does not match (to be sure we continue searching for it)
+                                match,_ = check_connect(p,ti)
+                                if match:
+                                    if m.group(0) != p['name']:
+                                        ac[p['name']] = m.group(0)
+                                    break
+                                else:
+                                    ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':pname, 'tag':''}
             # Check for extended match : suffix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_suffix',False):
                     for m in re.finditer(r'\b('+pname+r'_\w+)\b', signal_dict_text, flags=re.MULTILINE):
                         if m.group(0) in signal_dict:
                             ti = signal_dict[m.group(0)]
-                            # TODO: do a coherence check , don't just select first one
                             if ti['decl']:
-                                if m.group(0) != p['name']:
-                                    ac[p['name']] = m.group(0)
-                                break
+                                # Do a coherence check and reset the declaration if it does not match (to be sure we continue searching for it)
+                                match,_ = check_connect(p,ti)
+                                if match:
+                                    if m.group(0) != p['name']:
+                                        ac[p['name']] = m.group(0)
+                                    break
+                                else:
+                                    ti = {'decl':None,'type':None,'array':"",'bw':"", 'name':pname, 'tag':''}
             # Get declaration of signal for connecteion
             if p['decl'] :
-                d = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
-                d = re.sub(r'var ','',d) # remove var indication
-                if p['type'].startswith(('input','output','inout')) :
-                    d = sig_type + ' ' + d
-                elif '.' in d: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
-                    d = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',d)
-                for (k,v) in param_dict.items():
-                    if k in d:
-                        d = re.sub(r'\b'+k+r'\b',v,d)
-                # try to cleanup the array size: [16-1:0] should give a proper [15:0]
-                # Still very basic, but should be ok for most cases
-                fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',d)
-                for f in fa:
-                    if f[3]=='+':
-                        value = int(f[2])+int(f[4])
-                    else:
-                        value = int(f[2])-int(f[4])
-                    d = d.replace(f[0],f[1]+str(value))
                 # If no signal is found, add declaration
                 if ti['decl'] is None:
                     # print ("Adding declaration for " + pname + " => " + str(p['decl'] + ' => ' + d))
-                    decl += indent_level*'\t' + d + ';\n'
+                    decl += indent_level*'\t' + p['declSig'] + ';\n'
                 # Else check signal coherence
                 else :
                     # print('[get_connect] signal={} -- port={}'.format(ti['decl'],p['decl']))
-                    # Check port direction
-                    if ti['decl'].startswith('input') and not p['decl'].startswith('input'):
-                        wc[p['name']] = 'Incompatible port direction (not an input)'
-                    # elif ti['decl'].startswith('output') and not p['decl'].startswith('output'):
-                    #     wc[p['name']] = 'Incompatible port direction (not an output)'
-                    elif ti['decl'].startswith('inout') and not p['decl'].startswith('inout'):
-                        wc[p['name']] = 'Incompatible port direction not an inout'
-                    # check type
-                    ds = re.sub(r'input |output |inout ','',ti['decl']) # remove I/O indication
-                    # remove qualifier like var, signed, unsigned indication
-                    ds = re.sub(r'var |signed |unsigned ','',ds.strip())
-                    d  = re.sub(r'signed |unsigned ','',d)
-                    # remove () for interface
-                    if '$' not in d:
-                        d = re.sub(r'\(|\)','',d)
-                    if ti['type'].startswith(('input','output','inout')) :
-                        ds = sig_type + ' ' + ds
-                    elif '.' in ds: # For interface remove modport
-                        ds = re.sub(r'(\w+)\b(.*)',r'\1',ds)
-                        d = re.sub(r'(\w+)\b(.*)',r'\1',d)
-                    # convert wire/reg to logic
-                    ds = re.sub(r'\b(wire|reg)\b','logic',ds.strip())
-                    d  = re.sub(r'\b(wire|reg)\b','logic',d.strip())
-                    # Remove scope if not available in both type
-                    if ('::' in ds and '::' not in d) or ('::' not in ds and '::' in d) :
-                        ds = re.sub(r'\w+\:\:','',ds)
-                        d = re.sub(r'\w+\:\:','',d)
-                    # In case of smart autoconnect replace the signal name by the port name
-                    if p['name'] in ac.keys():
-                        ds = re.sub(r'\b' + ac[p['name']] + r'\b', pname,ds)
-                    if pname != p['name']:
-                        ds = re.sub(r'\b' + pname + r'\b', p['name'],ds)
-                    if ds!=d :
-                        wc[p['name']] = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
-                        wc[p['name']] = re.sub(r'\b'+p['name']+r'\b','',wc[p['name']]) # do not display port name
-                        # print(wc[p['name']])
+                    match,warn = check_connect(p,ti)
+                    if not match :
+                        wc[p['name']] = warn
+                        print(wc[p['name']])
         return (decl,ac,wc)
+
+def check_connect(port,sig):
+    # print('Check {} vs {}'.format(port['decl'],sig['decl']))
+    # Check port direction
+    if sig['decl'].startswith('input') and not port['decl'].startswith('input'):
+        return False,'Incompatible port direction (not an input)'
+    # elif sig['decl'].startswith('output') and not port['decl'].startswith('output'):
+    #     wc[port['name']] = 'Incompatible port direction (not an output)'
+    elif sig['decl'].startswith('inout') and not port['decl'].startswith('inout'):
+        return False,'Incompatible port direction not an inout'
+    # check type
+    ds = re.sub(r'input |output |inout ','',sig['decl']) # remove I/O indication
+    # remove qualifier like var, signed, unsigned indication
+    ds = re.sub(r'var |signed |unsigned ','',ds.strip())
+    d  = re.sub(r'signed |unsigned ','',port['declSig'])
+    # remove () for interface
+    if '$' not in d:
+        d = re.sub(r'\(|\)','',d)
+    if sig['type'].startswith(('input','output','inout')) and not ds.startswith('logic '):
+        ds = 'logic ' + ds
+    elif '.' in ds: # For interface remove modport
+        ds = re.sub(r'(\w+)\b(.*)',r'\1',ds)
+        d = re.sub(r'(\w+)\b(.*)',r'\1',d)
+    # convert wire/reg to logic
+    ds = re.sub(r'\b(wire|reg)\b','logic',ds.strip())
+    d  = re.sub(r'\b(wire|reg)\b','logic',d.strip())
+    # Remove scope if not available in both type
+    if ('::' in ds and '::' not in d) or ('::' not in ds and '::' in d) :
+        ds = re.sub(r'\w+\:\:','',ds)
+        d = re.sub(r'\w+\:\:','',d)
+    # In case of smart autoconnect replace the signal name by the port name
+    # if port['name'] in ac.keys():
+    #     ds = re.sub(r'\b' + ac[port['name']] + r'\b', pname,ds)
+    if sig['name'] != port['name']:
+        ds = re.sub(r'\b' + sig['name'] + r'\b', port['name'],ds)
+    if ds!=d :
+        warn = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
+        return False,re.sub(r'\b'+port['name']+r'\b','',warn) # do not display port name
+    return True,''
 
 ##########################################
 # Toggle between .* and explicit binding #
@@ -794,7 +811,8 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
         apl = [x for x in mpl if x not in ipl]
         if apl:
             (decl,ac,wc) = VerilogDoModuleInstCommand.get_connect(self, self.view, settings, mi)
-            b = '\n' if (self.view.substr(sublime.Region(r.b-3,r.b-2))!='\n') else ''
+            last_char = self.view.substr(sublime.Region(r.a,r.b-2)).strip(' \t')[-1]
+            b = '\n' if last_char!='\n' else ''
             for p in apl:
                 b+= "." + p + "("
                 if p in ac.keys():
@@ -837,11 +855,12 @@ class VerilogModuleReconnectCommand(sublime_plugin.TextCommand):
             for p in apl:
                 if p in ac:
                     ac_clean[p] = ac[p]
-                if p in wc:
-                    ac[p].pop()
                 m = re.search(r'^.*\b'+p+r'\b.*;',decl, re.MULTILINE)
                 if m:
                     decl_clean += m.group(0) +'\n'
+            for p in ipl:
+                if p in wc:
+                    wc.pop(p)
             nb_decl = len(decl_clean.splitlines())
             if decl_clean:
                 r_start = VerilogDoModuleInstCommand.get_region_decl(self, self.view,settings,r.a)
