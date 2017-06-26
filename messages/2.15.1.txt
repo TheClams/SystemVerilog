@@ -1,0 +1,4 @@
+SystemVerilog 2.15.0 Changelog:
+
+## Fix ###
+ - Fix leading comma in sublime-settings

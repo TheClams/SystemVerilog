@@ -149,6 +149,6 @@
         ["uvm_report_info"   , "uvm_report_info"   , "uvm_report_info(\"$1\", \"$0\", UVM_NONE);" ],
         ["uvm_report_warning", "uvm_report_warning", "uvm_report_warning(\"$1\", \"$0\");" ],
         ["uvm_report_error"  , "uvm_report_error"  , "uvm_report_error(\"$1\", \"$0\");" ],
-        ["uvm_report_fatal"  , "uvm_report_fatal"  , "uvm_report_fatal(\"$1\", \"$0\");" ],
+        ["uvm_report_fatal"  , "uvm_report_fatal"  , "uvm_report_fatal(\"$1\", \"$0\");" ]
 	]
 }
