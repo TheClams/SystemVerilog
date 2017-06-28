@@ -171,12 +171,12 @@ class VerilogBeautifier():
                     # print('block="{0}"" => eol={1} => last_line="{2}"'.format(block,idx_eol,last_line))
                     if tmp:
                         m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*[\w\$]+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
-                        # print('[Beautify] Testing for split: "{0}" (ilvl={1} prev={2}) - split={3}'.format(tmp,ilvl,ilvl_prev,split))
+                        # print('[Beautify] Testing for split: "{}" (ilvl={} prev={}) - split={} - state={}, block={}'.format(tmp,ilvl,ilvl_prev,split,self.state,self.block_state))
                         if not m:
                             if tmp.startswith('always'):
                                 split_always = 1
                                 # print('[Beautify] Always split on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
-                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state not in ['(',''] :
+                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' and (self.state != '' or self.block_state=='always') :
                                 if ilvl not in split:
                                     if self.state == 'case' and re.match(r'\s*\w+\s*,$',tmp):
                                         # print('[Beautify] Multiple state case at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))

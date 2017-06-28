@@ -18,8 +18,8 @@ interface my_interface1;
     logic   two;
 
     modport sys (
-//  ^ keyword.control
-//          ^ support.function.generic
+//  ^ keyword.modport
+//          ^ entity.name.modport
         input one,
 //      ^ support.type
         output two
