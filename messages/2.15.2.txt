@@ -1,0 +1,8 @@
+SystemVerilog 2.15.2 Changelog:
+
+## Fix ###
+ - Fix Highlight for some instances array
+ - Beautifier:
+  * Fix case where always block (without begin) was not properly aligned
+  * Fix module alignment when inline import is used
+ - Fix completion for package (was not available anymore ...)

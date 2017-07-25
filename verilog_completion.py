@@ -60,7 +60,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if not view.substr(tmp_r).strip() :
             tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
             tmp_r.a = tmp_r.b
-        if view.substr(tmp_r) in ['.','`',':','=','?']:
+        if view.substr(tmp_r) in ['.','`','=','?']:
             prev_symb = view.substr(tmp_r)
         elif view.classify(tmp_r.b) & (sublime.CLASS_PUNCTUATION_END | 8192 | 4096):
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)

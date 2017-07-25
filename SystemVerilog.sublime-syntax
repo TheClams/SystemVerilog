@@ -19,7 +19,7 @@ contexts:
           pop: true
         - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
           captures:
-            1: support.type.scope.systemve6rilog
+            1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.systemverilog
             4: support.type.scope.systemverilog
@@ -292,12 +292,13 @@ contexts:
         - match: \#
           scope: keyword.operator.param.systemverilog
         - include: comments
-        - match: '\b({{id}})\b(?:\s*(?:\[(\d+)(?:\s*(\:)\s*(\d+))?\])|(?:\[([^\]]+)\]))?(?=\s*(\(|$))'
+        - match: '\b({{id}})\b(?:(?:\s*\[(\d+)(?:\s*(\:)\s*(\d+))?\])|(?:\s*\[([A-Z_]+)\])|(?:\s*\[([^\]]+)\]))?(?=\s*(\(|$))'
           captures:
             1: entity.name.type.module.systemverilog
             2: constant.numeric.systemverilog
             3: keyword.operator.range.systemverilog
             4: constant.numeric.systemverilog
+            5: constant.other.systemverilog
     - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*((?:\[(\d+)(\s*(\:)\s*(\d+))?\])|(?:\[([^\]]+)\]))?\s*(\(|$)'
       captures:
         1: storage.type.module.systemverilog

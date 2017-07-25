@@ -240,8 +240,14 @@ class VerilogBeautifier():
                             txt_new += block
                             block = line
                             line = ''
+            # Check that a module block get the whole port declaration
+            if self.block_state=='module' and w==';':
+                tmp = verilogutil.clean_comment(block+line).strip()
+                mod_import = 'import' in tmp and tmp.count(';')==1
+            else :
+                mod_import = False
             # Handle the self.block_state and call appropriate alignement function
-            if w==';' and self.state not in ['comment_line','ignore_line','comment_block','string', '(']:
+            if w==';' and self.state not in ['comment_line','ignore_line','comment_block','string', '('] and not mod_import:
                 if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
