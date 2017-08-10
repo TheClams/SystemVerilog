@@ -270,3 +270,9 @@ generate
     end
 endgenerate
 
+constraint constraint_c {
+// <- keyword.control
+//         ^ entity.name
+    soft var_1 < 1;
+//  ^ keyword.control
+}
