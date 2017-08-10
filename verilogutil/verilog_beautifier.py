@@ -243,7 +243,8 @@ class VerilogBeautifier():
             # Check that a module block get the whole port declaration
             if self.block_state=='module' and w==';':
                 tmp = verilogutil.clean_comment(block+line).strip()
-                mod_import = 'import' in tmp and tmp.count(';')==1
+                m = re.search(r';\s*\(',tmp,flags=re.MULTILINE)
+                mod_import = 'import' in tmp and not m
             else :
                 mod_import = False
             # Handle the self.block_state and call appropriate alignement function
@@ -485,7 +486,10 @@ class VerilogBeautifier():
         txt_new = self.indent*(ilvl) + 'module ' + m.group('mname').strip()
         # Add optional import declaration
         if m.group('import'):
-            txt_new += '\n{0}{1}\n'.format(self.indent*(ilvl+1),m.group('import').strip())
+            imports = m.group('import').strip().split('\n')
+            txt_new += '\n'
+            for i in imports:
+                txt_new += '{0}{1}\n'.format(self.indent*(ilvl+1),i)
         # Add optional parameter declaration
         if m.group('params'):
             param_txt = m.group('params').strip()
