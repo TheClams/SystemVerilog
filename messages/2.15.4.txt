@@ -1,0 +1,4 @@
+SystemVerilog 2.15.4 Changelog:
+
+## Misc ###
+ - Add config for debug (sv.debug = true)

@@ -24,6 +24,7 @@ except ImportError:
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 use_tooltip = False
+debug = False
 sv_settings = None
 tooltip_css = ''
 tooltip_flag = 0
@@ -34,12 +35,16 @@ def plugin_loaded():
     imp.reload(verilog_module)
     global sv_settings
     global pref_settings
+    global debug
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     pref_settings.clear_on_change('reload')
     pref_settings.add_on_change('reload',plugin_loaded)
     sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
     sv_settings.clear_on_change('reload')
     sv_settings.add_on_change('reload',plugin_loaded)
+    debug =  sv_settings.get("sv.debug")
+    if debug:
+        print('[SV:Popup] Plugin Loaded')
     init_css()
 
 def init_css():
@@ -135,7 +140,7 @@ class VerilogTypePopup :
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
             region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
         v = self.view.substr(region)
-        # print('[VerilogTypePopup] Word to show = {0}'.format(v))
+        if debug:  print('[SV:Popup.show] Word to show = {0}'.format(v));
         if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
             s,ti = self.get_type(v,region)
             if not s:
@@ -251,7 +256,7 @@ class VerilogTypePopup :
             scope = self.view.scope_name(region.a)
         ti = None
         txt = ''
-        # print ('[get_type] var={0} scope="{1}"'.format(var_name,scope))
+        if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
         # In case of field, retrieve parent type
         if '.' in var_name:
             ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)

@@ -39,7 +39,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         self.view = view
         self.settings = view.settings()
+        self.debug = self.settings.get("sv.debug")
         if self.settings.get("sv.disable_autocomplete"):
+            if self.debug:
+                print('[SV:on_query_completions] Autocompletion disabled')
             return []
         r = view.sel()[0]
         scope = view.scope_name(r.a)
@@ -83,7 +86,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if prev_symb and prev_symb[-1] in ['$','`','.']:
             prev_symb = prev_symb[-1]
         completion = []
-        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
+        if self.debug:
+            print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
         if prev_symb=='$':
             completion = self.listbased_completion('systemtask')
