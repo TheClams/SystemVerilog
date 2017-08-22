@@ -179,6 +179,12 @@ contexts:
         - include: operators
         - include: functions
         - include: constants
+    - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\s+([A-Za-z_][A-Za-z_0-9\.]*)'
+      scope: meta.definition.systemverilog
+      captures:
+        2: entity.name.type.class.systemverilog
+        3: keyword.operator.other.systemverilog
+        4: keyword.control.systemverilog
     - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
@@ -209,12 +215,6 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         2: entity.name.type.class.systemverilog
-    - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\s+([A-Za-z_][A-Za-z_0-9\.]*)'
-      scope: meta.definition.systemverilog
-      captures:
-        2: entity.name.type.class.systemverilog
-        3: keyword.operator.other.systemverilog
-        4: keyword.control.systemverilog
     - match: '\s*\b(virtual\s+)?(class)\s+\b({{id}})\b'
       scope: meta.definition.class.systemverilog
       captures:

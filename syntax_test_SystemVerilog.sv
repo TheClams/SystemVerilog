@@ -252,6 +252,9 @@ covergroup cg @(e);
     }
 endgroup
 
+coverpoint cp_name iff (cmd.kind == ANVM_CMD_abort);
+//                 ^ keyword.control
+
 always_ff @(posedge clk or negedge rst_n) begin : proc_
     if (~rst_n)
         a <= '0;
