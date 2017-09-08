@@ -100,7 +100,7 @@ contexts:
           scope: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport
-    - match: '\b(sequence)\s+({{id}})'
+    - match: '^\s*\b(sequence)\s+({{id}})'
       scope: meta.sequence.systemverilog
       captures:
         1: keyword.control.systemverilog
@@ -196,7 +196,7 @@ contexts:
         1: keyword.other.block.systemverilog
         3: keyword.operator.systemverilog
         4: entity.label.systemverilog
-    - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface|join|join_any|join_none)\b(\s*(:)\s*(\w+))?
+    - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endgroup|endinterface|endchecker|join|join_any|join_none)\b(\s*(:)\s*(\w+))?
       scope: meta.object.end.systemverilog
       captures:
         1: keyword.control.systemverilog
@@ -210,7 +210,7 @@ contexts:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
-    - match: '\s*(primitive|package|constraint|interface|covergroup|program)\s+\b({{id}})\b'
+    - match: '\s*(primitive|package|constraint|interface|covergroup|program|checker)\s+\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.control.systemverilog

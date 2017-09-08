@@ -25,7 +25,7 @@ class VerilogBeautifier():
         self.state = ''
         self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
-        self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence', 'fork', 'begin', '{', '(']
+        self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence','checker', 'fork', 'begin', '{', '(']
         if not ignoreTick:
             self.kw_block += ['`ifdef', '`ifndef', '`elsif', '`else']
 
@@ -446,7 +446,7 @@ class VerilogBeautifier():
                 return ""
             self.stateUpdate(w)
             # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
-            if w in ['module','package', 'generate', 'function', 'task', 'property', 'sequence']:
+            if w in ['module','package', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
                 self.block_state = w
                 return "incr_ilvl_flush"
             else:
@@ -499,6 +499,7 @@ class VerilogBeautifier():
             decl = re_param.findall(param_txt)
             if not decl:
                 print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
+                return ''
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
             len_bw    = max([len(x[4]) for x in decl])
