@@ -1,0 +1,8 @@
+SystemVerilog 2.15.5 Changelog:
+
+## Improvement ##
+ - Edit settings: now use built-in command to edit setting (show a new window with default and user config side-to-side)
+
+## Fix ###
+ - Beautifier: Fix module alignment when multiple inline import are used
+ - Highlight: fix "iff" highlight and add checker/endchecker (SV2012)

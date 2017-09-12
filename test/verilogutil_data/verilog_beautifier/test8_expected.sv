@@ -10,6 +10,7 @@ endmodule
 module test_2
     import foo1_pkg::*;
     import foo2_pkg::*;
+    import foo3_pkg::*;
 (
     input logic i_en ,
     input logic i_en2

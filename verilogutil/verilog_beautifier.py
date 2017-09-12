@@ -489,7 +489,7 @@ class VerilogBeautifier():
             imports = m.group('import').strip().split('\n')
             txt_new += '\n'
             for i in imports:
-                txt_new += '{0}{1}\n'.format(self.indent*(ilvl+1),i)
+                txt_new += '{0}{1}\n'.format(self.indent*(ilvl+1),i.strip())
         # Add optional parameter declaration
         if m.group('params'):
             param_txt = m.group('params').strip()
