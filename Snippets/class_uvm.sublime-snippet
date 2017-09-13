@@ -1,6 +1,6 @@
 <snippet>
 	<name>UVM Class</name>
-	<content><![CDATA[class ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} extends ${2: /* base class*/} (
+	<content><![CDATA[class ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} extends ${2: /* base class*/};
 
 /*-------------------------------------------------------------------------------
 -- Interface, port, fields
