@@ -229,12 +229,12 @@ def lookup_type(view, t):
             ti['fname'] = (fname,rowcol[0],rowcol[1])
         # Consider first file with a valid type definition to be the correct one
         else:
+            settings = view.settings()
+            file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv') + settings.get('sv.vh_ext','vh') + settings.get('sv.svh_ext','svh'))
             for f in filelist:
                 fname, display_fname, rowcol = f
                 fname = sublimeutil.normalize_fname(fname)
-                # Parse only systemVerilog file. Check might be a bit too restrictive ...
-                # print(t + ' defined in ' + str(fname))
-                if fname.lower().endswith(('sv','svh', 'v', 'vh')):
+                if fname.lower().endswith(file_ext):
                     ti = type_info_file(view,fname,t)
                     if ti['type'] and ti['tag']!='typedef' :
                         ti['fname'] = (fname,rowcol[0],rowcol[1])
@@ -256,6 +256,8 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
                 self.view.run_command("verilog_module_reconnect")
                 return
         self.window = sublime.active_window()
+        settings = self.view.settings()
+        self.file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv'))
         # Populate the list_module_files:
         #  - If no folder in current project, just list open files
         #  - if it exist use latest version and display panel immediately while running an update
@@ -286,7 +288,7 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         for folder in sublime.active_window().folders():
             for root, dirs, files in os.walk(folder):
                 for fn in files:
-                    if fn.lower().endswith(('.v','.sv')):
+                    if fn.lower().endswith(self.file_ext):
                         ffn = os.path.join(root,fn)
                         f = open(ffn)
                         if os.stat(ffn).st_size:

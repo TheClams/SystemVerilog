@@ -3,6 +3,12 @@
 	"extensions": ["v", "vh", "sv", "svh"],
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
 	"auto_complete_triggers": [ {"selector": "source.systemverilog - string - comment - constant", "characters": ".$`:{,"} ],
+	// Extension for verilog/SystemVerilog file used to enable/disable autocompletion and select file for parsing
+	// Header files are excluded from files to parse for module definition
+	"sv.v_ext"  : ["v"  ],
+	"sv.sv_ext" : ["sv" ],
+	"sv.vh_ext" : ["vh" ],
+	"sv.svh_ext": ["svh"],
 
 	"sv.tooltip" : true, // True to display information in a tooltip (sublime 3072+), false to use the status bar instead
 	"sv.tooltip_hide_on_move" : true, // True to hide the tooltip when the mouse move away from the tooltip

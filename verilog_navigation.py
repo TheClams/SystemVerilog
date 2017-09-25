@@ -5,7 +5,6 @@ from plistlib import readPlistFromBytes
 
 try:
     from SystemVerilog import verilog_module
-    import verilog_module
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     import verilog_module
@@ -856,7 +855,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
             sublime.status_message('Linting successful: no issue found')
 
 
-
+# Command to delete a list of signal declaration
 class VerilogDeleteSignalCommand(sublime_plugin.TextCommand):
 
     def run(self,edit, args):

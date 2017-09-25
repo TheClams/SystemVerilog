@@ -1,0 +1,7 @@
+SystemVerilog 2.15.6 Changelog:
+
+## Improvement ##
+ - Add option to define extension for verilog/SystemVerilog file used to enable some autocompletion and feature like module instance
+
+## Fix ###
+ - snippets: Fix syntax error in the class snippets

@@ -132,7 +132,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         #Provide completion specific to the file type
         fname = self.view.file_name()
         if fname:
-            is_sv = os.path.splitext(fname)[1].startswith('.sv')
+            is_sv = fname.lower().endswith(tuple(self.settings.get('sv.sv_ext','sv')))
         else:
             is_sv = False
         if is_sv :
@@ -268,10 +268,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 filelist = view.window().lookup_symbol_in_index(t)
                 # print(' Filelist for ' + t + ' = ' + str(filelist))
                 if filelist:
+                    file_ext = tuple(self.settings.get('sv.v_ext','v') + self.settings.get('sv.sv_ext','sv') + self.settings.get('sv.vh_ext','vh') + self.settings.get('sv.svh_ext','svh'))
                     for f in filelist:
                         fname = sublimeutil.normalize_fname(f[0])
                         # Parse only verilog files. Check might be a bit too restrictive ...
-                        if fname.lower().endswith(('sv','svh', 'v', 'vh')):
+                        if fname.lower().endswith(file_ext):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
                             tti = verilog_module.type_info_file(view,fname,t)
                             if tti['type']:
@@ -482,10 +483,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             t = re.sub(r'\w+\:\:','',t)
             filelist = view.window().lookup_symbol_in_index(t)
             if filelist:
+                file_ext = tuple(self.settings.get('sv.sv_ext','sv') + self.settings.get('sv.svh_ext','svh'))
                 for f in filelist:
                     fname = sublimeutil.normalize_fname(f[0])
-                    # Parse only systemVerilog file. Check might be a bit too restrictive ...
-                    if fname.lower().endswith(('sv','svh')):
+                    if fname.lower().endswith(file_ext):
                         tti = verilog_module.type_info_file(view,fname,t)
                         if tti:
                             # print('[struct_assign_completion] Type %s found in %s: %s' %(ti['type'],fname,str(tti)))
@@ -953,7 +954,7 @@ class VerilogDoInsertFsmTemplate(sublime_plugin.TextCommand):
         (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
         fname = self.view.file_name()
         if fname:
-            is_sv = os.path.splitext(fname)[1].startswith('.sv')
+            is_sv = fname.lower().endswith(tuple(self.view.settings().get('sv.sv_ext','sv')))
         else:
             is_sv = False
         if is_sv:
