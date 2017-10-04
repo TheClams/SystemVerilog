@@ -390,11 +390,14 @@ def parse_module(flines,mname=r'\w+',inst_only=False,no_inst=False):
     # Extract instances name
     inst = [ti for ti in ati if ti['type']!='module' and ti['type']!='interface' and ti['tag']=='inst']
     # Extract signal name
-    signals = [ti for ti in ati if ti['type'] not in ['module','interface','modport'] and ti['tag']!='inst' and ti['name'] not in ports_name ]
+    signals = [ti for ti in ati if ti['type'] not in ['module','interface'] and ti['tag'] not in ['inst','modport','clocking'] and ti['name'] not in ports_name ]
     minfo = {'name': mname, 'param':params, 'port':ports, 'inst':inst, 'type':m.group('type'), 'signal' : signals}
     modports = [ti for ti in ati if ti['tag']=='modport']
     if modports:
         minfo['modport'] = modports
+    clocking = [ti for ti in ati if ti['tag']=='clocking']
+    if clocking:
+        minfo['clocking'] = clocking
     # print('[SV.parse_module] minfo = ')
     # pprint.pprint(minfo,width=200)
     return minfo

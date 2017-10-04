@@ -1,0 +1,6 @@
+SystemVerilog 2.15.7 Changelog:
+
+## Fix ###
+ - Completion:
+ 	* modport won't appear twice in the completion
+ 	* clocking block are now properly tagged as such and put after the signal list

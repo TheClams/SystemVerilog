@@ -546,6 +546,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 c.append([x['name']+'\tI/O', x['name']])
             for x in ii['signal']:
                 c.append([x['name']+'\tField', x['name']])
+            if 'clocking' in ii:
+                for x in ii['clocking']:
+                    c.append([x['name']+'\tClocking', x['name']])
         if 'modport' in ii:
             for x in ii['modport']:
                 c.append([x['name']+'\tModport', x['name']])
