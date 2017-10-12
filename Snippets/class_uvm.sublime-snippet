@@ -21,7 +21,7 @@
 		super.new(name, parent);
 	endfunction : new
 
-	endclass : ${1}]]></content>
+endclass : ${1}]]></content>
 	<tabTrigger>uvmclass</tabTrigger>
 	<scope>source.systemverilog</scope>
 </snippet>

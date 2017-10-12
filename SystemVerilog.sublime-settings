@@ -53,6 +53,7 @@
 	// Debug option
 	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
 	"sv.disable_autocomplete": false,
+	"sv.debug": false, // Display some debug information in the console. WARNING: can be verbose and slow !
 	// Completion list :
 	//  - the first list element is the completion trigger
 	//  - the second list element is the description appearing the completion list

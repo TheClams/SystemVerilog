@@ -284,7 +284,7 @@ class VerilogTypePopup :
         # Get function I/O
         elif 'support.function.generic' in scope or 'entity.name.function' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)
-            # print ('[get_type] Function: {0}'.format(ti))
+            if debug: print ('[get_type] Function: {0}'.format(ti))
             if ti:
                 txt = ti['decl']
         # Get structure/interface
@@ -722,7 +722,7 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
     def findInstance(self, mname):
         projname = sublime.active_window().project_file_name()
         if projname not in verilog_module.list_module_files:
-            verilog_module.VerilogModuleInstCommand.get_list_file(None,projname,None)
+            verilog_module.VerilogModuleInstCommand.get_list_file(self,projname,None)
         inst_dict = {}
         cnt = 0
         re_str = r'^(\s*'+mname+r'\s+(#\s*\(.*\)\s*)?(\w+).*$)'

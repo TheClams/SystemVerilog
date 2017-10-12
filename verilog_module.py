@@ -256,8 +256,6 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
                 self.view.run_command("verilog_module_reconnect")
                 return
         self.window = sublime.active_window()
-        settings = self.view.settings()
-        self.file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv'))
         # Populate the list_module_files:
         #  - If no folder in current project, just list open files
         #  - if it exist use latest version and display panel immediately while running an update
@@ -285,10 +283,12 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         global lmf_update_ongoing
         lmf_update_ongoing = True
         lmf = []
+        settings = self.view.settings()
+        file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv'))
         for folder in sublime.active_window().folders():
             for root, dirs, files in os.walk(folder):
                 for fn in files:
-                    if fn.lower().endswith(self.file_ext):
+                    if fn.lower().endswith(file_ext):
                         ffn = os.path.join(root,fn)
                         f = open(ffn)
                         if os.stat(ffn).st_size:
