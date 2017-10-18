@@ -5,7 +5,7 @@ SystemVerilog 2.16.0 Changelog:
  - Hierarchy:
     * Add option to open the hierarchy in a new window (sv.hierarchy_new_window)
     * Add function to navigate from the hierarchy to the instance or module name properly.
-
+    * Add marker [U] for unresolved reference
 
 ## Keybind Update ##
 To use the new function to navigate in the hierarchy add the following keybind:

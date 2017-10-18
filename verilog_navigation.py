@@ -693,12 +693,13 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                 hierarchyInfo['fname'] += ':{}:{}'.format(row,col+2)
                 break
         self.d[mi['name']] = [(x['type'],x['name']) for x in mi['inst']]
+        self.unresolved = []
         li = [x['type'] for x in mi['inst']]
         while li :
             # print('Loop on list with {1} elements : {2}'.format(len(li),li))
             li_next = []
             for i in li:
-                if i not in self.d.keys():
+                if i not in self.d.keys() and i not in self.unresolved:
                     filelist = w.lookup_symbol_in_index(i)
                     if filelist:
                         for f in filelist:
@@ -716,6 +717,8 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                         li_next += [x['type'] for x in mi['inst']]
                         if mi['type'] not in ['interface']:
                             self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
+                    else:
+                        self.unresolved.append(i)
             li = list(set(li_next))
         txt = top_level + '\n'
         txt += self.printSubmodule(top_level,1)
@@ -743,7 +746,8 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                     if lvl<20 :
                         txt += self.printSubmodule(x[0],lvl+1)
                 else:
-                    txt += '- {name}    ({type})\n'.format(name=x[1],type=x[0])
+                    ustr = '  [U]' if x[0] in self.unresolved else ''
+                    txt += '- {name}    ({type}){unresolved}\n'.format(name=x[1],type=x[0],unresolved=ustr)
         return txt
 
 # Navigate within the hierarchy
