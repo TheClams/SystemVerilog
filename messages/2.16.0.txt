@@ -1,0 +1,33 @@
+SystemVerilog 2.16.0 Changelog:
+
+
+## Enhancement ###
+ - Hierarchy:
+    * Add option to open the hierarchy in a new window (sv.hierarchy_new_window)
+    * Add function to navigate from the hierarchy to the instance or module name properly.
+
+
+## Keybind Update ##
+To use the new function to navigate in the hierarchy add the following keybind:
+
+```
+	{
+		"keys": ["f12"], "command": "verilog_hierarchy_goto_definition",
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "text.result-systemverilog"}
+		]
+	}
+```
+
+It is also possible to bind some mouse click, but be aware that sublime does not support
+context sensitive binding, meaning that you will override whatever was bind to the mouse click !
+Here is an example to bind 'ctrl+right click' to the command:
+
+```
+	{
+        "button": "button2", "modifiers": ["ctrl"],
+        "command": "verilog_hierarchy_goto_definition",
+        "press_command": "drag_select",
+    }
+```

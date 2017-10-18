@@ -81,8 +81,6 @@ contexts:
       push:
         - meta_scope: meta.module.systemverilog
         - match: ;
-          captures:
-            1: entity.name.function.systemverilog
           pop: true
         - match: '\s*\bimport\b'
           scope: keyword.control.systemverilog

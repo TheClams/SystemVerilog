@@ -116,6 +116,18 @@ def init_css():
        tooltip_css = ''
 
 ############################################################################
+callbacks_on_load = {}
+
+class VerilogOnLoadEventListener(sublime_plugin.EventListener):
+    # Called when a file is finished loading.
+    def on_load_async(self, view):
+        global callbacks_on_load
+        if view.file_name() in callbacks_on_load:
+            callbacks_on_load[view.file_name()]()
+            del callbacks_on_load[view.file_name()]
+
+
+############################################################################
 # Display type of the signal/variable under the cursor into the status bar #
 class VerilogTypePopup :
     def __init__(self,view):
@@ -650,6 +662,9 @@ def getModuleName(view):
 
 ######################################################################################
 # Create a new buffer showing the hierarchy (sub-module instances) of current module #
+hierarchyInfo = {'dict':{}, 'view':None,'fname':''}
+hierarchyView = None
+
 class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
@@ -663,9 +678,20 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
         sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showHierarchy(mi,w,txt))
 
     def showHierarchy(self,mi,w,txt):
+        # Save info in global for later access
+        global hierarchyInfo
+        hierarchyInfo['view'] = self.view
+        hierarchyInfo['fname'] = self.view.file_name()
+
         # Create Dictionnary where each type is associated with a list of tuple (instance type, instance name)
         self.d = {}
         top_level = mi['name']
+        # Extract Symbol position
+        for x in self.view.symbols() :
+            if x[1] == top_level:
+                row,col = self.view.rowcol(x[0].a)
+                hierarchyInfo['fname'] += ':{}:{}'.format(row,col+2)
+                break
         self.d[mi['name']] = [(x['type'],x['name']) for x in mi['inst']]
         li = [x['type'] for x in mi['inst']]
         while li :
@@ -679,18 +705,28 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                             fname = sublimeutil.normalize_fname(f[0])
                             mi = verilogutil.parse_module_file(fname,i,True)
                             if mi:
+                                hierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
                                 break
                     # Not in project ? try in current file
                     else :
                         mi = verilogutil.parse_module(txt,i,True)
+                        if mi:
+                            hierarchyInfo['dict'][mi['name']] = self.view.file_name()
                     if mi:
                         li_next += [x['type'] for x in mi['inst']]
-                        self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
+                        if mi['type'] not in ['interface']:
+                            self.d[i] = [(x['type'],x['name']) for x in mi['inst']]
             li = list(set(li_next))
         txt = top_level + '\n'
         txt += self.printSubmodule(top_level,1)
 
+        nw = self.view.settings().get('sv.hierarchy_new_window',False)
+        if nw:
+            sublime.run_command('new_window')
+            w = sublime.active_window()
+
         v = w.new_file()
+        v.settings().set("tab_size", 2)
         v.set_name(top_level + ' Hierarchy')
         v.set_syntax_file('Packages/SystemVerilog/Find Results SV.hidden-tmLanguage')
         v.set_scratch(True)
@@ -709,6 +745,71 @@ class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
                 else:
                     txt += '- {name}    ({type})\n'.format(name=x[1],type=x[0])
         return txt
+
+# Navigate within the hierarchy
+class VerilogHierarchyGotoDefinitionCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        global hierarchyInfo
+        r = self.view.sel()[0]
+        if r.empty() :
+            r = self.view.word(r)
+        scope = self.view.scope_name(r.a)
+        fname = ''
+        inst_name = ''
+        # Not in the proper file ? use standard goto_definition to
+        if 'text.result-systemverilog' not in scope:
+            self.view.window().run_command('goto_definition')
+            return
+        if 'entity.name' in scope:
+            l = self.view.substr(self.view.line(r))
+            indent = (len(l) - len(l.lstrip()))-2
+            if indent<0:
+                print('[SV.navigation] Hierarchy buffer corrupted : Invalid position for an instance !')
+                return
+            elif indent == 0:
+                fname = hierarchyInfo['fname']
+            else:
+                w = ''
+                # find module parent name
+                txt = self.view.substr(sublime.Region(0,r.a))
+                m = re.findall(r'^{}\+ \w+\s+\((\w+)\)'.format(' '*indent),txt,re.MULTILINE)
+                if m:
+                    inst_name = self.view.substr(r)
+                    if m[-1] in hierarchyInfo['dict']:
+                        fname = hierarchyInfo['dict'][m[-1]]
+        elif 'storage.name' in scope:
+            w = self.view.substr(r)
+            if w in hierarchyInfo['dict']:
+                fname = hierarchyInfo['dict'][w]
+        elif 'keyword.module' in scope:
+            fname = hierarchyInfo['fname']
+
+        if fname:
+            if not inst_name:
+                hierarchyInfo['view'].window().open_file(fname,sublime.ENCODED_POSITION)
+            else:
+                m = re.match(r'(.+)\:(\d+)\:(\d+)',fname)
+                fname_short = fname if not m else m.group(1)
+                v = hierarchyInfo['view'].window().find_open_file(fname_short)
+                if v :
+                    hierarchyInfo['view'].window().focus_view(v)
+                    self.goto_symb(v,inst_name)
+                else :
+                    v = hierarchyInfo['view'].window().open_file(fname,sublime.ENCODED_POSITION)
+                    global callbacks_on_load
+                    callbacks_on_load[fname_short] = lambda v=v, inst_name=inst_name: self.goto_symb(v,inst_name)
+
+    def goto_symb(self,v,inst_name):
+        global hierarchyInfo
+        row=-1
+        for x in v.symbols() :
+            if x[1] == inst_name:
+                row,col = v.rowcol(x[0].a)
+                break
+        if row>=0:
+            sublimeutil.move_cursor(v,v.text_point(row,col))
+
 
 ###########################################################
 # Find all instances of current module or selected module #

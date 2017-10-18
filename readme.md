@@ -48,9 +48,8 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * List all undeclared signals
 
 ####Configuration
-To see all existing configuration option, go to Preferences->Package Settings->SystemVerilog->Settings (Default).
+To see all existing configuration option and edit your configuration, go to Preferences->Package Settings->SystemVerilog->Settings.
 
-To edit settings open the Settings (User), and add parameter with the value you want.
 
 ####Detail documentation
 For a detail documentation on the different features, check online documentation: http://sv-doc.readthedocs.org/en/latest .
@@ -60,7 +59,7 @@ For a detail documentation on the different features, check online documentation
 Keymapping example
 ------------------
 
-To map key to the different feature, simply add the following to your user .sublime-keymap file:
+To map key to the different features, simply add the following to your user .sublime-keymap file:
 
 	{
 		"keys": ["f10"], "command": "verilog_type",
@@ -132,6 +131,7 @@ To map key to the different feature, simply add the following to your user .subl
 		"keys": ["ctrl+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"move"},
 		"context":
 		[
+			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
 	},
@@ -139,6 +139,7 @@ To map key to the different feature, simply add the following to your user .subl
 		"keys": ["ctrl+shift+m"], "command": "verilog_goto_block_boundary", "args":{"cmd":"select"},
 		"context":
 		[
+			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
 	}

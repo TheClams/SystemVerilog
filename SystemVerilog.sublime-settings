@@ -50,6 +50,8 @@
 	"sv.proc_indent"             : 1, // Number of indentation level for process
 	// Popup config
 	"sv.hover_max_size" : -1, // Max size of the file (in byte) to display popup info. Set to -1 to disable the limit (default), 0 to disable feature.
+	// Navigation config
+	"sv.hierarchy_new_window" : false, // True to open a new window to display the module hierarchy
 	// Debug option
 	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
 	"sv.disable_autocomplete": false,
