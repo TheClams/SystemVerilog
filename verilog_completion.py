@@ -661,7 +661,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Extract line to get indentation. Start region one character to the righft to be sure we do not take previous line
             l = self.view.substr(view.line(sublime.Region(r.a+1,r.b)))
             m = re.match(r'(\s*)',l)
-            re_str = r'^' + m.groups()[0] + r'((\w+.*)?(begin)\s*(:\s*(\w+))?|(?:virtual\s+)?(function)\s+(?:automatic\s+)?(?:\w+\s+)?(\w+)\s*\(|(class)\s+(\w+)|(module)\s+(\w+)|(package)\s+(\w+)|(interface)\s+(\w+)|(?:virtual\s+)?(task)\s+(\w+)|(case)\s*\((.+)\)|(generate)|(covergroup)\s+(\w+))'
+            re_str = r'^' + m.groups()[0] + r'((\w+.*)?(begin)\s*(:\s*(\w+))?|(?:virtual\s+)?(function)\s+(?:(?:automatic|static)\s+)?(?:\w+\s+)?(\w+)\s*\(|(class)\s+(\w+)|(module)\s+(\w+)|(package)\s+(?:(?:automatic|static)\s+)?(\w+)|(interface)\s+(\w+)|(?:virtual\s+)?(task)\s+(\w+)|(case)\s*\((.+)\)|(generate)|(covergroup)\s+(\w+))'
         elif prefix.startswith('endf'):
             re_str = r'function\s+(?:automatic\s+)?(?:\w+\s+)?(\w+)\s*\('
             kw = 'endfunction'
@@ -684,7 +684,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             re_str = r'module\s+(\w+)'
             kw = 'endmodule'
         elif prefix.startswith('endp'):
-            re_str = r'package\s+(\w+)'
+            re_str = r'package\s+(?:(?:automatic|static)\s+)?(\w+)'
             kw = 'endpackage'
         elif prefix.startswith('endi'):
             re_str = r'interface\s+(\w+)'

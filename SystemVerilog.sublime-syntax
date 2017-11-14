@@ -186,11 +186,12 @@ contexts:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
-    - match: '\s*(primitive|package|constraint|interface|covergroup|program|checker)\s+\b({{id}})\b'
+    - match: '\s*(primitive|package|constraint|interface|covergroup|checker)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
-        1: keyword.control.systemverilog
-        2: entity.name.type.class.systemverilog
+        1: keyword.other.systemverilog
+        2: keyword.other.systemverilog
+        3: entity.name.type.class.systemverilog
     - match: '\s*\b(virtual\s+)?(class)\s+\b({{id}})\b'
       scope: meta.definition.class.systemverilog
       captures:
@@ -484,13 +485,13 @@ contexts:
         - include: base-grammar
         - include: ifmodport
   program-def:
-    - match: '\s*(program)\s+(?:(automatic)\s+)?\b({{id}})\b'
+    - match: '\b(program)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
         1: keyword.other.systemverilog
         2: keyword.other.systemverilog
         3: entity.name.type.program.systemverilog
       push:
-        - meta_scope: meta.module.systemverilog
+        - meta_scope: meta.program.systemverilog
         - match: ;
           pop: true
         - match: '\s*\bimport\b'

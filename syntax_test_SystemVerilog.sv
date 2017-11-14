@@ -11,7 +11,7 @@ logic x;
 ------------------------------------------------------------------------------*/
 
 interface my_interface1;
-// <- keyword.control
+// <- keyword.other
 //        ^ entity.name.type.class
     logic   one;
 //  ^ storage.type
@@ -31,7 +31,7 @@ endinterface /* my_interface1 */
 
     // Interface with indentation
     interface my_interface2;
-//  ^ keyword.control
+//  ^ keyword.other
 //            ^ entity.name.type.class
         logic   one;
         logic   two;
@@ -274,7 +274,7 @@ generate
 endgenerate
 
 constraint constraint_c {
-// <- keyword.control
+// <- keyword.other
 //         ^ entity.name
     soft var_1 < 1;
 //  ^ keyword.control
@@ -299,10 +299,16 @@ endchecker
 program automatic test (
 // <- keyword.other.systemverilog
 //      ^^^^^^^^^ keyword.other.systemverilog
-//                ^^^^ entity.name.program.systemverilog
+//                ^^^^ entity.name.type.program.systemverilog
     dut_interface.test_ports axi_dut
 //  ^^^^^^^^^^^^^ meta.program.systemverilog storage.type.interface.systemverilog
 //                ^^^^^^^^^^ support.modport.systemverilog
 );
 endprogram: test
 //          ^^^^ entity.label.systemverilog
+
+
+package automatic example_pkg;
+//      ^^^^^^^^^ meta.definition.systemverilog keyword.other.systemverilog
+//                ^^^^^^^^^^^ meta.definition.systemverilog entity.name.type.class.systemverilog
+endpackage : example_pkg
