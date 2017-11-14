@@ -101,6 +101,7 @@ def init_css():
         tooltip_css+= 'body {{ background-color: #{bg:06x}; margin: 1px; font-size: 1em; }}\n'.format(bg=bgBody)
         tooltip_css+= 'p {padding-left: 0.6em;}\n'
         tooltip_css+= '.content {margin: 0.8em;}\n'
+        tooltip_css+= 'a {{color: #{c:06x};}}\n'.format(c=fg)
         tooltip_css+= '.keyword {{color: #{c:06x};}}\n'.format(c=kw)
         tooltip_css+= '.support {{color: #{c:06x};}}\n'.format(c=sup)
         tooltip_css+= '.storage {{color: #{c:06x};}}\n'.format(c=sto)
@@ -153,7 +154,7 @@ class VerilogTypePopup :
         v = self.view.substr(region)
         if debug:  print('[SV:Popup.show] Word to show = {0}'.format(v));
         if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
-            s,ti = self.get_type(v,region)
+            s,ti,colored = self.get_type(v,region)
             if not s:
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
@@ -199,7 +200,7 @@ class VerilogTypePopup :
                 elif ti and ti['type']=='package':
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     s += self.add_info([x for x in ti['member']])
-                else :
+                elif not colored :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
                         # print(ti)
@@ -213,7 +214,7 @@ class VerilogTypePopup :
                                 fti = verilogutil.get_all_type_info(m.groups()[0])
                                 if fti:
                                     s += self.add_info(fti)
-                        elif 'interface' in ti['decl']:
+                        elif ti['decl'] and 'interface' in ti['decl']:
                             mi = verilog_module.lookup_module(self.view,ti['name'])
                             if mi :
                                 # pprint.pprint(mi)
@@ -266,8 +267,9 @@ class VerilogTypePopup :
         else:
             scope = self.view.scope_name(region.a)
         ti = None
+        colored = False
         txt = ''
-        if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
+        # if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
         # In case of field, retrieve parent type
         if '.' in var_name:
             ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
@@ -277,22 +279,37 @@ class VerilogTypePopup :
         elif 'support.function.port' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
             s = self.view.substr(region)
-            mname = re.search(r'\w+',s).group(0)
-            #print('[get_type] Find module with name {0}'.format(mname))
+            m = re.match(r'^(?s)\s*(\w+)\s+(\w+)',s,re.MULTILINE)
+            if not m:
+                m = re.match(r'^(?s)\s*(\w+)\s*#(?:.*?)\)\s*(\w+)',s,re.MULTILINE)
+                if not m:
+                    m = re.match(r'^(?s)\s*(\w+)()',s,re.MULTILINE)
+            mname = m.group(1)
+            iname = m.group(2)
+            # print('[get_type] Find module with name {} (instance {})'.format(mname,iname))
             mi = verilog_module.lookup_module(self.view,mname)
             if mi:
+                colored = True
                 found = False
+                fname = '{0}:{1}:{2}'.format(mi['fname'][0],mi['fname'][1],mi['fname'][2])
                 for p in mi['port']:
                     if p['name']==var_name:
-                        txt = p['decl']
+                        txt,_ = self.color_str(s=p['decl'].rsplit(' ',1)[0],last_word=False)
+                        if p['decl'].startswith('in'): # Input or inout
+                            txt += ' <a href="REFERENCE@{0}@{1}">{1}</a>'.format(mi['fname'][0],var_name)
+                        elif p['decl'].startswith('output'): # output
+                            txt += ' <a href="DRIVER@{0}@{1}">{1}</a>'.format(mi['fname'][0],var_name)
+                        else:
+                            txt += ' {0}'.format(var_name)
                         found = True
                         break
                 # Check parameters if this was not found in port name
                 if not found:
                     for p in mi['param']:
                         if p['name']==var_name:
-                            txt = 'parameter {0} {1} = {2}'.format(p['decl'],p['name'],p['value'])
-                            break
+                            txt,_ = self.color_str(s='  parameter {0} {1} = {2}'.format(p['decl'],p['name'],p['value']))
+                if sv_settings.get('sv.tooltip_show_module_on_port',False):
+                    txt = '<a href="LINK@{0}" class="storage">{1}</a><span class="entity"> {2}</span><br>  {3}'.format(fname,mname,iname,txt)
         # Get function I/O
         elif 'support.function.generic' in scope or 'entity.name.function' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)
@@ -362,12 +379,12 @@ class VerilogTypePopup :
                 if 'value' in ti and ti['value']:
                     txt += ' = ' + ti['value']
         # print('[SV:get_type] {0}'.format(ti))
-        return txt,ti
+        return txt,ti,colored
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'extends']
 
-    def color_str(self,s, addLink=False, ti_var=None):
+    def color_str(self,s, addLink=False, ti_var=None, last_word=True):
         ss = s.split()
         sh = ''
         ti = None
@@ -378,11 +395,11 @@ class VerilogTypePopup :
             m = re.match(r'^[A-Za-z_]\w+$',w)
             if '"' in w :
                 sh+=re.sub(r'(".*?")',r'<span class="string">\1</span> ',w)
-            elif i == len(ss)-1:
+            elif i == len(ss)-1 and last_word:
                 if m:
                     if addLink and ti_var and 'fname' in ti_var:
                         fname = '{0}:{1}:{2}'.format(ti_var['fname'][0],ti_var['fname'][1],ti_var['fname'][2])
-                        w ='<a href="{1}@{0}" class="entity">{1}</a>'.format(fname,w)
+                        w ='<a href="LINK@{0}" class="entity">{1}</a>'.format(fname,w)
                 else:
                     w = re.sub(r'\b((b|d|o)?\d+(\.\d+(ms|us|ns|ps|fs)?)?)\b',r'<span class="numeric">\1</span>',w)
                     w = re.sub(r'(\'h[0-9A-Fa-f]+)\b',r'<span class="numeric">\1</span>',w)
@@ -401,7 +418,7 @@ class VerilogTypePopup :
                     ti = verilog_module.lookup_type(self.view,ws[1])
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(fname,ws[1])
+                    sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,ws[1])
                 else:
                     sh+='<span class="storage">{0}</span> '.format(ws[1])
             elif '.' in w:
@@ -411,7 +428,7 @@ class VerilogTypePopup :
                         ti = verilog_module.lookup_type(self.view,ws[0])
                     if ti and 'fname' in ti:
                         fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
-                        sh+='<a href="{1}@{0}" class="storage">{1}</a>'.format(fname,ws[0])
+                        sh+='<a href="LINK@{0}" class="storage">{1}</a>'.format(fname,ws[0])
                     else:
                         sh+='<span class="storage">{0}</span>'.format(ws[0])
                     sh+='.<span class="support">{0}</span> '.format(ws[1])
@@ -430,7 +447,7 @@ class VerilogTypePopup :
                 # print('[SV:color_str] word={0} => ti={1}'.format(w,ti))
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
-                    sh+='<a href="{1}@{0}" class="storage">{1}</a> '.format(fname,w)
+                    sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,w)
                 else:
                     sh+='<span class="storage">{0}</span> '.format(w)
             elif re.match(r'\d+',w) :
@@ -444,7 +461,21 @@ class VerilogTypePopup :
     def on_navigate(self, href):
         href_s = href.split('@')
         pos = sublime.Region(0,0)
-        v = self.view.window().open_file(href_s[1], sublime.ENCODED_POSITION)
+        v = self.view.window().find_open_file(href_s[1])
+        if v :
+            self.view.window().focus_view(v)
+            if href_s[0]=='DRIVER':
+                goto_driver(v,href_s[2])
+            elif href_s[0]=='REFERENCE':
+                goto_signal_ref(v,href_s[2])
+        else :
+            v = self.view.window().open_file(href_s[1],sublime.ENCODED_POSITION)
+            global callbacks_on_load
+            if href_s[0]=='DRIVER':
+                callbacks_on_load[href_s[1]] = lambda v=v, inst_name=href_s[2]: goto_driver(v,inst_name)
+            elif href_s[0]=='REFERENCE':
+                callbacks_on_load[href_s[1]] = lambda v=v, inst_name=href_s[2]: goto_signal_ref(v,inst_name)
+
 
 # Manual command to display the popup
 class VerilogTypeCommand(sublime_plugin.TextCommand):
@@ -500,73 +531,9 @@ class VerilogGotoDriverCommand(sublime_plugin.TextCommand):
         region = self.view.sel()[0]
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
-        v = self.view.substr(region).strip()
-        v_word = r'\b'+v+r'\b'
-        # look for an input or an interface of the current module, and for an assignement
-        sl = [r'input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + v + r'\b']
-        sl.append(r'^\s*\w+\.\w+\s+' + v + r'\b')
-        sl.append(r'\b' + v + r'\b\s*<?\=[^\=]')
-        for s in sl:
-            r = self.view.find(s,0)
-            # print('searching ' + s + ' => ' + str(r))
-            if r:
-                # print("Found input at " + str(r) + ': ' + self.view.substr(self.view.line(r)))
-                sublimeutil.move_cursor(self.view,r.a)
-                return
-        # look for a connection explicit, implicit or by position
-        sl = [r'\.(\w+)\s*\(\s*'+v+r'\b' , r'(\.\*)', r'(\(|,)\s*'+v+r'\b\s*(,|\)\s*;)']
-        for k,s in enumerate(sl):
-            pl = []
-            rl = self.view.find_all(s,0,r'$1',pl)
-            # print('searching ' + s + ' => ' + str(rl))
-            for i,r in enumerate(rl):
-                # print('Found in line ' + self.view.substr(self.view.line(r)))
-                # print('Scope for ' + str(r) + ' = ' + self.view.scope_name(r.a))
-                if 'meta.module.inst' in self.view.scope_name(r.a) :
-                    rm = sublimeutil.expand_to_scope(self.view,'meta.module.inst',r)
-                    txt = verilogutil.clean_comment(self.view.substr(rm))
-                    # Parse module definition
-                    mname = re.findall(r'\w+',txt)[0]
-                    filelist = self.view.window().lookup_symbol_in_index(mname)
-                    if not filelist:
-                        return
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_module_file(fname,mname)
-                        if mi:
-                            break
-                    if mi:
-                        op = r'^(output\s+.*|\w+\.\w+\s+)'
-                        # Output port string to search
-                        portname = ''
-                        if k==1: #Explicit connection
-                            portname = v
-                        elif k==0: #implicit connection
-                            portname = pl[i]
-                        elif k==2 : #connection by position
-                            for j,l in enumerate(txt.split(',')) :
-                                if v in l:
-                                    dl = [x['decl'] for x in mi['port']]
-                                    if re.search(op,dl[j]) :
-                                        r_v = self.view.find(v_word,rm.a)
-                                        if r_v and r_v.b<=rm.b:
-                                            sublimeutil.move_cursor(self.view,r_v.a)
-                                        else:
-                                            sublimeutil.move_cursor(self.view,r.a)
-                                        return
-                        if portname != '' :
-                            op += portname+r'\b'
-                            for x in mi['port']:
-                                m = re.search(op,x['decl'])
-                                if m:
-                                    r_v = self.view.find(v_word,rm.a)
-                                    if r_v and r_v.b<=rm.b:
-                                        sublimeutil.move_cursor(self.view,r_v.a)
-                                    else:
-                                        sublimeutil.move_cursor(self.view,r.a)
-                                    return
-        # Everything failed
-        sublime.status_message("Could not find driver of " + v)
+        signal = self.view.substr(region).strip()
+        goto_driver(self.view,signal)
+
 
 
 ##########################################################
@@ -659,6 +626,96 @@ def getModuleName(view):
         mname = view.substr(r)
     # print(mname)
     return mname
+
+def goto_driver(view,signal):
+    signal_word = r'\b'+signal+r'\b'
+    # look for an input or an interface of the current module, and for an assignement
+    sl = [r'input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + signal + r'\b']
+    sl.append(r'^\s*\w+\.\w+\s+' + signal + r'\b')
+    sl.append(r'\b' + signal + r'\b\s*<?\=[^\=]')
+    for s in sl:
+        r = view.find(s,0)
+        # print('searching ' + s + ' => ' + str(r))
+        if r:
+            # print("Found input at " + str(r) + ': ' + view.substr(view.line(r)))
+            sublimeutil.move_cursor(view,r.a)
+            return
+    # look for a connection explicit, implicit or by position
+    sl = [r'\.(\w+)\s*\(\s*'+signal+r'\b' , r'(\.\*)', r'(\(|,)\s*'+signal+r'\b\s*(,|\)\s*;)']
+    for k,s in enumerate(sl):
+        pl = []
+        rl = view.find_all(s,0,r'$1',pl)
+        # print('searching ' + s + ' => ' + str(rl))
+        for i,r in enumerate(rl):
+            # print('Found in line ' + view.substr(view.line(r)))
+            # print('Scope for ' + str(r) + ' = ' + view.scope_name(r.a))
+            if 'meta.module.inst' in view.scope_name(r.a) :
+                rm = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
+                txt = verilogutil.clean_comment(view.substr(rm))
+                # Parse module definition
+                mname = re.findall(r'\w+',txt)[0]
+                filelist = view.window().lookup_symbol_in_index(mname)
+                if not filelist:
+                    return
+                for f in filelist:
+                    fname = sublimeutil.normalize_fname(f[0])
+                    mi = verilogutil.parse_module_file(fname,mname)
+                    if mi:
+                        break
+                if mi:
+                    op = r'^(output\s+.*|\w+\.\w+\s+)'
+                    # Output port string to search
+                    portname = ''
+                    if k==1: #Explicit connection
+                        portname = signal
+                    elif k==0: #implicit connection
+                        portname = pl[i]
+                    elif k==2 : #connection by position
+                        for j,l in enumerate(txt.split(',')) :
+                            if signal in l:
+                                dl = [x['decl'] for x in mi['port']]
+                                if re.search(op,dl[j]) :
+                                    r_v = view.find(signal_word,rm.a)
+                                    if r_v and r_v.b<=rm.b:
+                                        sublimeutil.move_cursor(view,r_v.a)
+                                    else:
+                                        sublimeutil.move_cursor(view,r.a)
+                                    return
+                    if portname != '' :
+                        op += portname+r'\b'
+                        for x in mi['port']:
+                            m = re.search(op,x['decl'])
+                            if m:
+                                r_v = view.find(signal_word,rm.a)
+                                if r_v and r_v.b<=rm.b:
+                                    sublimeutil.move_cursor(view,r_v.a)
+                                else:
+                                    sublimeutil.move_cursor(view,r.a)
+                                return
+    # Everything failed
+    sublime.status_message("Could not find driver of " + signal)
+
+def goto_signal_ref(view,signal):
+    lr = view.find_all(r'\b{}\b'.format(signal))
+    refs = { 'txt':[], 'row':[], 'point':[] }
+    for r in lr:
+        scope = view.scope_name(r.b)
+        if 'comment' in scope or 'meta.module' in scope :
+            continue
+        row,col = view.rowcol(r.b)
+        if row not in refs['row']:
+            line = view.substr(view.line(r.b)).strip()
+            if re.search(r'\b{}\b\s*<?=(?!=)',line) :
+                continue
+            refs['txt'].append(line)
+            refs['row'].append(row)
+            refs['point'].append(r.b)
+    if len(refs['row']) > 1 :
+        view.window().show_quick_panel(refs['txt'],
+            on_select    = lambda x:sublimeutil.move_cursor(view,refs['point'][x]),
+            on_highlight = lambda x:sublimeutil.move_cursor(view,refs['point'][x]))
+    elif len(refs['row']) == 1 :
+        sublimeutil.move_cursor(view,refs['point'][0])
 
 ######################################################################################
 # Create a new buffer showing the hierarchy (sub-module instances) of current module #
@@ -805,7 +862,6 @@ class VerilogHierarchyGotoDefinitionCommand(sublime_plugin.TextCommand):
                     callbacks_on_load[fname_short] = lambda v=v, inst_name=inst_name: self.goto_symb(v,inst_name)
 
     def goto_symb(self,v,inst_name):
-        global hierarchyInfo
         row=-1
         for x in v.symbols() :
             if x[1] == inst_name:

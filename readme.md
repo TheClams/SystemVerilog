@@ -5,14 +5,14 @@ Sublime Text SystemVerilog Package
 Description
 -----------
 
-####Syntax Highlighting:
+#### Syntax Highlighting:
  * SystemVerilog / Verilog
  * UCF (Xilinx Constraint file)
 
 Note: the default color scheme (Monokai) is missing a lot of scope, and might not give the best results.
 You can try my personal variation of Sunburst : https://bitbucket.org/Clams/sublimesystemverilog/downloads/Sunburst2.tmTheme
 
-####Code Navigation:
+#### Code Navigation:
 
  * Show signal declaration in tooltip or status bar
  * Goto declaration : move cursor to the declaration of the selected signal
@@ -21,7 +21,7 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * Show hierarchy of a module (all its sub-module)
  * Move cursor / select text between start/end of block (like [], {}, begin/end, function/endfunction, ...)
 
-####Code Completion :
+#### Code Completion :
 
  * Smart Autocompletion: method for standard type,  field for struct/interface/class, system task, ...
  * Smart snippet for always, case
@@ -29,13 +29,13 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * Various Snippets (module, interface, class, for, ...)
  * Insert template for FSM
 
-####Module Instance helper:
+#### Module Instance helper:
 
  * Instantiation: Select a module from a list and create instantiation and connection
  * Reconnect: remove connection to deleted port, add connection to new port
  * Toggle .* in module binding (similar to the auto-star feature of Emacs verilog-mode)
 
-####Code Alignement:
+#### Code Alignement:
 
  * Reindent
  * Align module port
@@ -43,15 +43,15 @@ You can try my personal variation of Sunburst : https://bitbucket.org/Clams/subl
  * Align module instantiation
  * Align assignement
 
-####Linting:
+#### Linting:
  * Find/Remove all unused signals
  * List all undeclared signals
 
-####Configuration
+#### Configuration
 To see all existing configuration option and edit your configuration, go to Preferences->Package Settings->SystemVerilog->Settings.
 
 
-####Detail documentation
+#### Detail documentation
 For a detail documentation on the different features, check online documentation: http://sv-doc.readthedocs.org/en/latest .
 
 

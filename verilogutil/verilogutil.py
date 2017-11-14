@@ -24,13 +24,16 @@ port_dir = ['input', 'output','inout', 'ref']
 def clean_comment(text):
     def replacer(match):
         s = match.group(0)
+        # Handle special case of ( * ) to not mistake with (* *)
+        if match.group(1)=='*' :
+            return s
         if s.startswith('/') or s.startswith('('):
             return " " # note: a space and not an empty string
         else:
             return s
 
     pattern = re.compile(
-        r'//.*?$|/\*.*?\*/|\(\*.*?\*\)|"(?:\\.|[^\\"])*"',
+        r'//.*?$|/\*.*?\*/|\(\s*(\*)\s*\)|\(\*.*?\*\)|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
     )
     # do we need trim whitespaces?
@@ -57,8 +60,9 @@ def get_type_info_file_cache(fname, var_name, fdate):
 #return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
 def get_type_info(txt,var_name,search_decl=True):
     txt = clean_comment(txt)
-    # print('[get_type_info] text = {0}'.format(txt))
-    m = re.search(re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    m = re.search(r'(?s)'+re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    # print('[get_type_info] text = {}'.format(txt))
+    # print('[get_type_info] RE = {}'.format(re_enum+r'('+var_name+r')\b.*$'))
     tag = 'enum'
     idx_type = 1
     idx_bw = 3
@@ -74,8 +78,8 @@ def get_type_info(txt,var_name,search_decl=True):
             m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
             tag = 'typedef'
             if not m and search_decl:
-                re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'?\{.+?\}|[^,;]+))?[^\.]*?$'
-                # print(re_str)
+                re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'\{.+?\}|\{.+?\}|[^,;]+))?[^\.]*?$'
+                # print('[get_type_info] RE inst = {}'.format(re_str))
                 m = re.search(re_str, txt, flags=re.MULTILINE)
                 tag = 'decl'
                 idx_type = 3
@@ -85,7 +89,7 @@ def get_type_info(txt,var_name,search_decl=True):
                 if not m :
                     m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
                     tag = 'inst'
-    # print('[get_type_info] tag = {0} , groups = {1}, str={2}'.format(tag,m.groups(),m.group(0)))
+    # print('[get_type_info] tag = {0} , groups = {1}, str={2}'.format(tag,'' if not m else m.groups(),'' if not m else m.group(0)))
     ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag)[0]
     return ti
 

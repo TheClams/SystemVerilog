@@ -1,0 +1,9 @@
+SystemVerilog 2.17.0 Changelog:
+
+
+## Enhancement ###
+ - Tooltip:
+  * Option to display module name while hovering on a port binding (sv.tooltip_show_module_on_port)
+  * Add link in tooltip for module port binding
+ - Add reference indexing (latest ST3 build) for module instances and functions
+
