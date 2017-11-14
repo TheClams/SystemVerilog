@@ -74,30 +74,8 @@ contexts:
         3: entity.name.type.systemverilog
         5: keyword.control.systemverilog
         6: support.function.resolve.systemverilog
-    - match: '\s*(module)\s+\b({{id}})\b'
-      captures:
-        1: keyword.control.systemverilog
-        2: entity.name.type.module.systemverilog
-      push:
-        - meta_scope: meta.module.systemverilog
-        - match: ;
-          pop: true
-        - match: '\s*\bimport\b'
-          scope: keyword.control.systemverilog
-          push:
-            - match: ;
-              pop: true
-            - match: '\b({{id}})(::)'
-              captures:
-                1: support.type.scope.systemverilog
-                2: keyword.operator.scope.systemverilog
-            - match: '\*'
-              scope: keyword.operator.systemverilog
-        - include: port-dir
-        - match: \s*(parameter)
-          scope: keyword.other.systemverilog
-        - include: base-grammar
-        - include: ifmodport
+    - include: module-def
+    - include: program-def
     - match: '^\s*\b(sequence)\s+({{id}})'
       scope: meta.sequence.systemverilog
       captures:
@@ -480,6 +458,58 @@ contexts:
         - include: module-binding
         - match: \b(virtual)\b
           scope: keyword.control.systemverilog
+  module-def:
+    - match: '\s*(module)\s+\b({{id}})\b'
+      captures:
+        1: keyword.control.systemverilog
+        2: entity.name.type.module.systemverilog
+      push:
+        - meta_scope: meta.module.systemverilog
+        - match: ;
+          pop: true
+        - match: '\s*\bimport\b'
+          scope: keyword.control.systemverilog
+          push:
+            - match: ;
+              pop: true
+            - match: '\b({{id}})(::)'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+            - match: '\*'
+              scope: keyword.operator.systemverilog
+        - include: port-dir
+        - match: \s*(parameter)
+          scope: keyword.other.systemverilog
+        - include: base-grammar
+        - include: ifmodport
+  program-def:
+    - match: '\s*(program)\s+(?:(automatic)\s+)?\b({{id}})\b'
+      captures:
+        1: keyword.other.systemverilog
+        2: keyword.other.systemverilog
+        3: entity.name.type.program.systemverilog
+      push:
+        - meta_scope: meta.module.systemverilog
+        - match: ;
+          pop: true
+        - match: '\s*\bimport\b'
+          scope: keyword.control.systemverilog
+          push:
+            - match: ;
+              pop: true
+            - match: '\b({{id}})(::)'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+            - match: '\*'
+              scope: keyword.operator.systemverilog
+        - include: port-dir
+        - match: \s*(parameter)
+          scope: keyword.other.systemverilog
+        - include: base-grammar
+        - include: ifmodport
+
   operators:
     - match: (==|===|!=|!==|<=|>=|<|>)
       scope: keyword.operator.comparison.systemverilog

@@ -294,3 +294,15 @@ checker op_test (logic clk, vld_1, vld_2, logic [3:0] opcode);
     endsequence
     cover property (op_accept);
 endchecker
+
+
+program automatic test (
+// <- keyword.other.systemverilog
+//      ^^^^^^^^^ keyword.other.systemverilog
+//                ^^^^ entity.name.program.systemverilog
+    dut_interface.test_ports axi_dut
+//  ^^^^^^^^^^^^^ meta.program.systemverilog storage.type.interface.systemverilog
+//                ^^^^^^^^^^ support.modport.systemverilog
+);
+endprogram: test
+//          ^^^^ entity.label.systemverilog
