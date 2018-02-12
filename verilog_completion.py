@@ -205,7 +205,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if 'meta.module.inst' in scope:
                 r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
                 txt = verilogutil.clean_comment(view.substr(r))
-                mname = re.findall(r'\w+',txt)[0]
+                words = re.findall(r'[\w\`][\w\.]*|`\w+',txt)
+                if words[0]=='bind':
+                    if len(words)<3:
+                        print("[SV:dot_completion] Unable to get bind module name: expect 'bind inst_name module_name'")
+                        return completion
+                    mname = words[2]
+                else:
+                    mname = words[0]
                 filelist = view.window().lookup_symbol_in_index(mname)
                 if filelist:
                     for f in filelist:
@@ -213,7 +220,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         mi = verilogutil.parse_module_file(fname,mname)
                         if mi:
                             break
-                    is_param = 'meta.module-param' in scope
+                    is_param = 'meta.bind.param' in scope
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
             else :
                 return completion
@@ -410,6 +417,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     l[d[x[0]]] = x
                 else :
                     l.append(x)
+        if not l:
+            print('[listbased_completion] No completion found for {}'.format(name))
+            return []
         return [['{0}\t{1}'.format(x[0],x[1]),x[2]] for x in l]
 
     def struct_completion(self,decl, isAssign=False, fe=[]):
@@ -564,24 +574,31 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         if not minfo:
             return c
-        # Extract all exising binding
-        b = re.findall(r'\.(\w+)\s*\(',txt,flags=re.MULTILINE)
+        # print(txt_raw)
         # Select parameter or port for completion
         if is_param:
             l = minfo['param']
+            m = re.search(r'#\s*\((?P<bind>.*?)\)\s*\w+',txt,flags=re.MULTILINE)
         else:
             l = minfo['port']
+            m = re.search(r'\w+\s*\((?P<bind>.*?)\)\s*;',txt,flags=re.MULTILINE)
         if not l:
             return c
         # print('[module_binding_completion] Port/param : ' + str(l))
-        len_port = max([len(p['name']) for p in l])
-        # Check current line to see if the connection is already done and if we are
+        # Extract all existing binding
+        if m:
+            txt = m.group('bind')
+        b = re.findall(r'\.(\w+)\s*\(',txt,flags=re.MULTILINE)
+        if '\n' in txt:
+            len_port = max([len(p['name']) for p in l])
+        else:
+            len_port = 0
+        # Check current line to see if the connection is already done and if we are on the last binding
         eot = verilogutil.clean_comment(txt_raw[pos:])
         has_binding = re.match(r'^\.\w*\s*\(',eot) is not None
         if not has_binding:
-            is_last = re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*;',eot,flags=re.MULTILINE) is not None
-        # print('End text = \n{0}\nHas_bonding={1}, is_last={2}'.format(eot,has_binding,is_last))
-        # TODO: find a way to know if the comma need to be inserted or not
+            is_last = re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*(;|\w+)',eot,flags=re.MULTILINE) is not None
+        # print('End text = \n{0}\nHas_binding={1}, is_last={2}'.format(eot,has_binding,is_last))
         for x in l:
             if x['name'] not in b:
                 if is_param:

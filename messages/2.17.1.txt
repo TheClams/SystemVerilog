@@ -1,0 +1,9 @@
+SystemVerilog 2.17.1 Changelog:
+
+## Fix ##
+ - Reference List: update to include every type reference (was only simple module before)
+ - Autocompletion:
+    * Fix parameter binding autocompletion
+    * Port/parameter autocompletion now works with bind module
+ - Highlight :
+    *  Highlight properly system task in struct assignment

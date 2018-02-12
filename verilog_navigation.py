@@ -284,6 +284,9 @@ class VerilogTypePopup :
                 m = re.match(r'^(?s)\s*(\w+)\s*#(?:.*?)\)\s*(\w+)',s,re.MULTILINE)
                 if not m:
                     m = re.match(r'^(?s)\s*(\w+)()',s,re.MULTILINE)
+            if not m:
+                print('[SV:Popup.get_type] Unable to extract the module name in {}'.format(s))
+                return
             mname = m.group(1)
             iname = m.group(2)
             # print('[get_type] Find module with name {} (instance {})'.format(mname,iname))
