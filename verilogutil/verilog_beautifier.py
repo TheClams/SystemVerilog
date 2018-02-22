@@ -25,7 +25,7 @@ class VerilogBeautifier():
         self.state = ''
         self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
-        self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case', 'generate', 'covergroup', 'property', 'sequence','checker', 'fork', 'begin', '{', '(']
+        self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case','casex','casez', 'generate', 'covergroup', 'property', 'sequence','checker', 'fork', 'begin', '{', '(']
         if not ignoreTick:
             self.kw_block += ['`ifdef', '`ifndef', '`elsif', '`else']
 
@@ -170,7 +170,7 @@ class VerilogBeautifier():
                     tmp = verilogutil.clean_comment(last_line).strip()
                     # print('block="{0}"" => eol={1} => last_line="{2}"'.format(block,idx_eol,last_line))
                     if tmp:
-                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*[\w\$]+)?)$|(case)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
+                        m = re.search(r'(;|\{|\bend|\bendcase|\bendgenerate)$|^\}$|(begin(\s*\:\s*[\w\$]+)?)$|(case(?:x|z)?)\s*\(.*\)$|(`\w+)\s*(\(.*\))?$|^ *(`\w+)\b',tmp)
                         # print('[Beautify] Testing for split: "{}" (ilvl={} prev={}) - split={} - state={}, block={}'.format(tmp,ilvl,ilvl_prev,split,self.state,self.block_state))
                         if not m:
                             if tmp.startswith('always'):
@@ -444,7 +444,10 @@ class VerilogBeautifier():
             # Handle case where this is an external declaration (meaning no block following)
             if w_prev[-2] in ['extern','cover','assert'] or (w_prev[-4]=='extern' and w_prev[-2]=='virtual') :
                 return ""
-            self.stateUpdate(w)
+            if w.startswith('case'):
+                self.stateUpdate('case')
+            else :
+                self.stateUpdate(w)
             # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
             if w in ['module','package', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
                 self.block_state = w
@@ -765,7 +768,7 @@ class VerilogBeautifier():
         re_str_l = []
         # case/structure : "word: statement"
         if mask_op & 1:
-            re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:(?!\:))\s*(?P<statement>.*)$')
+            re_str_l.append(r'^[ \t]*(?P<scope>\w+\:\:)?(?P<name>[\w`\'\"\.\?]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>\:(?!\:))\s*(?P<statement>.*)$')
         # Continous assignement: "assign word = statement"
         if mask_op & 2:
             re_str_l.append(r'^[ \t]*(?P<scope>assign)\s+(?P<name>[\w`\'\"\.]+)[ \t]*(\[(?P<bitslice>.*?)\])?\s*(?P<op>=)\s*(?P<statement>.*)$')

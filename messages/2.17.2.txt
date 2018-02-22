@@ -1,0 +1,5 @@
+SystemVerilog 2.17.2 Changelog:
+
+## Fix ##
+ - Alignement :
+    *  Support casex/z statements
