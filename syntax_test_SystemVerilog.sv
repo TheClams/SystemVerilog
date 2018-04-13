@@ -145,6 +145,8 @@ mytype [3:0][4][`MACRO*4] myvar3[PARAM-1:`TEST/4]; // userdefined type with pack
 
 logic [3:0]  sig_logic = 4'shC;
 
+interconnect [0:1] iBus;
+// <- storage.type.systemverilog
 /*------------------------------------------------------------------------------
 --  PSL
 ------------------------------------------------------------------------------*/
@@ -260,7 +262,7 @@ covergroup cg @(posedge e);
 //                               ^^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
         bins allother = default sequence ;
 //                              ^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
-    option.detect_overlap = ;
+    option.detect_overlap = 1;
     }
 
 endgroup
@@ -283,6 +285,45 @@ endgroup
     endgroup // cg1
 //  ^ meta.block.cover.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
 
+/*------------------------------------------------------------------------------
+--  Constraint
+------------------------------------------------------------------------------*/
+
+constraint constraint_c {
+// <- keyword.other
+//         ^ entity.name
+    solve y before x;
+//  ^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+//          ^^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+    soft var_1 < 1;
+//  ^ keyword.other
+    x dist { [100:102] := 1, 200 := 2, 300 :/ 5};
+//    ^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+    if (mode == little)
+//  ^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+        len < 10;
+    else if (mode == big)
+        len > 100;
+    length == count_ones( v ) ;
+//            ^^^^^^^^^^ meta.block.constraint.systemverilog support.function.generic.systemverilog
+}
+
+constraint C::proto1 { x inside {-4, 5, [y:2*y]}; }
+//         ^ meta.block.constraint.systemverilog storage.type.userdefined.systemverilog
+//          ^^ keyword.operator.scope.systemverilog
+//            ^^^^^^ meta.block.constraint.systemverilog entity.name.section.systemverilog
+//                       ^^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+//                                ^ meta.block.constraint.systemverilog meta.brackets.systemverilog constant.numeric.decimal.systemverilog
+//                                          ^ meta.block.constraint.systemverilog meta.brackets.systemverilog keyword.operator.arithmetic.systemverilog
+//                                             ^ meta.brackets.systemverilog keyword.operator.array.end.systemverilog
+
+p.randomize() with { length inside [512:1512]; mode dist {1:=4, [2:3]:/3} ;}
+// ^^^^^^^^ support.function.generic.systemverilog
+//                          ^^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+//                                                  ^^^^^ meta.block.constraint.systemverilog
+constraint c {
+
+}
 /*------------------------------------------------------------------------------
 --  MISC
 ------------------------------------------------------------------------------*/
@@ -322,13 +363,6 @@ generate
         );
     end
 endgenerate
-
-constraint constraint_c {
-// <- keyword.other
-//         ^ entity.name
-    soft var_1 < 1;
-//  ^ keyword.control
-}
 
 checker op_test (logic clk, vld_1, vld_2, logic [3:0] opcode);
     bit [3:0] opcode_d1;

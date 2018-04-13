@@ -1,0 +1,8 @@
+{
+	"scope" : "source.systemverilog",
+	"completions": [
+		{ "trigger" : "generate", "contents":"generate\n\t$0\nendgenerate"},
+		{ "trigger" : "foreach", "contents":"foreach($1) begin\n\t$0\nend"},
+		"posedge "
+	]
+}

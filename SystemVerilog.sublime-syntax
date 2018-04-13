@@ -77,11 +77,8 @@ contexts:
     - include: cover
     - include: module-def
     - include: program-def
-    - match: '^\s*\b(sequence)\s+({{id}})'
-      scope: meta.sequence.systemverilog
-      captures:
-        1: keyword.control.systemverilog
-        2: entity.name.function.systemverilog
+    - include: constraint
+    - include: assertion
     - match: '\b(bind)\s+((`\w+)|([a-zA-Z_][a-zA-Z0-9_\.]*))\b'
       captures:
         1: keyword.control.systemverilog
@@ -104,11 +101,10 @@ contexts:
       captures:
         1: keyword.modport.systemverilog
         2: entity.name.modport.systemverilog
-    - include: assertion
     - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
-    - match: \s*\b(initial|always|begin|fork|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|dist|clocking|cover|coverpoint|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
+    - match: \s*\b(initial|always|begin|fork|wait|force|release|assign|always_comb|always_ff|always_latch|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|typedef|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
       captures:
         1: keyword.control.systemverilog
     - match: \s*\b(end)\b(\s*(:)\s*(\w+))?
@@ -130,7 +126,7 @@ contexts:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
-    - match: '\s*(primitive|package|constraint|interface|checker)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
+    - match: '\s*(primitive|package|interface|checker)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.other.systemverilog
@@ -501,7 +497,7 @@ contexts:
         1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
   storage-type-systemverilog:
-    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox)\b'
+    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped)\b'
       scope: storage.type.systemverilog
     - match: \s*\b(uvm_transaction|uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence_base|uvm_sequence|uvm_sequence_item|uvm_sequence_state|uvm_sequencer|uvm_sequencer_base|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection|uvm_recorder|uvm_domain|uvm_reg_field|uvm_reg|uvm_reg_block|uvm_bitstream_t|uvm_radix_enum|uvm_printer|uvm_packer|uvm_comparer|uvm_scope_stack)\b
       scope: storage.type.uvm.systemverilog
@@ -604,7 +600,12 @@ contexts:
       captures:
         1: keyword.sva.systemverilog
         2: entity.name.sva.systemverilog
-    - match: \b(\w+)\s*(:)\s*(assert)\b
+    - match: '^\s*\b(sequence)\s+({{id}})'
+      scope: meta.sequence.systemverilog
+      captures:
+        1: keyword.control.systemverilog
+        2: entity.name.function.systemverilog
+    - match: \b(\w+)\s*(:)\s*(assert|assume|cover)\b
       captures:
         1: entity.name.sva.systemverilog
         2: keyword.operator.systemverilog
@@ -658,7 +659,7 @@ contexts:
     - match: '\s*\b(covergroup)\b'
       captures:
         1: keyword.other.systemverilog
-      set :
+      push :
         - meta_scope:  meta.block.cover.systemverilog
         - match: ({{id}})
           scope: entity.name.type.covergroup.systemverilog
@@ -690,3 +691,42 @@ contexts:
               pop: true
 
 # Constraint
+  constraint :
+    - match: '\s*(?:(extern|pure)\s+)?(?:(static)\s+)?(constraint)\s+({{id}})\s*(;)'
+      captures:
+        1 : keyword.other.systemverilog
+        2 : keyword.other.systemverilog
+        3 : keyword.other.systemverilog
+        4 : entity.name.section.systemverilog
+    - match: '\s*(?:(static)\s+)?(constraint)\s+(?:({{id}})(::))?({{id}})\s*(\{)'
+      captures:
+        1 : keyword.other.systemverilog
+        2 : keyword.other.systemverilog
+        3 : storage.type.userdefined.systemverilog
+        4 : keyword.operator.scope.systemverilog
+        5 : entity.name.section.systemverilog
+      set: constraint_block
+    - match: '\s*\b(with)\s*(\{)'
+      captures:
+        1: keyword.other.systemverilog
+      set: constraint_block
+  constraint_block:
+        - meta_scope: meta.block.constraint.systemverilog
+        - match: \b(solve|before|soft|if|else|foreach|disable|dist|inside|unique)\b
+          scope: keyword.other.systemverilog
+        - match: '\}'
+          pop: true
+        - match : \{
+          scope: keyword.operator.array.begin.systemverilog
+          push :
+            - meta_scope: meta.brackets.systemverilog
+            - match: \}
+              scope: keyword.operator.array.end.systemverilog
+              pop: true
+            - include: constants
+            - include: operators
+        - include: comments
+        - include: operators
+        - include: constants
+        - include: functions
+        - include: strings

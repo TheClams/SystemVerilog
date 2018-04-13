@@ -497,7 +497,7 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)]+)\s*(?P<sep>,)?[ \t]*(?P<list>\w+\s*=\s*\w+(,)?\s*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
             if not decl:
@@ -508,7 +508,7 @@ class VerilogBeautifier():
             len_bw    = max([len(x[4]) for x in decl])
             len_param = max([len(x[5]) for x in decl])
             len_value = max([len(x[6]) for x in decl])
-            len_comment = max([len(x[10]) for x in decl])
+            len_comment = max([len(x[-1]) for x in decl])
             has_param_list = ['' for x in decl if x[0] != '']
             has_param_all = len(has_param_list)==len(decl)
             has_param = len(has_param_list)>0
