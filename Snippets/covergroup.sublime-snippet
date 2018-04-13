@@ -1,0 +1,8 @@
+<snippet>
+	<name>Covergroup</name>
+   <content><![CDATA[covergroup ${1:cg}();
+   	${0}
+endgroup : ${1:cg}]]></content>
+	<tabTrigger>covergroup</tabTrigger>
+	<scope>source.systemverilog</scope>
+</snippet>

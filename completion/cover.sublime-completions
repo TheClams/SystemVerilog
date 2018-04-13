@@ -1,0 +1,25 @@
+{
+   "scope": "meta.block.cover.systemverilog",
+
+   "completions":
+   [
+      "coverpoint",
+      "cross",
+      "bins",
+      "binsof",
+      "posedge",
+      "negedge",
+      "iff",
+      "illegal_bins",
+      "ignore_bins",
+      "wildcard",
+      "default",
+      "sequence",
+      "matches",
+      "intersect",
+      "with function sample",
+      "with",
+      "option",
+      "type_option"
+   ]
+}

@@ -221,6 +221,69 @@ endfunction : my_func
         // <- invalid.illegal
 
 /*------------------------------------------------------------------------------
+--  Coverage
+------------------------------------------------------------------------------*/
+covergroup cg @(posedge e);
+// <- meta.block.cover.systemverilog keyword.other.systemverilog
+//         ^^ meta.block.cover.systemverilog entity.name.type.covergroup.systemverilog
+//              ^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+
+    option.per_instance = 1;
+//         ^^^^^^^^^^^^ meta.block.cover.systemverilog variable.other.systemverilog
+    cp0 : coverpoint cp_name {
+//  ^^^ meta.block.cover.systemverilog entity.name.type.coverpoint.systemverilog
+        bins b01    = {[0:1]};
+        bins b23    = {[2:3]};
+        bins apple = X with (a+b < 257) matches 127
+//                                      ^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+        bins others = default;
+        option.comment = "comment";
+        option.at_least = 1_000; //
+    }
+
+    cp0 : coverpoint (this.vif.sig && this.vif.en) iff(cmd.kind == ANVM_CMD_abort) {
+//                                                 ^ keyword.other
+        illegal_bins il_bins = default;
+//      ^^^^^^^^^^^^ keyword.other.systemverilog
+//                             ^^^^^^^ keyword.other.systemverilog
+        wildcard bins b_data_super_queue = {2'b1?};
+//      ^^^^^^^^ keyword.other.systemverilog
+        ignore_bins ig_bins = {3} ;
+//      ^^^^^^^^ keyword.other.systemverilog
+    }
+
+    cx : cross cp0, cp1 iff(rst_n){
+//                      ^^^ keyword
+        bins w_11 =  ! binsof(a) intersect {[100:200]};
+//      ^^^^ keyword.other.systemverilog
+//                     ^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+//                               ^^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+        bins allother = default sequence ;
+//                              ^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+    option.detect_overlap = ;
+    }
+
+endgroup
+
+covergroup x (int nsid, input conf cfg, ref logic z) with function sample(int slba);
+//                      ^^^^^ meta.block.cover.systemverilog support.type.systemverilog
+//                                                   ^^^^^^^^^^^^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+    type_option.strobe = 1;
+    a : coverpoint slba {
+       bins range[3] = {[32'h0000_0000 : cfg.num_ns[nsid].ns_size]};
+//                       ^^^^^^^^^^^^^ meta.block.cover.systemverilog constant.numeric.systemverilog
+       bins mod3[] = {[0:255]} with (item % 3 == 0)
+//                             ^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+    }
+endgroup
+// <- meta.block.cover.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
+
+    covergroup cg1;
+//  ^^^^^^^^^^ meta.block.cover.systemverilog keyword.other.systemverilog
+    endgroup // cg1
+//  ^ meta.block.cover.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
+
+/*------------------------------------------------------------------------------
 --  MISC
 ------------------------------------------------------------------------------*/
 
@@ -241,19 +304,6 @@ fork : f_label
     end : b_label
 join : f_label
 
-covergroup cg @(e);
-    option.per_instance = 1;
-    cp : coverpoint cp_name {
-        bins b01    = {[0:1]};
-        bins b23    = {[2:3]};
-        bins others = default;
-        option.comment = "comment";
-        option.at_least = 1_000; //
-    }
-endgroup
-
-coverpoint cp_name iff (cmd.kind == ANVM_CMD_abort);
-//                 ^ keyword.control
 
 always_ff @(posedge clk or negedge rst_n) begin : proc_
     if (~rst_n)

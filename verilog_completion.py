@@ -173,6 +173,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.b = r.a
         r.a -=1
         array_depth = 0
+
         # Handle array case
         while view.substr(r) == ']' :
             r.a -=1
@@ -200,6 +201,25 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     ci = verilog_module.lookup_type(self.view,cname)
                     if ci:
                         return self.class_completion(ci['fname'][0],cname,'',False)
+        # Cover option completion
+        elif w in ['option','type_option'] and 'meta.block.cover' in scope:
+            completion.append(['weight\toption','weight = $0;'])
+            completion.append(['goal\toption','goal = $0;'])
+            completion.append(['comment\toption','comment = "$0";'])
+            if w=='option' :
+                completion.append(['name\toption','name = "$0";'])
+                completion.append(['at_least\toption','at_least = $0;'])
+                completion.append(['detect_overlap\toption','detect_overlap = $0;'])
+                completion.append(['auto_bin_max\toption','auto_bin_max = $0;'])
+                completion.append(['cross_num_print_missing\toption','cross_num_print_missing = $0;'])
+                completion.append(['per_instance\toption','per_instance = $0;'])
+                completion.append(['get_inst_coverage\toption','get_inst_coverage = $0;'])
+            else :
+                completion.append(['strobe\toption','strobe = $0;'])
+                completion.append(['merge_instances\toption','merge_instances = $0;'])
+                completion.append(['distribute_first\toption','distribute_first = $0;'])
+            return completion
+        #
         elif w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
             #No word before dot => check the scope
             if 'meta.module.inst' in scope:

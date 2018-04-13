@@ -1,0 +1,7 @@
+SystemVerilog 2.18.0 Changelog:
+
+## Enhancement ##
+ - Covergroup :
+    * Fix a few highlight issue (and add corresponding tests)
+    * Add Snippet for covergroup
+    * Add autocompletion specific to covergroup block and option.*
