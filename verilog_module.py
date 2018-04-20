@@ -111,10 +111,24 @@ def type_info_on_hier(view,varname,txt=None,region=None):
         elif ti and ti['type']:
             if ti['type']=='module':
                 ti = lookup_module(view,ti['name'])
+            elif ti['type']=='clocking' :
+                for p in ti['port']:
+                    if p['name']==v :
+                        # Suppose we got here through a lookup (TBC if it is always the case)
+                        if fname:
+                            ti = ti = type_info_file(view,fname,v)
+                        else :
+                            ti = p['name']
+                            ti['decl'] = '{} logic {}'.format(ti['type'],v)
+                        break;
+                else : # not found
+                    ti = None
             elif ti['type']!='class':
                 ti = lookup_type(view,ti['type'])
         # Lookup for the variable inside the type defined
-        if ti and ti['type']=='struct' :
+        if not ti:
+            return None
+        if ti['type']=='struct' :
             m = re.search(r'\{(.*)\}', ti['decl'])
             til = verilogutil.get_all_type_info(m.groups()[0])
             ti = None
@@ -122,7 +136,7 @@ def type_info_on_hier(view,varname,txt=None,region=None):
                 if e['name']==v:
                     ti = e
                     break
-        elif ti and 'fname' in ti:
+        elif 'fname' in ti:
             fname = ti['fname'][0]
             ti = type_info_file(view,fname,v)
             if ti['type'] in ['function', 'task']:

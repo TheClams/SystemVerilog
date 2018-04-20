@@ -199,7 +199,19 @@ class VerilogTypePopup :
                     # print(ci)
                 elif ti and ti['type']=='package':
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
-                    s += self.add_info([x for x in ti['member']])
+                    if 'member' in ti:
+                        members = []
+                        for x in ti['member']:
+                            m = re.match(r'(?P<decl>(typedef\s+)?enum\s+([^\{]*))\{(?P<val>.*)\}\s*(?P<name>[^;]*)',x['decl'])
+                            if m :
+                                d = '{} {}'.format(m.group('decl'),m.group('name'))
+                                for v in m.group('val').split(','):
+                                    d+='<br>{}{}'.format('&nbsp;'*8,v.strip())
+                            else :
+                                d = re.sub(r'struct\s+(packed\s*)(\{.*\})',r'struct \1',x['decl'])
+                            members.append({'decl' : d})
+                        s += self.add_info(members)
+                        # s += self.add_info([x for x in ti['member']])
                 elif not colored :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
@@ -217,7 +229,7 @@ class VerilogTypePopup :
                         elif ti['decl'] and 'interface' in ti['decl']:
                             mi = verilog_module.lookup_module(self.view,ti['name'])
                             if mi :
-                                # pprint.pprint(mi)
+                                pprint.pprint(mi)
                                 if 'param' in mi:
                                     s += self.add_info(mi['param'],fielTemplate='DNV-parameter')
                                 if 'signal' in mi:
@@ -269,7 +281,7 @@ class VerilogTypePopup :
         ti = None
         colored = False
         txt = ''
-        # if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
+        if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
         # In case of field, retrieve parent type
         if '.' in var_name:
             ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
@@ -381,11 +393,11 @@ class VerilogTypePopup :
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:
                     txt += ' = ' + ti['value']
-        # print('[SV:get_type] {0}'.format(ti))
+        # if debug: print('[SV:get_type] {0}'.format(ti))
         return txt,ti,colored
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
-                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'extends']
+                'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'default', 'extends']
 
     def color_str(self,s, addLink=False, ti_var=None, last_word=True):
         ss = s.split()

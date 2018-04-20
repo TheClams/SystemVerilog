@@ -9,5 +9,5 @@ SystemVerilog 2.18.0 Changelog:
     * Improve snippet
     * Add autocompletion specific to constraint
   - Misc:
-    * Add highlight for interconnect
+    * Add highlight for interconnect and untyped
 

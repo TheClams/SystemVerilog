@@ -287,6 +287,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     modport_only = True
                 elif ti['type']=='module':
                     t = w
+                elif ti['type']=='clocking':
+                    for x in ti['port']:
+                        completion.append([x['name']+'\t'+x['type'], x['name']])
+                    return completion
                 else:
                     t = ti['type']
 

@@ -57,41 +57,47 @@ def get_type_info_file_cache(fname, var_name, fdate):
     return ti
 
 # Extract the declaration of var_name from txt
-#return a tuple: complete string, type, arraytype (none, fixed, dynamic, queue, associative)
 def get_type_info(txt,var_name,search_decl=True):
+    ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag': '', 'value':None}
     txt = clean_comment(txt)
     m = re.search(r'(?s)'+re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    # print('[get_type_info] var = {}'.format(var_name))
     # print('[get_type_info] text = {}'.format(txt))
     # print('[get_type_info] RE = {}'.format(re_enum+r'('+var_name+r')\b.*$'))
-    tag = 'enum'
-    idx_type = 1
-    idx_bw = 3
-    idx_max = 5
-    idx_val = -1
-    if not m:
-        m = re.search(re_union+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
-        tag = 'struct'
-        if not m:
-            idx_type = 1
-            idx_bw = 3
-            idx_max = 3
-            m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
-            tag = 'typedef'
-            if not m and search_decl:
-                re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'\{.+?\}|\{.+?\}|[^,;]+))?[^\.]*?$'
-                # print('[get_type_info] RE inst = {}'.format(re_str))
-                m = re.search(re_str, txt, flags=re.MULTILINE)
-                tag = 'decl'
-                idx_type = 3
-                idx_bw = 4
-                idx_max = 5
-                idx_val = 9
-                if not m :
-                    m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
-                    tag = 'inst'
-    # print('[get_type_info] tag = {0} , groups = {1}, str={2}'.format(tag,'' if not m else m.groups(),'' if not m else m.group(0)))
-    ti = get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag)[0]
-    return ti
+    if m:
+        # print('[get_type_info] {} type is Enum'.format(var_name))
+        return get_type_info_from_match(var_name,m,1,3,5,-1,'enum')[0]
+    # Struct
+    m = re.search(re_union+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    if m:
+        # print('[get_type_info] {} type is struct'.format(var_name))
+        return get_type_info_from_match(var_name,m,1,3,5,-1,'struct')[0]
+    # Typedef
+    m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
+    if m:
+        # print('[get_type_info] {} type is typedef'.format(var_name))
+        return get_type_info_from_match(var_name,m,1,3,3,-1,'typedef')[0]
+    #
+    if not search_decl:
+        return ti_not_found
+    # Clocking block
+    m = re.search(r'(?s)\b(clocking)\s+('+var_name+r')(.*?)endclocking\b',txt)
+    if m :
+        # print('[get_type_info] {} type is Clocking'.format(var_name))
+        return get_clocking_info(var_name,m.group(3))
+    # Signal declaration
+    re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'\{.+?\}|\{.+?\}|[^,;]+))?[^\.]*?$'
+    # print('[get_type_info] RE Decl = {}'.format(re_str))
+    m = re.search(re_str, txt, flags=re.MULTILINE)
+    if m:
+        # print('[get_type_info] {} type is a declaration'.format(var_name))
+        return get_type_info_from_match(var_name,m,3,4,5,9,'decl')[0]
+    # Instances
+    m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    if m:
+        # print('[get_type_info] {} type is an instance'.format(var_name))
+        return get_type_info_from_match(var_name,m,3,4,5,9,'inst')[0]
+    return ti_not_found
 
 # Extract the macro content from `define name macro_content
 def get_macro(txt, name):
@@ -151,11 +157,12 @@ def get_all_type_info(txt,no_inst=False):
         txt = r.sub('',txt)
     # Look for clocking block
     # print('[get_all_type_info] Look for clocking block')
-    r = re.compile(r'(?s)clocking\s+(\w+)(.*?)endclocking(\s*:\s*\w+)?', flags=re.MULTILINE)
+    r = re.compile(r'(?s)(default\s+)?(clocking)\s+(\w+)(.*?)endclocking(\s*:\s*\w+)?', flags=re.MULTILINE)
     cbs = r.findall(txt)
     if cbs:
         for cb in cbs:
-            ti.append({'decl':'clocking '+cb[0],'type':'','array':'','bw':'', 'name':cb[0], 'tag':'clocking'})
+            ti.append(get_clocking_info(cb[2],cb[3]))
+            # print('[get_all_type_info] Clocking: {}'.format(ti))
         # remove clocking block before looking for I/O and field to avoid duplication of signals
         txt = r.sub('',txt)
     # Look for enum declaration
@@ -336,6 +343,19 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             # TODO: handle init value inside list
             # print("Array: " + str(m) + "=>" + str(at))
             ti.append(d)
+    return ti
+
+def get_clocking_info(name, content):
+    ports = []
+    m_port = re.search(r'input\s+([^;]+);',content)
+    if m_port:
+        ports+=[{'name':x.strip(),'type':'input'} for x in m_port.group(1).split(',')]
+    m_oport = re.search(r'output\s+([^;]+);',content)
+    if m_oport:
+        ports+=[{'name':x.strip(),'type':'output'} for x in m_port.group(1).split(',')]
+    ti = {'decl':'clocking '+name,'type':'clocking','array':'','bw':'', 'name':name, 'tag':'clocking',
+        'port':ports}
+    # print('[get_clocking_info] {}'.format(ti))
     return ti
 
 ###############################################################################

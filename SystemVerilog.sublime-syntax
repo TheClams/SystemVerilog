@@ -259,16 +259,6 @@ contexts:
     - match: '\[\s*(\$)\s*\]'
       captures:
         1: keyword.operator.systemverilog
-    # Attributes
-    - match: ^\s*\(\*
-      captures:
-        0: punctuation.definition.attribute.systemverilog
-      push:
-        - meta_scope: comment.attribute.systemverilog
-        - match: \*\)
-          pop: true
-          captures:
-            0: punctuation.definition.attribute.systemverilog
     # stray bracket
     - match: \(
       push:
@@ -316,6 +306,16 @@ contexts:
       scope: comment.line.double-slash.systemverilog
       captures:
         1: punctuation.definition.comment.systemverilog
+    # Attributes
+    - match: ^\s*(\(\*)\s*\w
+      captures:
+        1: punctuation.definition.attribute.systemverilog
+      push:
+        - meta_scope: comment.attribute.systemverilog
+        - match: \*\)
+          pop: true
+          captures:
+            0: punctuation.definition.attribute.systemverilog
   constants:
     - match: '(\b\d+)?''(s?[bB]\s*[0-1xXzZ?][0-1_xXzZ?]*|s?[oO]\s*[0-7xXzZ?][0-7_xXzZ?]*|s?[dD]\s*[0-9xXzZ?][0-9_xXzZ?]*|s?[hH]\s*[0-9a-fA-FxXzZ?][0-9a-fA-F_xXzZ?]*)((e|E)(\+|-)?[0-9]+)?(?!''|\w)'
       scope: constant.numeric.systemverilog
@@ -420,7 +420,7 @@ contexts:
             - match: '\*'
               scope: keyword.operator.systemverilog
         - include: port-dir
-        - match: \s*(parameter)
+        - match: \s*(parameter|localparam)
           scope: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport

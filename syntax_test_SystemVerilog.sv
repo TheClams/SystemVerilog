@@ -128,6 +128,10 @@ timeprecision 1fs;
 // <- keyword.control
 //            ^ constant.numeric.time
 
+sequence e3(sequence a, untyped b);
+@(posedge sysclk) a.triggered ##1 b;
+endsequence
+
 /*------------------------------------------------------------------------------
 --  User Defined type
 ------------------------------------------------------------------------------*/

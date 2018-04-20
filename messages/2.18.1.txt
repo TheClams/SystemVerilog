@@ -1,0 +1,13 @@
+SystemVerilog 2.18.1 Changelog:
+
+## Enhancement ##
+  - Clocking block :
+    * Parsing of clocking block include info on ports
+    * Provide autocompletion for all ports of the clocking block
+    * Provide pop-up info for ports
+
+ ## Bug Fix ##
+  - Highlight :
+    * Support localparam in the ANSI declaration
+    * Support inline attribute in port declaration ( e.g. (* mark_debug = "true" *) input logic ...)
+
