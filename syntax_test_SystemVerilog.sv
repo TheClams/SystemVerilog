@@ -323,11 +323,12 @@ constraint C::proto1 { x inside {-4, 5, [y:2*y]}; }
 
 p.randomize() with { length inside [512:1512]; mode dist {1:=4, [2:3]:/3} ;}
 // ^^^^^^^^ support.function.generic.systemverilog
-//                          ^^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
-//                                                  ^^^^^ meta.block.constraint.systemverilog
-constraint c {
+//                 ^ meta.block.constraint.systemverilog punctuation.section.block.begin.systemverilog
+//                          ^^^^^^ keyword.other.systemverilog
+//                                                                         ^ punctuation.section.block.end.systemverilog
 
-}
+assert(a.randomize(ack) with {}; );
+
 /*------------------------------------------------------------------------------
 --  MISC
 ------------------------------------------------------------------------------*/

@@ -262,6 +262,7 @@ contexts:
     # stray bracket
     - match: \(
       push:
+        # - meta_scope: meta.brackets.systemverilog
         - match: \)
           pop: true
         - match: '[^\)\n]*$(?!\n)'
@@ -456,6 +457,8 @@ contexts:
       scope: keyword.operator.comparison.systemverilog
     - match: (=)
       scope: keyword.operator.assignment.systemverilog
+    - match: (:=|:/)
+      scope: keyword.operator.constraint.systemverilog
     - match: (\-|\+|\*|\/|<<|>>|%)
       scope: keyword.operator.arithmetic.systemverilog
     - match: (!|&&|\|\||\bor\b)
@@ -705,16 +708,19 @@ contexts:
         3 : storage.type.userdefined.systemverilog
         4 : keyword.operator.scope.systemverilog
         5 : entity.name.section.systemverilog
-      set: constraint_block
+        6 : punctuation.section.block.constraint.begin.systemverilog
+      push: constraint_block
     - match: '\s*\b(with)\s*(\{)'
       captures:
         1: keyword.other.systemverilog
-      set: constraint_block
+        2: punctuation.section.block.constraint.begin.systemverilog
+      push: constraint_block
   constraint_block:
         - meta_scope: meta.block.constraint.systemverilog
         - match: \b(solve|before|soft|if|else|foreach|disable|dist|inside|unique)\b
           scope: keyword.other.systemverilog
         - match: '\}'
+          scope: punctuation.section.block.constraint.end.systemverilog
           pop: true
         - match : \{
           scope: keyword.operator.array.begin.systemverilog
