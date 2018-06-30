@@ -261,7 +261,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             return [ti_not_found]
         t = m.groups()[1]
         idx_bw = 3
-    # print("[SV:get_type_info_from_match] Group => " + str(m.groups()))
+    # print("[SV:get_type_info_from_match] type={} Group => {}".format(t,str(m.groups())))
     value = None
     ft = ''
     bw = ''
@@ -307,7 +307,15 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         return [ti_not_found]
     ti = []
     if t=='class' and len(signal_list)==1 :
-        ti.append(parse_class(line+'\nendclass'))
+        # For class try to create a valid complete class declaration by adding at least the endclass
+        # If the declaration was on more than one line assume it was because of parameters, and close parenthesis
+        l = line.strip()
+        if not l.endswith(';'):
+            if l.endswith(','):
+                l = l[:-1]
+            l+= ');'
+        l+='\nendclass'
+        ti.append(parse_class(l))
         if ti[0]:
             ti[0]['tag'] = 'decl'
         else:
@@ -347,11 +355,9 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
 
 def get_clocking_info(name, content):
     ports = []
-    m_port = re.search(r'input\s+([^;]+);',content)
-    if m_port:
+    for m_port in re.finditer(r'input\s+([^;]+);',content):
         ports+=[{'name':x.strip(),'type':'input'} for x in m_port.group(1).split(',')]
-    m_oport = re.search(r'output\s+([^;]+);',content)
-    if m_oport:
+    for m_oport in re.finditer(r'output\s+([^;]+);',content):
         ports+=[{'name':x.strip(),'type':'output'} for x in m_port.group(1).split(',')]
     ti = {'decl':'clocking '+name,'type':'clocking','array':'','bw':'', 'name':name, 'tag':'clocking',
         'port':ports}

@@ -159,11 +159,12 @@ class VerilogTypePopup :
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
             elif use_tooltip :
+                if debug:  print('[SV:Popup.show] {} (colored={})'.format(ti,colored));
                 s_func = '<br><span class="extra-info">{0}<span class="keyword">function </span><span class="function">{1}</span>()</span>' # tempalte for printing function info
                 if ti and (ti['type'] in ['module','interface','function','task']):
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'param' in ti:
-                        s += self.add_info(ti['param'],fielTemplate='DNV-parameter')
+                        s += self.add_info(ti['param'],fieldTemplate='DNV-parameter')
                     if 'port' in ti:
                         s += self.add_info(ti['port'])
                     if ti['type']=='interface':
@@ -173,7 +174,12 @@ class VerilogTypePopup :
                             if 'signal' in ti:
                                 s += self.add_info([x for x in ti['signal'] if x['tag']=='decl'])
                             if 'modport' in ti:
-                                s += self.add_info(ti['modport'],fielTemplate='modport {0}', field='name')
+                                s += self.add_info(ti['modport'],fieldTemplate='modport {0}', field='name')
+                elif ti and ti['type'] == 'clocking':
+                    s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
+                    for p in ti['port']:
+                        x = '{} {}'.format(p['type'],p['name'])
+                        s += '<br><span class="extra-info">{}{}</span>'.format('&nbsp;'*4,self.color_str(x)[0])
                 elif ti and 'tag' in ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
                     m = re.search(r'(?s)^(.*)\{(.*)\}', ti['decl'])
                     s,tti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
@@ -229,13 +235,13 @@ class VerilogTypePopup :
                         elif ti['decl'] and 'interface' in ti['decl']:
                             mi = verilog_module.lookup_module(self.view,ti['name'])
                             if mi :
-                                pprint.pprint(mi)
+                                # pprint.pprint(mi)
                                 if 'param' in mi:
-                                    s += self.add_info(mi['param'],fielTemplate='DNV-parameter')
+                                    s += self.add_info(mi['param'],fieldTemplate='DNV-parameter')
                                 if 'signal' in mi:
                                     s += self.add_info([x for x in mi['signal'] if x['tag']=='decl'])
                                 if 'modport' in mi:
-                                    s += self.add_info(mi['modport'],fielTemplate='modport {0}', field='name')
+                                    s += self.add_info(mi['modport'],fieldTemplate='modport {0}', field='name')
                         elif ti['type']=='class':
                             ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
                             if ci:
@@ -252,15 +258,15 @@ class VerilogTypePopup :
                         s = s[:127]
                 sublime.status_message(s)
 
-    def add_info(self, ilist, field='decl', template='<br><span class="extra-info">{0}{1}</span>', space=4, limit=256, useColor=True, fielTemplate='{0}'):
+    def add_info(self, ilist, field='decl', template='<br><span class="extra-info">{0}{1}</span>', space=4, limit=256, useColor=True, fieldTemplate='{0}'):
         s = ''
         cnt = 0;
         for x in ilist:
-            if fielTemplate.startswith('DNV'):
-                f = fielTemplate[4:]+' {d} {n} = {v}'
+            if fieldTemplate.startswith('DNV'):
+                f = fieldTemplate[4:]+' {d} {n} = {v}'
                 f = f.format(d=x['decl'],n=x['name'],v=x['value'])
             else :
-                f = fielTemplate.format(x[field])
+                f = fieldTemplate.format(x[field])
             if useColor:
                 f = self.color_str(f)[0]
             s += template.format('&nbsp;'*space,f)
