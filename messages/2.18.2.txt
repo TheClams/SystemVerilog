@@ -1,0 +1,15 @@
+SystemVerilog 2.18.2 Changelog:
+
+## Enhancement ##
+  - Clocking block :
+    * Improve parsing with multiple input/output statement
+  - Snippets: fork/join
+
+## Bug Fix ##
+  - Highlight : Fix highlight of comment in constraint
+  - Parsing : fix some class info extraction
+  - Alignement :
+    * Fix misalignement following generate block
+    * Support module parameter value containing spaces.
+  - Remove some print debug ...
+

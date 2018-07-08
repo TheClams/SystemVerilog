@@ -49,7 +49,7 @@ def type_info_from_import(view,txt,varname):
 
 def type_info_from_base(view,r,varname):
     ti = None
-    cname,cdecl = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+(.*?);')
+    cname,cdecl = sublimeutil.find_closest(view,r,r'(?s)\bclass\s+.*?\bextends\s+(.*?);')
     # print ('[SV: type_info_from_base] inside class {}'.format(cname))
     if cname:
         ci = lookup_type(view,cname)

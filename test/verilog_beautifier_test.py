@@ -148,3 +148,7 @@ class Tests(unittest.TestCase):
     def test_always_nobegin(self):
         cfg = BeautifyConfig(nbSpace=3)
         self.runBeautifyTest(self.path_test+"always_nobegin.sv", self.path_test+"always_nobegin_exp.sv", cfg)
+
+    def test_beautifyGenerate(self):
+        cfg = BeautifyConfig(nbSpace=3)
+        self.runBeautifyTest(self.path_test+"generate.sv", self.path_test+"generate_exp.sv", cfg)
