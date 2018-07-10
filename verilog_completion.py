@@ -655,10 +655,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout']:
                 ti = verilog_module.lookup_type(view,ti['type'])
             if ti and ti['type']=='enum':
-                m = re.search(r'\{(.*)\}', ti['decl'])
-                if m :
-                    el = re.findall(r"(\w+).*?(?:,|$)",m.groups()[0])
-                    c += ([['{0}\tEnum value'.format(x),x] for x in el])
+                el = verilogutil.get_enum_values(ti['decl'])
+                c += ([['{0}\tEnum value'.format(x),x] for x in el])
         return c
 
     # Completion for ::

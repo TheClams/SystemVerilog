@@ -598,3 +598,10 @@ def fill_case(ti,length=0):
     print('[fill_case] Type not supported: ' + str(t))
     return (None,None)
 
+
+# Extract all enum values from the declaration
+def get_enum_values(decl):
+    m = re.search(r'\{(.*)\}', decl)
+    if not m:
+        return []
+    return re.findall(r"(\w+).*?(?:,|$)",m.groups()[0])

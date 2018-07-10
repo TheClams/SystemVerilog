@@ -983,7 +983,10 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
         # Extract the list of declared signals/port/param
         decl = []
         for x in self.mi['signal']:
-            decl.append(x['name'])
+            if x['tag']=='enum' :
+                decl += verilogutil.get_enum_values(x['decl'])
+            else :
+                decl.append(x['name'])
         for x in self.mi['port']:
             decl.append(x['name'])
         for x in self.mi['param']:
@@ -992,9 +995,10 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
             decl.append(x['name'])
         # Remove duplicate and check that each signals is inside the list of declared signals
         signals = list(set(signals)) # remove duplicate
-        signals = [s for s in signals if s not in ['and','or']] # remove false positive
+        signals = [s for s in signals if s not in ['and','or','int']] # remove false positive
         undecl = [s for s in signals if s not in decl]
         if undecl:
+            # Check for enum
             # Look for import package to be sure signals/constant used were not declared in a package
             imps = re.findall(r'(?s)^\s*import\s*(.*?);',self.txt,re.MULTILINE)
             if imps:
@@ -1006,6 +1010,9 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
                     pi = verilog_module.lookup_package(self.view,pkg)
                     if pi:
                         decl += [x['name'] for x in pi['member'] if x['tag'] in ['decl']]
+                        for x in pi['member'] :
+                            if x['tag']=='enum':
+                                decl += verilogutil.get_enum_values(x['decl'])
                 undecl = [x for x in undecl if x not in decl]
             if undecl:
                 self.result["undeclared"] = ', '.join([x for x in undecl])
