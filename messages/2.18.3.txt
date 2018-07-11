@@ -1,5 +1,0 @@
-SystemVerilog 2.18.3 Changelog:
-
-## Bug Fix ##
-  - Linting : Don't report enum/param in undeclared signal
-

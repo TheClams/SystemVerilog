@@ -23,6 +23,7 @@ except ImportError:
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 use_tooltip = False
+show_ref = False
 debug = False
 sv_settings = None
 tooltip_css = ''
@@ -50,12 +51,14 @@ def init_css():
     global use_tooltip
     global tooltip_css
     global tooltip_flag
+    global show_ref
     if int(sublime.version()) >= 3072 :
         use_tooltip = sv_settings.get('sv.tooltip',True)
         if sv_settings.get('sv.tooltip_hide_on_move',True):
             tooltip_flag = sublime.HIDE_ON_MOUSE_MOVE_AWAY
         else:
             tooltip_flag = 0
+        show_ref = int(sublime.version()) >= 3145 and sv_settings.get('sv.tooltip_show_refs',True)
         color_plist = readPlistFromBytes(sublime.load_binary_resource(pref_settings.get('color_scheme')))
         color_dict = {}
         for x in color_plist['settings'] :
@@ -101,6 +104,7 @@ def init_css():
         tooltip_css+= 'body {{ background-color: #{bg:06x}; margin: 1px; font-size: 1em; }}\n'.format(bg=bgBody)
         tooltip_css+= 'p {padding-left: 0.6em;}\n'
         tooltip_css+= '.content {margin: 0.8em;}\n'
+        tooltip_css+= 'h1 {font-size: 1.0rem;font-weight: bold; margin: 0 0 0.25em 0;}\n'
         tooltip_css+= 'a {{color: #{c:06x};}}\n'.format(c=fg)
         tooltip_css+= '.keyword {{color: #{c:06x};}}\n'.format(c=kw)
         tooltip_css+= '.support {{color: #{c:06x};}}\n'.format(c=sup)
@@ -111,6 +115,7 @@ def init_css():
         tooltip_css+= '.numeric {{color: #{c:06x};}}\n'.format(c=num)
         tooltip_css+= '.string {{color: #{c:06x};}}\n'.format(c=st)
         tooltip_css+= '.extra-info {font-size: 0.9em; }\n'
+        tooltip_css+= '.ref_links {font-size: 0.9em; color: #0080D0; padding-left: 0.6em}\n'
         #print(tooltip_css)
     else :
        use_tooltip  = False
@@ -155,6 +160,7 @@ class VerilogTypePopup :
         if debug:  print('[SV:Popup.show] Word to show = {0}'.format(v));
         if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
             s,ti,colored = self.get_type(v,region)
+            ref_name = ''
             if not s:
                 sublime.status_message('No definition found for ' + v)
             # Check if we use tooltip or statusbar to display information
@@ -162,6 +168,7 @@ class VerilogTypePopup :
                 if debug:  print('[SV:Popup.show] {} (colored={})'.format(ti,colored));
                 s_func = '<br><span class="extra-info">{0}<span class="keyword">function </span><span class="function">{1}</span>()</span>' # tempalte for printing function info
                 if ti and (ti['type'] in ['module','interface','function','task']):
+                    ref_name = ti['name']
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'param' in ti:
                         s += self.add_info(ti['param'],fieldTemplate='DNV-parameter')
@@ -190,6 +197,7 @@ class VerilogTypePopup :
                         if fti:
                             s += self.add_info(fti)
                 elif ti and ti['type']=='class':
+                    ref_name = ti['name']
                     if 'fname' in ti:
                         ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
                     else :
@@ -247,6 +255,16 @@ class VerilogTypePopup :
                             if ci:
                                 s += self.add_info([x for x in ci['member'] if 'access' not in x])
                                 s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
+                # Add reference list
+                if show_ref and ref_name :
+                    refs = self.view.window().lookup_references_in_index(ref_name)
+                    if refs:
+                        ref_links = []
+                        for l in refs :
+                            l_href = '{}:{}:{}'.format(l[0],l[2][0],l[2][1])
+                            l_name = os.path.basename(l[0])
+                            ref_links.append('<a href="LINK@{}" class="ref_links">{}</a>'.format(l_href,l_name))
+                        s += '<h1><br>Reference:</h1><span>{}</span>'.format('<br>'.join(ref_links))
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 # print(s)
                 self.view.show_popup(s,location=location, flags=tooltip_flag, max_width=500, on_navigate=self.on_navigate)

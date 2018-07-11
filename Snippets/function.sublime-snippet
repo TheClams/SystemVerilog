@@ -1,8 +1,8 @@
 <snippet>
    <name>Function SystemVerilog</name>
-   <content><![CDATA[function ${0}();
+   <content><![CDATA[function ${1:void} ${2}($0);
 
-endfunction : ${0}]]></content>
+endfunction : ${2}]]></content>
     <tabTrigger>function</tabTrigger>
     <scope>source.systemverilog</scope>
 </snippet>

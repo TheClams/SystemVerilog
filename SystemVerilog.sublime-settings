@@ -13,6 +13,7 @@
 	"sv.tooltip" : true, // True to display information in a tooltip (sublime 3072+), false to use the status bar instead
 	"sv.tooltip_hide_on_move" : true, // True to hide the tooltip when the mouse move away from the tooltip
 	"sv.tooltip_show_module_on_port" : false, // True to include module type and instance when showing tooltip for a port
+	"sv.tooltip_show_refs" : true, // True to show reference to module/interface/...
 	// SystemVerilog Alignment configuration
 	"sv.one_bind_per_line"     : true,  // When aligning module instantiation force only one binding per line
 	"sv.one_decl_per_line"     : false, // When aligning signal declaration force only one signal per line
