@@ -545,6 +545,7 @@ def get_all_function(txt,funcname=r'\w+'):
     fil = [] # Function Info list
     fl = re.findall(r'(?s)(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\3\b',txt,flags=re.MULTILINE)
     fl += re.findall(r'(?s)extern\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
+    fl += re.findall(r'(?s)^[ \t]*import\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
     for ( f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
         if f_args:
             pi = get_all_type_info(f_args + ';')
