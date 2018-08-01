@@ -1,22 +1,15 @@
+from __future__ import absolute_import
+
 import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, pprint, imp, threading
 from collections import Counter
 from plistlib import readPlistFromBytes
 
-try:
-    from SystemVerilog import verilog_module
-except ImportError:
-    sys.path.append(os.path.dirname(__file__))
-    import verilog_module
-
-try:
-    from SystemVerilog.verilogutil import verilogutil
-    from SystemVerilog.verilogutil import sublimeutil
-except ImportError:
-    sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
-    import verilogutil
-    import sublimeutil
-
+from . import verilog_module
+from .verilogutil import verilogutil
+from .verilogutil import sublimeutil
+from .color_scheme_util import st_color_scheme_matcher
+from .color_scheme_util import rgba
 
 ############################################################################
 # Init
@@ -33,6 +26,7 @@ def plugin_loaded():
     imp.reload(verilogutil)
     imp.reload(sublimeutil)
     imp.reload(verilog_module)
+    imp.reload(st_color_scheme_matcher)
     global sv_settings
     global pref_settings
     global debug
@@ -59,64 +53,46 @@ def init_css():
         else:
             tooltip_flag = 0
         show_ref = int(sublime.version()) >= 3145 and sv_settings.get('sv.tooltip_show_refs',True)
-        color_plist = readPlistFromBytes(sublime.load_binary_resource(pref_settings.get('color_scheme')))
-        color_dict = {}
-        for x in color_plist['settings'] :
-            if 'scope' in x:
-                for s in x['scope'].split(','):
-                    color_dict[s.strip()] = x['settings']
-        color_dict['__GLOBAL__'] = color_plist['settings'][0]['settings'] # first settings contains global settings, without scope(hopefully)
-        # pprint.pprint(color_dict, width=200)
-        bg = int(color_dict['__GLOBAL__']['background'][1:],16)
-        fg = int(color_dict['__GLOBAL__']['foreground'][1:],16)
-        # Get color for keyword, support, storage, default to foreground
-        kw  = fg if 'keyword' not in color_dict else int(color_dict['keyword']['foreground'][1:],16)
-        sup = fg if 'support' not in color_dict else int(color_dict['support']['foreground'][1:],16)
-        sto = fg if 'storage' not in color_dict else int(color_dict['storage']['foreground'][1:],16)
-        ent = fg if 'entity' not in color_dict else int(color_dict['entity']['foreground'][1:],16)
-        fct = fg if 'support.function' not in color_dict else int(color_dict['support.function']['foreground'][1:],16)
-        op  = fg if 'keyword.operator' not in color_dict else int(color_dict['keyword.operator']['foreground'][1:],16)
-        num = fg if 'constant.numeric' not in color_dict else int(color_dict['constant.numeric']['foreground'][1:],16)
-        st  = fg if 'string' not in color_dict else int(color_dict['string']['foreground'][1:],16)
+        #
+        scheme = st_color_scheme_matcher.ColorSchemeMatcher(pref_settings.get('color_scheme'))
+        bg = scheme.get_special_color('background')
+        fg = scheme.get_special_color('foreground')
         # Create background and border color based on the background color
-        b = bg & 255
-        g = (bg>>8) & 255
-        r = (bg>>16) & 255
-        if b > 128:
-            bgHtml = b - 0x33
-            bgBody = b - 0x20
+        bg_rgb = rgba.RGBA(bg)
+        if bg_rgb.b > 128:
+            bgHtml = bg_rgb.b - 0x33
+            bgBody = bg_rgb.b - 0x20
         else:
-            bgHtml = b + 0x33
-            bgBody = b + 0x20
-        if g > 128:
-            bgHtml += (g - 0x33)<<8
-            bgBody += (g - 0x20)<<8
+            bgHtml = bg_rgb.b + 0x33
+            bgBody = bg_rgb.b + 0x20
+        if bg_rgb.g > 128:
+            bgHtml += (bg_rgb.g - 0x33)<<8
+            bgBody += (bg_rgb.g - 0x20)<<8
         else:
-            bgHtml += (g + 0x33)<<8
-            bgBody += (g + 0x20)<<8
-        if r > 128:
-            bgHtml += (r - 0x33)<<16
-            bgBody += (r - 0x20)<<16
+            bgHtml += (bg_rgb.g + 0x33)<<8
+            bgBody += (bg_rgb.g + 0x20)<<8
+        if bg_rgb.r > 128:
+            bgHtml += (bg_rgb.r - 0x33)<<16
+            bgBody += (bg_rgb.r - 0x20)<<16
         else:
-            bgHtml += (r + 0x33)<<16
-            bgBody += (r + 0x20)<<16
-        tooltip_css = 'html {{ background-color: #{bg:06x}; color: #{fg:06x}; }}\n'.format(bg=bgHtml, fg=fg)
+            bgHtml += (bg_rgb.r + 0x33)<<16
+            bgBody += (bg_rgb.r + 0x20)<<16
+        tooltip_css = 'html {{ background-color: #{bg:06x}; color: {fg}; }}\n'.format(bg=bgHtml, fg=fg)
         tooltip_css+= 'body {{ background-color: #{bg:06x}; margin: 1px; font-size: 1em; }}\n'.format(bg=bgBody)
         tooltip_css+= 'p {padding-left: 0.6em;}\n'
         tooltip_css+= '.content {margin: 0.8em;}\n'
         tooltip_css+= 'h1 {font-size: 1.0rem;font-weight: bold; margin: 0 0 0.25em 0;}\n'
-        tooltip_css+= 'a {{color: #{c:06x};}}\n'.format(c=fg)
-        tooltip_css+= '.keyword {{color: #{c:06x};}}\n'.format(c=kw)
-        tooltip_css+= '.support {{color: #{c:06x};}}\n'.format(c=sup)
-        tooltip_css+= '.storage {{color: #{c:06x};}}\n'.format(c=sto)
-        tooltip_css+= '.function {{color: #{c:06x};}}\n'.format(c=fct)
-        tooltip_css+= '.entity {{color: #{c:06x};}}\n'.format(c=ent)
-        tooltip_css+= '.operator {{color: #{c:06x};}}\n'.format(c=op)
-        tooltip_css+= '.numeric {{color: #{c:06x};}}\n'.format(c=num)
-        tooltip_css+= '.string {{color: #{c:06x};}}\n'.format(c=st)
+        tooltip_css+= 'a {{color: {c};}}\n'.format(c=fg)
+        tooltip_css+= '.keyword {{color: {c};}}\n'.format(c=scheme.get_color('keyword'))
+        tooltip_css+= '.support {{color: {c};}}\n'.format(c=scheme.get_color('support'))
+        tooltip_css+= '.storage {{color: {c};}}\n'.format(c=scheme.get_color('storage'))
+        tooltip_css+= '.function {{color: {c};}}\n'.format(c=scheme.get_color('support.function'))
+        tooltip_css+= '.entity {{color: {c};}}\n'.format(c=scheme.get_color('entity'))
+        tooltip_css+= '.operator {{color: {c};}}\n'.format(c=scheme.get_color('keyword.operator'))
+        tooltip_css+= '.numeric {{color: {c};}}\n'.format(c=scheme.get_color('constant.numeric'))
+        tooltip_css+= '.string {{color: {c};}}\n'.format(c=scheme.get_color('string'))
         tooltip_css+= '.extra-info {font-size: 0.9em; }\n'
         tooltip_css+= '.ref_links {font-size: 0.9em; color: #0080D0; padding-left: 0.6em}\n'
-        #print(tooltip_css)
     else :
        use_tooltip  = False
        tooltip_css = ''

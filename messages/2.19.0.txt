@@ -2,8 +2,9 @@ SystemVerilog 2.19.0 Changelog:
 
 ## Enhancement ##
   - Tooltip :
-  	* Now show a list of reference for module. This is controlled by setting sv.tooltip_show_refs
-  	* Support tooltip for function declared as import DPI
+    * Support new ST color-scheme format
+    * Now show a list of reference for module. This is controlled by setting sv.tooltip_show_refs
+    * Support tooltip for function declared as import DPI
 
 ## Bug Fix ##
   - Linting : Don't report enum/param in undeclared signal
