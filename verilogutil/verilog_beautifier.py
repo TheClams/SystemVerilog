@@ -23,7 +23,7 @@ class VerilogBeautifier():
             self.indent = self.indentSpace
         self.states = []
         self.state = ''
-        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
+        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter|local|protected)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
         self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case','casex','casez', 'generate', 'covergroup', 'property', 'sequence','checker', 'fork', 'begin', '{', '(']
         if not ignoreTick:
@@ -188,8 +188,11 @@ class VerilogBeautifier():
                                 elif not split[ilvl][1].strip().startswith('@') :
                                     # Exclude the assign cases
                                     m = re.match(r'^\s*(assign\s+)?\w+\s*(<?=)\s*(.*)',split[ilvl][1])
+                                    # Exclude the param list
                                     if not m:
-                                        # print('[Beautify] Incrementing split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                                        m = re.match(r'^\s*(localparam|parameter)\b',split[ilvl][1])
+                                    if not m:
+                                        # print('[Beautify] Incrementing split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}" ({split})'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl, split=split))
                                         split[ilvl][0] += 1
                 if self.block_state == 'decl' and not self.re_decl.match(line.strip()):
                     if self.settings['reindentOnly']:
@@ -198,7 +201,7 @@ class VerilogBeautifier():
                         txt_new += self.alignDecl(block)
                     block = ''
                     self.block_state = ''
-                # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl} (split={split}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl, split=split))
                 block += line.rstrip() + '\n'
                 line = ''
                 original_indent = ''
@@ -498,7 +501,7 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+|localparam\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" ]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"]+(,)?[ \t]*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+|localparam\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" ]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"\$ \=]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
             if not decl:
@@ -537,7 +540,7 @@ class VerilogBeautifier():
                     else:
                         # print('params = {0}'.format(m_param.groups()))
                         if has_param_all:
-                            l_new += 'parameter '
+                            l_new += '{} '.format('parameter' if not m_param.group('parameter') else m_param.group('parameter').strip())
                         if len_type>0:
                             if m_param.group('type'):
                                 if m_param.group('type') not in ['signed','unsigned']:

@@ -185,8 +185,9 @@ localparam logic [1:0] myvar2 = MY_INIT2;
 --  Structure / Typedef
 ------------------------------------------------------------------------------*/
 typedef struct {logic a; int b; bit [3:0] c;} mystruct;
-protected const mystruct c_var = '{a:0,b:1,c:4'hD};
+protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0};
 //                                 ^ support.function.field
+//                                                   ^^^^^^^ meta.struct.assign keyword.control
 
 /*------------------------------------------------------------------------------
 --  Task & functions
@@ -323,9 +324,9 @@ constraint C::proto1 { x inside {-4, 5, [y:2*y]}; }
 
 p.randomize() with { length inside [512:1512]; mode dist {1:=4, [2:3]:/3} ;}
 // ^^^^^^^^ support.function.generic.systemverilog
-//                 ^ meta.block.constraint.systemverilog punctuation.section.block.begin.systemverilog
+//                 ^ meta.block.constraint.systemverilog punctuation.section.block.constraint.begin.systemverilog
 //                          ^^^^^^ keyword.other.systemverilog
-//                                                                         ^ punctuation.section.block.end.systemverilog
+//                                                                         ^ punctuation.section.block.constraint.end.systemverilog
 
 assert(a.randomize(ack) with {}; );
 

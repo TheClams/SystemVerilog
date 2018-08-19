@@ -243,6 +243,10 @@ contexts:
             - match: '(?:,|})'
               pop: true
             - include: base-grammar
+        - match: '\b(default)\s*(:)(?!:)'
+          captures:
+            1: keyword.control.systemverilog
+            2: keyword.operator.other.systemverilog
         - match: '\b({{id}})\s*(:)(?!:)'
           captures:
             1: support.function.field.systemverilog
