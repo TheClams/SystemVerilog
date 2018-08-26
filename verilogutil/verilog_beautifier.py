@@ -501,21 +501,24 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?P<parameter>parameter\s+|localparam\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" ]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"\$ \=]+(,)?[ \t]*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
             if not decl:
                 print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
                 return ''
+            # print(decl)
+            len_param = max([len(x[0]) for x in decl])
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
             len_bw    = max([len(x[4]) for x in decl])
             len_param = max([len(x[5]) for x in decl])
             len_value = max([len(x[6]) for x in decl])
             len_comment = max([len(x[-1]) for x in decl])
-            has_param_list = ['' for x in decl if x[0] != '']
+            has_param_list = [x[0] for x in decl if x[0] != '']
             has_param_all = len(has_param_list)==len(decl)
             has_param = len(has_param_list)>0
+            last_param = 'parameter' if len(has_param_list)==0 else has_param_list[0]
             # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param)))
             if m.group('import'):
                 txt_new += self.indent*(ilvl+1) + '#('
@@ -531,24 +534,26 @@ class VerilogBeautifier():
                 for i,line in enumerate(lines):
                     l = line.strip()
                     # ignore the first line with parameter keyword only since it has already been added
-                    if i==0 and l=='parameter':
+                    if i==0 and l==last_param:
                         continue
                     l_new = self.indent*(ilvl+1)
                     m_param = re_param.search(l)
                     if not m_param or self.settings['reindentOnly']:
                         l_new += l
                     else:
+                        if m_param.group('parameter') :
+                            last_param = m_param.group('parameter')
                         # print('params = {0}'.format(m_param.groups()))
                         if has_param_all:
-                            l_new += '{} '.format('parameter' if not m_param.group('parameter') else m_param.group('parameter').strip())
+                            l_new += last_param.ljust(len_param+1)
                         if len_type>0:
                             if m_param.group('type'):
                                 if m_param.group('type') not in ['signed','unsigned']:
                                     l_new += m_param.group('type').ljust(len_type+1)
                                 else:
-                                    l_new += ''.ljust(len_type+2) + m_param.group('type').ljust(len_sign+1)
+                                    l_new += ''.ljust(len_type+1) + m_param.group('type').ljust(len_sign+1)
                             else:
-                                l_new += ''.ljust(len_type+2)
+                                l_new += ''.ljust(len_type+1)
                         if len_sign>0:
                             if m_param.group('sign'):
                                 l_new += m_param.group('sign').ljust(len_sign)

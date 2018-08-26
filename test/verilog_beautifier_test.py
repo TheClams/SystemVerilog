@@ -73,9 +73,9 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig(nbSpace=2)
         self.runBeautifyTest(self.path_test+"typedef.sv", self.path_test+"typedef_exp.sv", cfg)
 
-    def test_beautifyText5(self):
+    def test_beautifyParam(self):
         cfg = BeautifyConfig()
-        self.runBeautifyTest(self.path_test+"test5.sv", self.path_test+"test5_expected.sv", cfg)
+        self.runBeautifyTest(self.path_test+"param.sv", self.path_test+"param_exp.sv", cfg)
 
     def test_beautifyText6(self):
         cfg = BeautifyConfig()
