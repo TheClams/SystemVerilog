@@ -402,3 +402,12 @@ package automatic example_pkg;
 //      ^^^^^^^^^ meta.definition.systemverilog keyword.other.systemverilog
 //                ^^^^^^^^^^^ meta.definition.systemverilog entity.name.type.class.systemverilog
 endpackage : example_pkg
+
+
+`ifdef SIGNED_FEATURES
+//     ^^^^^^^^^^^^^^^ support.variable.systemverilog
+    typedef logic signed [3:0] mytype;
+`elsif UNSIGNED_FEATURES
+//     ^^^^^^^^^^^^^^^^^ support.variable.systemverilog
+    typedef logic unsigned [3:0] mytype;
+`endif

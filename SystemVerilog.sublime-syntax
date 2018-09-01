@@ -334,7 +334,7 @@ contexts:
       scope: constant.numeric.time.systemverilog
     - match: '\b([A-Z][A-Z0-9_]*)\b'
       scope: constant.other.net.systemverilog
-    - match: (`ifdef|`ifndef|`default_nettype)\s+(\w+)
+    - match: (`ifdef|`elsif|`ifndef|`default_nettype)\s+(\w+)
       captures:
         1: constant.other.preprocessor.systemverilog
         2: support.variable.systemverilog
