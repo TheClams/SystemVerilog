@@ -92,7 +92,21 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if prev_symb=='$':
             completion = self.listbased_completion('systemtask')
         elif prev_symb=='`':
-            completion =  self.listbased_completion('tick')
+            pl = ''
+            if prefix:
+                _,pl = verilog_module.lookup_macro(self.view,prefix)
+            if pl:
+                pl = pl.split(',')
+                s= '`{}('.format(prefix)
+                for i,p in enumerate(pl):
+                    s+= '${{{0}:{1}}}'.format(i+1,p.strip())
+                    if i != (len(pl)-1):
+                        s+=', '
+                s+= ')${0}'
+                completion.append(['`{}\tmacro'.format(prefix),s])
+                flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
+            else:
+                completion =  self.listbased_completion('tick')
         elif prev_symb=='.':
             completion =  self.dot_completion(view,r)
         elif prev_symb=='::':

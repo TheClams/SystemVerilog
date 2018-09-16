@@ -1,0 +1,9 @@
+SystemVerilog 2.20.0 Changelog:
+
+## Improvements ##
+ - Autocompletion :
+ 	* Now works on macro with parameters
+
+## Bug Fix ##
+  - Tooltip :
+  	* Fix display of macro using < character

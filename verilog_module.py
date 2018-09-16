@@ -270,6 +270,28 @@ def lookup_type(view, t):
     # print('[SV:lookup_type] {0}'.format(ti))
     return ti
 
+def lookup_macro(view, name):
+    txt = ''
+    params = []
+    filelist = view.window().lookup_symbol_in_index(name)
+    if filelist:
+        fname = view.file_name()
+        # Check if symbol is defined in current file first
+        if fname in [sublimeutil.normalize_fname(f[0]) for f in filelist]:
+            with open(fname,'r') as f:
+                flines = str(f.read())
+            txt,params = verilogutil.get_macro(flines,name)
+        else:
+            for fi in filelist:
+                fname = sublimeutil.normalize_fname(fi[0])
+                with open(fname,'r') as f:
+                    flines = str(f.read())
+                txt,params = verilogutil.get_macro(flines,name)
+                if txt:
+                    break
+    return txt,params
+
+
 ########################################
 # Create module instantiation skeleton #
 class VerilogModuleInstCommand(sublime_plugin.TextCommand):

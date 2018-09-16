@@ -348,22 +348,7 @@ class VerilogTypePopup :
                 txt = 'package {0}'.format(var_name)
         # Get Macro text
         elif 'constant.other.define' in scope:
-            filelist = self.view.window().lookup_symbol_in_index(var_name)
-            if filelist:
-                fname = self.view.file_name()
-                # Check if symbol is defined in current file first
-                if fname in [sublimeutil.normalize_fname(f[0]) for f in filelist]:
-                    with open(fname,'r') as f:
-                        flines = str(f.read())
-                    txt,_ = verilogutil.get_macro(flines,var_name)
-                else:
-                    for fi in filelist:
-                        fname = sublimeutil.normalize_fname(fi[0])
-                        with open(fname,'r') as f:
-                            flines = str(f.read())
-                        txt,_ = verilogutil.get_macro(flines,var_name)
-                        if txt:
-                            break
+            txt,_ = verilog_module.lookup_macro(self.view,var_name)
         # Variable inside a scope
         elif vs:
             if len(vs)==2:
@@ -400,7 +385,7 @@ class VerilogTypePopup :
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'default', 'extends']
 
     def color_str(self,s, addLink=False, ti_var=None, last_word=True):
-        ss = s.split()
+        ss = s.replace('<','&lt;').split()
         sh = ''
         ti = None
         pos_var = len(ss)-1
