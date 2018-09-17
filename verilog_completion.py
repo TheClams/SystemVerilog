@@ -61,12 +61,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         tmp_r = sublime.Region(r.a,r.b)
         # print('[SV:on_query_completions] tmp_r={0} => "{1}" . Class = {2}'.format(tmp_r,view.substr(tmp_r),view.classify(tmp_r.b)))
         if not view.substr(tmp_r).strip() :
-            tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
+            tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
             tmp_r.a = tmp_r.b
         if view.substr(tmp_r) in ['.','`','=','?']:
             prev_symb = view.substr(tmp_r)
         elif view.classify(tmp_r.b) & (sublime.CLASS_PUNCTUATION_END | 8192 | 4096):
+            #print('[SV:on_query_completions] tmp_r={0} => "{1}" ==>'.format(tmp_r,view.substr(tmp_r)))
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)
+            # print('[SV:on_query_completions] (punct end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
             prev_symb = view.substr(tmp_r).strip()
             if not prev_symb :
                 tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
@@ -76,7 +78,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     prev_symb = '.'
                     tmp_r.a = tmp_r.b - 1
                 tmp_r.b = tmp_r.a
-            # print('[SV:on_query_completions] (punct end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
         if view.classify(tmp_r.b) & sublime.CLASS_WORD_END:
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_WORD_START)
             prev_word = view.substr(tmp_r).strip()
@@ -122,8 +123,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif 'meta.struct.assign' in scope:
             completion = self.struct_assign_completion(view,r)
         elif prefix:
+            symbols = {n:l for l,n in view.symbols()}
+            l = ''
+            if prefix in symbols:
+                tmp_r = view.line(symbols[prefix])
+                l = view.substr(tmp_r)
+            if 'function' in l:
+                flines = verilogutil.clean_comment(view.substr(sublime.Region(tmp_r.a,self.view.size())))
+                fi = verilogutil.parse_function(flines,prefix)
+                if fi :
+                    s = self.function_snippet(fi)
+                    completion.append([fi['name']+'\t'+fi['type'],s])
+                    flag = 0
             # Provide completion for most used uvm function
-            if(prefix.startswith('u')):
+            elif(prefix.startswith('u')):
                 completion =  self.listbased_completion('uvm')
             # Provide completion for most always block
             elif(prefix.startswith('a')):
@@ -695,16 +708,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 for x in ti:
                     s = x['name']
                     if x['type'] in ['function','task']:
-                        s+= '('
-                        for i,p in enumerate(x['port']):
-                            s+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
-                            if i != (len(x['port'])-1):
-                                s+=', '
-                        s+= ')${0}'
+                        s = self.function_snippet(x)
                     c.append([x['name']+'\t'+x['type'],s])
         elif ti['type'] == 'class':
             sublime.status_message('Autocompletion for class scope unsupported for the moment')
         return c
+
+    def function_snippet(self,fi):
+        s = fi['name'] + '('
+        for i,p in enumerate(fi['port']):
+            s+= '${{{0}:/*{1}*/}}'.format(i+1,p['decl'])
+            if i != (len(fi['port'])-1):
+                s+=', '
+        s+= ')${0}'
+        return s
 
     # Completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface with label
     def end_completion(self,view,r,prefix):

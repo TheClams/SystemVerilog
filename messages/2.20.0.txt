@@ -3,6 +3,7 @@ SystemVerilog 2.20.0 Changelog:
 ## Improvements ##
  - Autocompletion :
  	* Now works on macro with parameters
+ 	* Now works on function defined in current file
 
 ## Bug Fix ##
   - Tooltip :
