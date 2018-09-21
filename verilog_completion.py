@@ -122,6 +122,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 completion = self.enum_assign_completion(view,m.group('name'))
         elif 'meta.struct.assign' in scope:
             completion = self.struct_assign_completion(view,r)
+        elif 'meta.block.cover.systemverilog' in scope:
+            completion = self.cover_completion(prefix)
+        elif 'meta.block.constraint.systemverilog' in scope:
+            completion = self.constraint_completion(prefix)
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
             l = ''
@@ -147,6 +151,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Provide completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface
             elif(prefix.startswith('end')):
                 completion = self.end_completion(view,r,prefix)
+            # Provide simple keywords completion
+            else:
+                completion = [
+                    ["generate\tkeyword","fork\n\t$0\njoin"            ],
+                    ["forkj\tfork..join","fork\n\t$0\njoin"            ],
+                    ["forkn\tfork..none","fork\n\t$0\njoin_none"       ],
+                    ["forka\tfork..any"  ,"fork\n\t$0\njoin_any"        ],
+                    ["foreach"          ,"foreach($1) begin\n\t$0\nend"],
+                    ["posedge\tkeyword" ,"posedge"],
+                    ["negedge\tkeyword" ,"negedge"]
+                ]
+        print((completion, flag))
         return (completion, flag)
 
     def always_completion(self):
@@ -305,7 +321,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             elif ti['type']=='process':
                 completion = self.process_completion()
             elif ti['type']=='event':
-                completion = ['triggered','triggered']
+                completion.append(['triggered\tevent','triggered'])
             # Non standard type => try to find the type in the lookup list and get the type
             else:
                 # Force the type to the word itself if we are in a module declaration : typical of modport
@@ -455,6 +471,42 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['prev\tprev()' , 'prev()' ])
         c.append(['num\tnum()'  , 'num()'  ])
         c.append(['name\tname()' , 'name()' ])
+        return c
+
+    def cover_completion(self,prefix):
+        c = [
+            ["bins\tcover"                ,"bins"                ],
+            ["binsof\tcover"              ,"binsof"              ],
+            ["coverpoint\tcover"          ,"coverpoint"          ],
+            ["cross\tcover"               ,"cross"               ],
+            ["default\tcover"             ,"default"             ],
+            ["iff\tcover"                 ,"iff"                 ],
+            ["illegal_bins\tcover"        ,"illegal_bins"        ],
+            ["ignore_bins\tcover"         ,"ignore_bins"         ],
+            ["intersect\tcover"           ,"intersect"           ],
+            ["matches\tcover"             ,"matches"             ],
+            ["negedge\tcover"             ,"negedge"             ],
+            ["option\tcover"              ,"option"              ],
+            ["posedge\tcover"             ,"posedge"             ],
+            ["type_option\tcover"         ,"type_option"         ],
+            ["sequence\tcover"            ,"sequence"            ],
+            ["wildcard\tcover"            ,"wildcard"            ],
+            ["with_function_sample\tcover","with function sample"],
+            ["with\tcover"                ,"with"                ]]
+        return c
+
+    def constraint_completion(self,prefix):
+        c = [
+            ["solve\tconstraint"   ,"solve"       ],
+            ["before\tconstraint"  ,"before"      ],
+            ["soft\tconstraint"    ,"soft"        ],
+            ["if\tconstraint"      ,"if"          ],
+            ["else\tconstraint"    ,"else"        ],
+            ["foreach\tconstraint" ,"foreach"     ],
+            ["disable\tconstraint" ,"disable"     ],
+            ["dist\tconstraint"    ,"dist {$0};"  ],
+            ["inside\tconstraint"  ,"inside {$0};"],
+            ["unique\tconstraint"  ,"unique"      ]]
         return c
 
     def listbased_completion(self, name):

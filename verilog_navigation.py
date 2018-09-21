@@ -196,7 +196,7 @@ class VerilogTypePopup :
                             if m :
                                 d = '{} {}'.format(m.group('decl'),m.group('name'))
                                 for v in m.group('val').split(','):
-                                    d+='<br>{}{}'.format('&nbsp;'*8,v.strip())
+                                    d+=' <br>{}{}'.format('&nbsp;'*8,v.strip())
                             else :
                                 d = re.sub(r'struct\s+(packed\s*)(\{.*\})',r'struct \1',x['decl'])
                             members.append({'decl' : d})
@@ -385,7 +385,7 @@ class VerilogTypePopup :
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'default', 'extends']
 
     def color_str(self,s, addLink=False, ti_var=None, last_word=True):
-        ss = s.replace('<','&lt;').split()
+        ss = re.sub(r'<(?!br>)','&lt;',s).split()
         sh = ''
         ti = None
         pos_var = len(ss)-1
@@ -450,8 +450,8 @@ class VerilogTypePopup :
                     sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,w)
                 else:
                     sh+='<span class="storage">{0}</span> '.format(w)
-            elif re.match(r'\d+',w) :
-                sh += re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span> ',w)
+            elif re.match(r'(\d+\'(b|d|o|h))?\d+',w) :
+                sh += re.sub(r'\b((\d+\'(b|d|o|h))?\d+)\b',r'<span class="numeric">\1</span> ',w)
             elif w in ['=','#'] :
                 sh += re.sub(r'(=|#)',r'<span class="operator">\1</span> ',w)
             else:

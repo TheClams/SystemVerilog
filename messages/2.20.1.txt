@@ -1,0 +1,11 @@
+SystemVerilog 2.20.1 Changelog:
+
+## Bug Fix ##
+  - Parsing :
+    * Now handle range in enums
+  - Tooltip :
+  	* Fix regression on enum (<br>)
+  - AutoCompletion:
+    * Fix autocompletion for event
+    * Auto-completion for fork/generate/... does not prevent anymore
+      normal autocompletion to be displayed
