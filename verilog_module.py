@@ -110,13 +110,23 @@ def type_info_from_base(view,r,varname):
 def type_info_on_hier(view,varname,txt=None,region=None):
     va = varname.split('.')
     ti = None
+    scope = ''
     if not txt and region:
         txt = view.substr(sublime.Region(0, view.line(region).b))
     for i in range(0,len(va)):
         v = va[i].split('[')[0] # retrieve name without array part
         # Get type definition: first iteration is done inside current file
         if i==0:
-            ti = type_info(view,txt,v)
+            if region:
+                scope = view.scope_name(region.a)
+            ti = {'type':None}
+            # If in a function body: check for a definition in the fubction first
+            if 'meta.function.body' in scope:
+                r_func = sublimeutil.expand_to_scope(view,'meta.function.body',region)
+                ti = type_info(view,view.substr(r_func),varname)
+            # Check in the whole text
+            if not ti['type']:
+                ti = type_info(view,txt,v)
             #if not found check for a definition in base class if this is an extended class
             if not ti['type'] and region:
                 bti = type_info_from_base(view,region,ti['name'])

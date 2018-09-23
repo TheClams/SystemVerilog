@@ -1,0 +1,12 @@
+SystemVerilog 2.20.2 Changelog:
+
+## Improvements ##
+ - Syntax : Update to better scope functions
+
+
+## Bug Fix ##
+  - Parsing :
+  	* Exclude forward class declaration from symbol list
+  	* variable type local to function now correctly used (Fix #168)
+    * Clean-up extern function before parsing variable
+      (avoid function arguments to appears as members ...)

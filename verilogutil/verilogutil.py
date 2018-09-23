@@ -121,6 +121,7 @@ def get_all_type_info(txt,no_inst=False):
     # Cleanup function contents since this can contains some signal declaration
     # print('[get_all_type_info] Cleanup functions/task')
     txt = re.sub(r'(?s)^[ \t]*(import|export)[ \t]*(\".*?\"[ \t]*)?(pure)?[ \t]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t\w]*extern\b[^;]+;','',txt, flags=re.MULTILINE)
     txt = re.sub(r'(?s)^[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
     # Cleanup constraint definition
     # print('[get_all_type_info] Cleanup constraint')
@@ -519,7 +520,7 @@ def parse_class_file_cache(fname, cname, fdate):
     return info
 
 def parse_class(flines,cname=r'\w+'):
-    # print("Parsing for class " + cname + ' in \n' + flines)
+    #print("Parsing for class " + cname + ' in \n' + flines)
     re_class = re.compile(r"(?s)(?P<type>class)\s+(?P<name>"+cname+r")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>\w+(?:\s*#\(.*?\))?))?\s*;(?P<content>.*?)(?P<ending>endclass)", flags=re.MULTILINE)
     m = re_class.search(flines)
     if m is None:
@@ -543,10 +544,15 @@ def parse_class(flines,cname=r'\w+'):
 
 def get_all_function(txt,funcname=r'\w+'):
     fil = [] # Function Info list
+    names = []
     fl = re.findall(r'(?s)(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\3\b',txt,flags=re.MULTILINE)
     fl += re.findall(r'(?s)extern\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
     fl += re.findall(r'(?s)^[ \t]*import\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
     for ( f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
+        if f_name in names:
+            continue
+        else :
+            names.append(f_name)
         if f_args:
             pi = get_all_type_info(f_args + ';')
         else:
@@ -560,6 +566,7 @@ def get_all_function(txt,funcname=r'\w+'):
         if d['return'].startswith('automatic'):
             d['return'] = ' '.join(d['return'].split()[1:])
         fil.append(d)
+    #print([x['name'] for x in fil])
     return fil
 
 # Fill all entry of a case for enum or vector (limited to 8b)

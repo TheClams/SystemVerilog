@@ -123,9 +123,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif 'meta.struct.assign' in scope:
             completion = self.struct_assign_completion(view,r)
         elif 'meta.block.cover.systemverilog' in scope:
-            completion = self.cover_completion(prefix)
+            completion = self.cover_completion()
         elif 'meta.block.constraint.systemverilog' in scope:
-            completion = self.constraint_completion(prefix)
+            completion = self.constraint_completion()
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
             l = ''
@@ -154,15 +154,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Provide simple keywords completion
             else:
                 completion = [
-                    ["generate\tkeyword","fork\n\t$0\njoin"            ],
                     ["forkj\tfork..join","fork\n\t$0\njoin"            ],
                     ["forkn\tfork..none","fork\n\t$0\njoin_none"       ],
-                    ["forka\tfork..any"  ,"fork\n\t$0\njoin_any"        ],
-                    ["foreach"          ,"foreach($1) begin\n\t$0\nend"],
+                    ["forka\tfork..any" ,"fork\n\t$0\njoin_any"        ],
+                    ["generate\tkeyword","generate\n\t$0\nendgenerate" ],
+                    ["foreach\tkeyword" ,"foreach($1) begin\n\t$0\nend"],
                     ["posedge\tkeyword" ,"posedge"],
                     ["negedge\tkeyword" ,"negedge"]
                 ]
-        print((completion, flag))
         return (completion, flag)
 
     def always_completion(self):
@@ -473,7 +472,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c.append(['name\tname()' , 'name()' ])
         return c
 
-    def cover_completion(self,prefix):
+    def cover_completion(self):
         c = [
             ["bins\tcover"                ,"bins"                ],
             ["binsof\tcover"              ,"binsof"              ],
@@ -495,7 +494,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             ["with\tcover"                ,"with"                ]]
         return c
 
-    def constraint_completion(self,prefix):
+    def constraint_completion(self):
         c = [
             ["solve\tconstraint"   ,"solve"       ],
             ["before\tconstraint"  ,"before"      ],

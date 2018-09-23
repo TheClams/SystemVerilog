@@ -209,11 +209,36 @@ function void my_pkg::my_func(ref logic d, input int din,
 //                               ^ support.function.systemverilog
                       output dout);
     $display("d=%0d",d);
+    if(d==0)
+        d = 1;
+    else if(din!=0)
+        d = 0
+    cfg = '{
+       f1      : 1,
+//     ^^ support.function.field.systemverilog
+       f2      : active,
+       default : 0
+//     ^^^^^^^ keyword.control.systemverilog
+    };
+    return null;
+//  ^^^^^^ keyword.control.systemverilog
+//         ^^^^ support.constant.systemverilog
 endfunction : my_func
 
         function automatic integer CLOGB2;
-        endfunction
+//      ^^^^^^^^ meta.function.systemverilog keyword.control.systemverilog
+//                                 ^^^^^^ entity.name.function.systemverilog
+        endfunction : CLOG
+//                    ^^^^ invalid.illegal.systemverilog
 
+   import "DPI-C" function void rnd(input int a, output int b);
+// ^^^^^^ keyword.control.systemverilog
+//         ^^^^^ string.quoted.double.systemverilog
+//                ^^^^^^^^ keyword.control.systemverilog
+
+import "DPI-C" pure function real cos  (input real a);
+//             ^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//                                ^^^ meta.function.prototype.systemverilog entity.name.function.systemverilog
 /*------------------------------------------------------------------------------
 --  Invalid syntax
 ------------------------------------------------------------------------------*/
@@ -329,7 +354,8 @@ p.randomize() with { length inside [512:1512]; mode dist {1:=4, [2:3]:/3} ;}
 //                                                                         ^ punctuation.section.block.constraint.end.systemverilog
 
 assert(a.randomize(ack) with {}; );
-
+// <- keyword.control.systemverilog
+//       ^^^^^^^^^ support.function.generic.systemverilog
 /*------------------------------------------------------------------------------
 --  MISC
 ------------------------------------------------------------------------------*/
@@ -355,8 +381,9 @@ join : f_label
 always_ff @(posedge clk or negedge rst_n) begin : proc_
     if (~rst_n)
         a <= '0;
-    else if (en)
-        a <= a + b;
+else if (en)
+// <- keyword.control.systemverilog
+        a <= int'(a) + b;
 end
 
 

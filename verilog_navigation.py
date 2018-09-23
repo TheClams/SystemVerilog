@@ -186,7 +186,7 @@ class VerilogTypePopup :
                             s+='<span class="storage">{0}</span>'.format(ci['extend'])
                         s += self.add_info([x for x in ci['member'] if 'access' not in x])
                         s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
-                    # print(ci)
+                    #if debug: print(ci);
                 elif ti and ti['type']=='package':
                     s,_ = self.color_str(s=s, addLink=True,ti_var=ti)
                     if 'member' in ti:
@@ -361,11 +361,17 @@ class VerilogTypePopup :
                             txt += ' = {0}'.format(ti['value'])
         # Simply lookup in the file before the use of the variable
         else :
-            # select whole file until end of current line
-            region = self.view.line(region)
-            lines = self.view.substr(sublime.Region(0, region.b))
-            # Extract type
-            ti = verilog_module.type_info(self.view,lines,var_name)
+            #If inside a function try first in the function body
+            ti = {'type':None}
+            if 'meta.function.body' in scope:
+                r_func = sublimeutil.expand_to_scope(self.view,'meta.function.body',region)
+                ti = verilog_module.type_info(self.view,self.view.substr(r_func),var_name)
+            if not ti['type'] :
+                # select whole file until end of current line
+                region = self.view.line(region)
+                lines = self.view.substr(sublime.Region(0, region.b))
+                # Extract type
+                ti = verilog_module.type_info(self.view,lines,var_name)
             #if not found check for a definition in base class if we this is an extended class
             if not ti['type'] :
                 bti = verilog_module.type_info_from_base(self.view,region,var_name)
@@ -378,7 +384,7 @@ class VerilogTypePopup :
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:
                     txt += ' = ' + ti['value']
-        # if debug: print('[SV:get_type] {0}'.format(ti))
+        #if debug: print('[SV:get_type] {0}'.format(ti))
         return txt,ti,colored
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
@@ -444,7 +450,7 @@ class VerilogTypePopup :
             elif ((i == pos_var-1 or (i>0 and ss[i-1]=='typedef')) and m) or (i == pos_var-2 and ('[' in ss[pos_var-1] or '#' in ss[pos_var-1])) :
                 if addLink:
                     ti = verilog_module.lookup_type(self.view,w)
-                # print('[SV:color_str] word={0} => ti={1}'.format(w,ti))
+                #if debug: print('[SV:color_str] word={0} => ti={1}'.format(w,ti));
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
                     sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,w)
