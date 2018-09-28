@@ -47,10 +47,7 @@ contexts:
     - include: constraint
     - include: assertion
     - include: keyword-control
-    - match: '\b(bind)\s+((`\w+)|([a-zA-Z_][a-zA-Z0-9_\.]*))\b'
-      captures:
-        1: keyword.control.systemverilog
-        3: constant.other.define.systemverilog
+    - include: process
     - match: \s*\b(modport)\s+(\w+)
       captures:
         1: keyword.modport.systemverilog
@@ -94,7 +91,6 @@ contexts:
     - include: all-types
     - include: operators
     - include: port-dir
-    - include: process
     - match: '\b(and|nand|nor|or|xor|xnor|buf|not|bufif[01]|notif[01]|r?[npc]mos|tran|r?tranif[01]|pullup|pulldown)\b'
       scope: support.type.systemverilog
     - include: strings
@@ -115,55 +111,9 @@ contexts:
         1: keyword.other.systemverilog
     - match: \s*\b(rand|randc)\b
       scope: storage.type.rand.systemverilog
-    - match: '^(\s*(bind)\s+((`\w+)|([a-zA-Z_][\w\.]*)))?\s*({{id}})\s*(?=#[^#])'
-      captures:
-        2: keyword.control.systemverilog
-        4: constant.other.define.systemverilog
-        6: storage.type.module.systemverilog
-      push:
-        - meta_scope: meta.module.inst.systemverilog
-        - match: ;|(?==|:)
-          pop: true
-        - match: \(
-          push:
-            - meta_scope: meta.module.bind.port.systemverilog
-            - include: module-binding
-            - include: storage-scope-systemverilog
-            - include: comments
-            - include: operators
-            - include: constants
-            - include: strings
-            - match: \)
-              pop: true
-        - include: module-param
-        - include: comments
-        - match: '\b({{id}})\b(?:(?:\s*\[(\d+)(?:\s*(\:)\s*(\d+))?\])|(?:\s*\[([A-Z_]+)\])|(?:\s*\[([^\]]+)\]))?(?=\s*(\(|$))'
-          captures:
-            1: entity.name.type.module.systemverilog
-            2: constant.numeric.systemverilog
-            3: keyword.operator.range.systemverilog
-            4: constant.numeric.systemverilog
-            5: constant.other.systemverilog
-    - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*((?:\[(\d+)(\s*(\:)\s*(\d+))?\])|(?:\[([^\]]+)\]))?\s*(\(|$)'
-      captures:
-        1: storage.type.module.systemverilog
-        2: entity.name.type.module.systemverilog
-        4: constant.numeric.systemverilog
-        6: keyword.operator.range.systemverilog
-        7: constant.numeric.systemverilog
-      push:
-        - meta_scope: meta.module.inst.systemverilog
-        - match: ;
-          pop: true
-        - include: module-binding
-        - include: storage-scope-systemverilog
-        - include: comments
-        - include: strings
-        - include: operators
-        - include: constants
+    - include: module-inst
     - include: struct-assign
     - include: storage-scope-systemverilog
-    - include: base-grammar
     - include: function-call
     - include: constants
     # stray bracket
@@ -392,6 +342,7 @@ contexts:
     - include: operators
     - include: strings
     - include: constants
+    - include: system-task
     - match: '\b({{id}})(::)'
       captures:
         1: support.type.scope.systemverilog
@@ -400,8 +351,6 @@ contexts:
       captures:
         1: storage.type.interface.systemverilog
         2: keyword.operator.cast.systemverilog
-    - match: '\$\b({{id}})\b'
-      scope: support.function.systemverilog
     - match: \b(virtual)\b
       scope: keyword.control.systemverilog
   module-param:
@@ -445,6 +394,58 @@ contexts:
           scope: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport
+  module-inst:
+    - match: '^(\s*(bind)\s+((`\w+)|([a-zA-Z_][\w\.]*)))?\s*({{id}})\s*(?=#[^#])'
+      captures:
+        2: keyword.control.systemverilog
+        4: constant.other.define.systemverilog
+        6: storage.type.module.systemverilog
+      push:
+        - meta_scope: meta.module.inst.systemverilog
+        - match: ;|(?==|:)
+          pop: true
+        - match: \(
+          push:
+            - meta_scope: meta.module.bind.port.systemverilog
+            - include: module-binding
+            - include: storage-scope-systemverilog
+            - include: comments
+            - include: operators
+            - include: constants
+            - include: strings
+            - match: \)
+              pop: true
+        - include: module-param
+        - include: comments
+        - match: '\b({{id}})\b(?:(?:\s*\[(\d+)(?:\s*(\:)\s*(\d+))?\])|(?:\s*\[([A-Z_]+)\])|(?:\s*\[([^\]]+)\]))?(?=\s*(\(|$))'
+          captures:
+            1: entity.name.type.module.systemverilog
+            2: constant.numeric.systemverilog
+            3: keyword.operator.range.systemverilog
+            4: constant.numeric.systemverilog
+            5: constant.other.systemverilog
+    - match: '\b(bind)\s+((`\w+)|([a-zA-Z_][a-zA-Z0-9_\.]*))\b'
+      captures:
+        1: keyword.control.systemverilog
+        3: constant.other.define.systemverilog
+    - match: '\b({{id}})\s+(?!intersect\b|and\b|or\b|throughout\b|within\b)({{id}})\s*((?:\[(\d+)(\s*(\:)\s*(\d+))?\])|(?:\[([^\]]+)\]))?\s*(\(|$)'
+      captures:
+        1: storage.type.module.systemverilog
+        2: entity.name.type.module.systemverilog
+        4: constant.numeric.systemverilog
+        6: keyword.operator.range.systemverilog
+        7: constant.numeric.systemverilog
+      push:
+        - meta_scope: meta.module.inst.systemverilog
+        - match: ;
+          pop: true
+        - include: module-binding
+        - include: storage-scope-systemverilog
+        - include: comments
+        - include: strings
+        - include: operators
+        - include: constants
+
   program-def:
     - match: '\b(program)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
@@ -508,8 +509,7 @@ contexts:
         5: storage.type.interface.systemverilog
     - match: \s*\b(output|input|inout|ref)\b
       scope: support.type.systemverilog
-    - match: '\$\b({{id}})\b'
-      scope: support.function.systemverilog
+    - include: system-task
   strings:
     - match: '"'
       captures:

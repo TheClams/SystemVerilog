@@ -164,6 +164,7 @@ my_interface1#(1) if1(clk,rst_n);
     virtual my_interface1#(3,4) if2;
 
 my_module i_my_module
+//        ^^^^^^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
   (
     .if1(if1),
     .if2(if2),
@@ -180,6 +181,29 @@ parameter
 localparam mytype myvar = mytype'(MY_INIT/4+8);
 localparam myvar1 = MY_INIT1;
 localparam logic [1:0] myvar2 = MY_INIT2;
+
+
+bind bind_assertion   assertion_ip      i_assert_ip (
+// <- keyword.control.systemverilog
+//                    ^^^^^^^^^^^^ storage.type.module.systemverilog
+//                                      ^^^^^^^^^^^ entity.name.type.module.systemverilog
+   .clk_ip   (clk),
+//  ^^^^^^ support.function.port.systemverilog
+//            ^^^^^^ meta.module.inst.systemverilog
+ .req_ip   (req),
+ .reset_ip (reset),
+ .gnt_ip   (gnt)
+);
+
+bind i_dut dut_tb_bind#(
+// <- meta.module.inst.systemverilog keyword.control.systemverilog
+//         ^^^^^^^^^^^ storage.type.module.systemverilog
+    .DATA_W   (DATA_W   ),
+//   ^^^^^^ meta.bind.param.systemverilog support.function.port.systemverilog
+    .MODE(1'b1),
+    .STRING("config")
+ ) i_bind(.*);
+// ^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
 
 /*------------------------------------------------------------------------------
 --  Structure / Typedef
@@ -206,7 +230,7 @@ function void my_pkg::my_func(ref logic d, input int din,
 //                  ^ keyword.operator.scope.systemverilog
                       input bit[3:0] d,
                       output bit[$clog(kk)-1:0] d2,
-//                               ^ support.function.systemverilog
+//                               ^ support.function.system.systemverilog
                       output dout);
     $display("d=%0d",d);
     if(d==0)
