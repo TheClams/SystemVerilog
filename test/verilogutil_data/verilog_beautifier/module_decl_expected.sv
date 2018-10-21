@@ -16,3 +16,10 @@ module test_2
     input logic i_en2
 );
 endmodule
+
+module my_module
+    import first_pkg::*, second_pkg::*;
+#(
+    parameter A = 1,
+    parameter B = 2
+) ();

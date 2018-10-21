@@ -1,0 +1,6 @@
+SystemVerilog 2.20.3 Changelog:
+
+
+## Bug Fix ##
+  - Alignment : Fix alignement with import statement
+  - AutoCompletion: prevent function autocompletion at declaration

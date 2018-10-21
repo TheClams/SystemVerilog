@@ -87,6 +87,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if prev_symb and prev_symb[-1] in ['$','`','.']:
             prev_symb = prev_symb[-1]
         completion = []
+        scope_tmp = view.scope_name(tmp_r.a)
         if self.debug:
             print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
@@ -129,6 +130,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
             l = ''
+            if 'meta.function.prototype' in scope_tmp:
+                return ([], 0)
             if prefix in symbols:
                 tmp_r = view.line(symbols[prefix])
                 l = view.substr(tmp_r)

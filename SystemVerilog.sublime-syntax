@@ -390,7 +390,7 @@ contexts:
             - match: '\*'
               scope: keyword.operator.systemverilog
         - include: port-dir
-        - match: \s*(parameter|localparam)
+        - match: \s*(parameter|localparam)\b
           scope: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport

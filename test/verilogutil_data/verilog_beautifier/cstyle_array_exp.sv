@@ -1,4 +1,4 @@
-module a();
+module a ();
     logic aaaa  [bw]   ;
     logic aaaaaa[bw]   ;
     logic aa           ;

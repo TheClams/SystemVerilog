@@ -1,4 +1,4 @@
-module tb();
+module tb ();
 
    generate
       if(x) begin : gen_x

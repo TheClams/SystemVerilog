@@ -5,16 +5,17 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True):
-        self.settings = {'nbSpace': nbSpace, \
-                        'useTab':useTab, \
-                        'oneBindPerLine':oneBindPerLine, \
-                        'oneDeclPerLine':oneDeclPerLine,\
-                        'paramOneLine': paramOneLine,\
-                        'indentSyle' : indentSyle,\
-                        'reindentOnly' : reindentOnly,\
-                        'stripEmptyLine': stripEmptyLine,\
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False):
+        self.settings = {'nbSpace': nbSpace,
+                        'useTab':useTab,
+                        'oneBindPerLine':oneBindPerLine,
+                        'oneDeclPerLine':oneDeclPerLine,
+                        'paramOneLine': paramOneLine,
+                        'indentSyle' : indentSyle,
+                        'reindentOnly' : reindentOnly,
+                        'stripEmptyLine': stripEmptyLine,
                         'instAlignPort' : instAlignPort ,
+                        'importSameLine' : importSameLine,
                         'ignoreTick' : ignoreTick}
         self.indentSpace = ' ' * nbSpace
         if useTab:
@@ -494,9 +495,12 @@ class VerilogBeautifier():
         # Add optional import declaration
         if m.group('import'):
             imports = m.group('import').strip().split('\n')
-            txt_new += '\n'
-            for i in imports:
-                txt_new += '{0}{1}\n'.format(self.indent*(ilvl+1),i.strip())
+            if len(imports)==1 and self.settings['importSameLine']:
+                txt_new += ' {} '.format(imports[0].strip())
+            else :
+                txt_new += '\n'
+                for i in imports:
+                    txt_new += '{0}{1}\n'.format(self.indent*(ilvl+1),i.strip())
         # Add optional parameter declaration
         if m.group('params'):
             param_txt = m.group('params').strip()
@@ -508,7 +512,7 @@ class VerilogBeautifier():
                 print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
                 return ''
             # print(decl)
-            len_param = max([len(x[0]) for x in decl])
+            len_kw = max([len(x[0]) for x in decl])
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
             len_bw    = max([len(x[4]) for x in decl])
@@ -521,7 +525,7 @@ class VerilogBeautifier():
             last_param = 'parameter' if len(has_param_list)==0 else has_param_list[0]
             # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param)))
             if m.group('import'):
-                txt_new += self.indent*(ilvl+1) + '#('
+                txt_new += self.indent*(ilvl) + '#('
             else:
                 txt_new += ' #('
             # add only one parameter statement if there is at least one but not on all line
@@ -545,7 +549,7 @@ class VerilogBeautifier():
                             last_param = m_param.group('parameter')
                         # print('params = {0}'.format(m_param.groups()))
                         if has_param_all:
-                            l_new += last_param.ljust(len_param+1)
+                            l_new += last_param.ljust(len_kw+1)
                         if len_type>0:
                             if m_param.group('type'):
                                 if m_param.group('type') not in ['signed','unsigned']:
@@ -589,7 +593,7 @@ class VerilogBeautifier():
         # Handle special case of no ports
         if not m.group('ports'):
             if not self.settings['reindentOnly']:
-                txt_new += '()'
+                txt_new += ' ()'
             return txt_new + ';'
         # Add port list declaration
         if txt_new[-1]!='\n':

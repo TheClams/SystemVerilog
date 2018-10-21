@@ -85,9 +85,9 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig(oneDeclPerLine=True, paramOneLine=False)
         self.runBeautifyTest(self.path_test+"test7.sv", self.path_test+"test7_expected.sv", cfg)
 
-    def test_beautifyText8(self):
+    def test_beautifyModuleDecl(self):
         cfg = BeautifyConfig()
-        self.runBeautifyTest(self.path_test+"test8.sv", self.path_test+"test8_expected.sv", cfg)
+        self.runBeautifyTest(self.path_test+"module_decl.sv", self.path_test+"module_decl_expected.sv", cfg)
 
     def test_beautifyText9(self):
         cfg = BeautifyConfig()
