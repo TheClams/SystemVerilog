@@ -222,8 +222,8 @@ task connect(virtual nfc_ip_top_if dut_if);
 //   ^ entity.name.function
 //           ^ keyword.other
 //                   ^ storage.type
-endtask
-
+endtask : connec
+//        ^ meta.task.body.systemverilog invalid.illegal.systemverilog
 
 function void my_pkg::my_func(ref logic d, input int din,
 //            ^ support.type.scope.systemverilog

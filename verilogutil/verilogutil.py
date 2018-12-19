@@ -257,7 +257,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
         elif m.groups()[0] is not None and not m.groups()[0].startswith('end'):
             t = str.rstrip(m.groups()[0]) + ' ' + t
     elif t=="const": # identifying a variable as simply const is typical of a struct/union : look for it
-        m = re.search( re_union+var_name+r'.*$', txt, flags=re.MULTILINE)
+        m = re.search( re_union+var_name+r'.*$', line, flags=re.MULTILINE)
         if m is None:
             return [ti_not_found]
         t = m.groups()[1]

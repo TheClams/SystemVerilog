@@ -9,31 +9,7 @@ variables:
 contexts:
   main:
     - include: function-def
-    - match: '\s*\b(?:(static|local|protected)\s+)?\s*\b(task)\s+(automatic)?'
-      captures:
-        1: keyword.control.systemverilog
-        2: keyword.control.systemverilog
-        3: keyword.control.systemverilog
-      push:
-        - meta_scope: meta.task.systemverilog
-        - match: ;
-          pop: true
-        - match: '\s*\b({{id}})\b'
-          captures:
-            1: entity.name.function.systemverilog
-        - match: \(
-          set:
-            - meta_scope: meta.task.port.systemverilog
-            - match: \)\s*;
-              pop: true
-            - include: port-dir
-            - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+({{id}})'
-              captures:
-                1: keyword.other.systemverilog
-                2: support.type.scope.systemverilog
-                3: keyword.operator.scope.systemverilog
-                4: storage.type.systemverilog
-            - include: base-grammar
+    - include: task-def
     - match: '\s*\b(nettype)\s+({{id}})\s+({{id}})(\s+(with)\s+({{id}}))?'
       captures:
         1: keyword.control.systemverilog
@@ -52,7 +28,7 @@ contexts:
       captures:
         1: keyword.modport.systemverilog
         2: entity.name.modport.systemverilog
-    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|edge|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|negedge|noshowcancelled|posedge|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
+    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
     - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endinterface|endchecker)\b(\s*(:)\s*(\w+))?
@@ -212,7 +188,7 @@ contexts:
         3: keyword.operator.systemverilog
         4: entity.label.systemverilog
 
-    - match: \s*\b(begin|end|fork|wait|force|release|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
+    - match: \s*\b(begin|end|fork|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
       captures:
         1: keyword.control.systemverilog
   struct-assign :
@@ -813,6 +789,60 @@ contexts:
   function-body:
     - meta_scope: meta.function.body.systemverilog
     - match: (endfunction)(?:\s(:)\s*(?:(\6)\b|({{id}})))?
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.operator.systemverilog
+        3: entity.label.systemverilog
+        4: invalid.illegal.systemverilog
+      pop: true
+    - include: port-dir
+    - include: casting
+    - include: keyword-control
+    - include: user-defined-type
+    - include: base-grammar
+    - include: function-call
+    - include: struct-assign
+
+# Task
+  task-def:
+    - match: ^\s*(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(task)\b(?:\s+(automatic))?
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
+        3: keyword.control.systemverilog
+        4: keyword.control.systemverilog
+        5: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.task.systemverilog
+        - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.systemverilog
+            4: support.type.scope.systemverilog
+            5: keyword.operator.scope.systemverilog
+            6: entity.name.function.systemverilog
+          set: [task-body, task-port]
+        - include: base-grammar
+  task-port:
+    - match: \(
+      set:
+        - meta_scope: meta.task.port.systemverilog
+        - match: \)\s*;
+          pop: true
+        - include: port-dir
+        - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+({{id}})'
+          captures:
+            1: keyword.other.systemverilog
+            2: support.type.scope.systemverilog
+            3: keyword.operator.scope.systemverilog
+            4: storage.type.systemverilog
+        - include: base-grammar
+    - include: comments
+    - include: else-pop
+  task-body:
+    - meta_scope: meta.task.body.systemverilog
+    - match: (endtask)(?:\s(:)\s*(?:(\6)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog

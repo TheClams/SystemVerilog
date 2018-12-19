@@ -508,7 +508,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             ["disable\tconstraint" ,"disable"     ],
             ["dist\tconstraint"    ,"dist {$0};"  ],
             ["inside\tconstraint"  ,"inside {$0};"],
-            ["unique\tconstraint"  ,"unique"      ]]
+            ["unique\tconstraint"  ,"unique {$0};"]]
         return c
 
     def listbased_completion(self, name):
