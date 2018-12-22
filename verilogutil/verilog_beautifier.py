@@ -24,7 +24,7 @@ class VerilogBeautifier():
             self.indent = self.indentSpace
         self.states = []
         self.state = ''
-        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter|local|protected)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
+        self.re_decl = re.compile(r'^[ \t]*(?:(?P<param>localparam|parameter|local|protected)\s+)?(?P<scope>\w+\:\:)?(?P<type>[A-Za-z_]\w*)[ \t]+(?P<sign>signed\b|unsigned\b)?[ \t]*(?P<bw>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)[ \t]*(?P<name>[A-Za-z_]\w*)[ \t]*(?P<array>(?:\[('+verilogutil.re_bw+r')\][ \t]*)*)(=\s*(?P<init>[^;]+))?(?P<sig_list>,[\w, \t]*)?;[ \t]*(?P<comment>.*)')
         self.re_inst = re.compile(r'(?s)^[ \t]*\b(?P<itype>\w+)\s*(#\s*\([^;]+\))?\s*\b(?P<iname>\w+)\s*\(',re.MULTILINE)
         self.kw_block = ['module', 'class', 'interface', 'program', 'function', 'task', 'package', 'case','casex','casez', 'generate', 'covergroup', 'property', 'sequence','checker', 'fork', 'begin', '{', '(']
         if not ignoreTick:
@@ -505,25 +505,36 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(\[(?P<bw>'+verilogutil.re_bw+r')\])?[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
             if not decl:
                 print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
                 return ''
-            # print(decl)
+            #print(decl)
             len_kw = max([len(x[0]) for x in decl])
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
-            len_bw    = max([len(x[4]) for x in decl])
-            len_param = max([len(x[5]) for x in decl])
-            len_value = max([len(x[6]) for x in decl])
+            len_param = max([len(x[4]) for x in decl])
+            len_value = max([len(x[5]) for x in decl])
             len_comment = max([len(x[-1]) for x in decl])
             has_param_list = [x[0] for x in decl if x[0] != '']
             has_param_all = len(has_param_list)==len(decl)
             has_param = len(has_param_list)>0
             last_param = 'parameter' if len(has_param_list)==0 else has_param_list[0]
-            # print(str((len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param)))
+            # Get bitwidth length, if any
+            port_bw_l  = [re.findall(r'\[(.+?)\]',re.sub(r'\s*','',x[3])) for x in decl]
+            len_bw_a = []
+            if len(port_bw_l)>0:
+                for x in port_bw_l:
+                    for i,y in enumerate(x):
+                        if i>=len(len_bw_a):
+                            len_bw_a.append(len(y))
+                        elif len_bw_a[i]<len(y):
+                            len_bw_a[i] = len(y)
+            # get total length of bitwidth, adding all internal length and adding 2 for each dimmension for the brackets
+            len_bw = sum(len_bw_a) + 2*len(len_bw_a)
+
             if m.group('import'):
                 txt_new += self.indent*(ilvl) + '#('
             else:
@@ -531,7 +542,10 @@ class VerilogBeautifier():
             # add only one parameter statement if there is at least one but not on all line
             if has_param and not has_param_all:
                 txt_new += 'parameter'
-            # If not on one line align parameter together, otherwise keep as is
+
+            # print('[sv.beautifier.param] len_type = {}, len_sign = {}, len_bw = {}, len_param = {}, len_value = {}, len_comment = {}, has_param_all = {}, has_param = {}, '.format(len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param))
+
+           # If not on one line align parameter together, otherwise keep as is
             if '\n' in param_txt or not self.settings['paramOneLine']:
                 txt_new += '\n'
                 lines = param_txt.splitlines()
@@ -545,6 +559,7 @@ class VerilogBeautifier():
                     if not m_param or self.settings['reindentOnly']:
                         l_new += l
                     else:
+                        # print('[sv.beautifier.param] Line = {} -> {}'.format(line,m_param.groups()))
                         if m_param.group('parameter') :
                             last_param = m_param.group('parameter')
                         # print('params = {0}'.format(m_param.groups()))
@@ -564,10 +579,12 @@ class VerilogBeautifier():
                             else:
                                 l_new += ''.ljust(len_sign+1)
                         if len_bw>0:
+                            s = ''
                             if m_param.group('bw'):
-                                l_new += '[' + m_param.group('bw').rjust(len_bw) + '] '
-                            else:
-                                l_new += ''.ljust(len_bw+3)
+                                bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m_param.group('bw')))
+                                for i,bw in enumerate(bw_a):
+                                    s += '[' + bw.rjust(len_bw_a[i]) + ']'
+                            l_new += s.ljust(len_bw+1)
                         l_new += m_param.group('param').ljust(len_param)
                         l_new += ' = ' + m_param.group('value').ljust(len_value)
                         if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
@@ -999,11 +1016,11 @@ class VerilogBeautifier():
                 # print('[alignDecl] {0} => {1}'.format(l,m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
-                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':0,'name':0,'array':[], 'array_sum':0, 'sig_list':0,'comment':0, 'init':0}
+                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
                 for k,g in m.groupdict().items():
                     if g:
                         # extract all bitwidth, to get each length individually
-                        if k=='array':
+                        if k in ['array','bw']:
                             port_bw_l  = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',g))
                             for i,y in enumerate(port_bw_l):
                                 if i>=len(len_max[ilvl][k]):
@@ -1023,12 +1040,17 @@ class VerilogBeautifier():
         # Get total length for array
         for k,x in len_max.items():
             x['array_sum'] = 0
+            x['bw_sum'] = 0
             for y in x['array']:
                 x['array_sum'] += 2 + y
+            for y in x['bw']:
+                x['bw_sum'] += 2 + y
+        # print('[sv.beautifier.decl] len_max = {}'.format(len_max))
         # Update alignement of each line
         txt_new = ''
         for line,m,ilvl in lines_match:
             if m:
+                # print('[sv.beautifier.decl] Line = {} -> {}'.format(line,m.groups()))
                 l = self.indent*ilvl
                 len_type = len_max[ilvl]['scope']+len_max[ilvl]['type']+1
                 # Add localparam/parameter. Adjust align length if not present on this line but present on other line
@@ -1048,18 +1070,20 @@ class VerilogBeautifier():
                     else:
                         l += ''.ljust(len_max[ilvl]['sign']+1)
                 #Align with width only if it exist in at least one of the line
-                if len_max[ilvl]['bw']>0:
+                if len_max[ilvl]['bw_sum']>0:
+                    s = ''
                     if m.group('bw'):
-                        l += '[' + m.group('bw').strip().rjust(len_max[ilvl]['bw']) + '] '
-                    else:
-                        l += ''.rjust(len_max[ilvl]['bw']+3)
+                        bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m.group('bw')))
+                        for i,bw in enumerate(bw_a):
+                            s += '[' + bw.rjust(len_max[ilvl]['bw'][i]) + ']'
+                    l += s.ljust(len_max[ilvl]['bw_sum']+1)
                 d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
                 # list of signals : do not align with the end of lign
                 if m.group('sig_list'):
                     l += m.group('name')
                     # No alignement for array/init in case of signal list
                     if m.group('array'):
-                        l += re.sub(r'\s*','',m_port.group('bw')).rjust(len_max[ilvl]['array_sum']) + ']'
+                        l += re.sub(r'\s*','',m.group('array')).rjust(len_max[ilvl]['array_sum']) + ']'
                     if m.group('init'):
                         l += ' = ' + m.group('init').strip().ljust(len_max[ilvl]['init'])
                     if one_decl_per_line:
