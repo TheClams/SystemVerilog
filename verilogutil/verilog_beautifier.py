@@ -1016,27 +1016,47 @@ class VerilogBeautifier():
                 # print('[alignDecl] {0} => {1}'.format(l,m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
-                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
+                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'type_full':0,'type_user':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
+                len_full = 0
                 for k,g in m.groupdict().items():
                     if g:
+                        w = g.strip()
                         # extract all bitwidth, to get each length individually
                         if k in ['array','bw']:
-                            port_bw_l  = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',g))
+                            port_bw_l  = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',w))
                             for i,y in enumerate(port_bw_l):
                                 if i>=len(len_max[ilvl][k]):
                                     len_max[ilvl][k].append(len(y))
                                 elif len_max[ilvl][k][i]<len(y):
                                     len_max[ilvl][k][i] = len(y)
+                        #
+                        elif k == 'type' :
+                            len_full = len(w)
+                            if w not in ['logic', 'wire', 'reg', 'bit'] :
+                                t = 'type_user'
+                            else:
+                                t = 'type'
+                            if len_full > len_max[ilvl][t]:
+                                len_max[ilvl][t] = len_full
                         # Get max length for each possible element of the regexp
-                        elif len(g.strip()) > len_max[ilvl][k]:
-                            len_max[ilvl][k] = len(g.strip())
+                        elif len(w) > len_max[ilvl][k]:
+                            len_max[ilvl][k] = len(w)
                         if k=='sig_list' and one_decl_per_line:
-                            for s in g.split(','):
+                            for s in w.split(','):
                                 if len(s.strip()) > len_max[ilvl]['name']:
                                     len_max[ilvl]['name'] = len(s.strip())
+                #
+                if len_full > 0 :
+                    if m.group('sign') :
+                        len_full += 1 + len(m.group('sign').strip())
+                    if m.group('bw') :
+                        len_full += 1 + len(m.group('bw').strip())
+                    if len_full > len_max[ilvl]['type_full'] :
+                        len_max[ilvl]['type_full'] = len_full
             else:
                 ilvl = 0
             lines_match.append((l,m,ilvl))
+
         # Get total length for array
         for k,x in len_max.items():
             x['array_sum'] = 0
@@ -1052,31 +1072,38 @@ class VerilogBeautifier():
             if m:
                 # print('[sv.beautifier.decl] Line = {} -> {}'.format(line,m.groups()))
                 l = self.indent*ilvl
-                len_type = len_max[ilvl]['scope']+len_max[ilvl]['type']+1
+                is_usertype = m.group('type') not in ['logic', 'wire', 'reg', 'bit']
+                len_type_full = len_max[ilvl]['scope']+len_max[ilvl]['type_full']+1
+                len_type = len_max[ilvl]['type']+1
+                t = ''
                 # Add localparam/parameter. Adjust align length if not present on this line but present on other line
                 if m.group('param'):
-                    l += (m.group('param')).ljust(len_max[ilvl]['param']+1)
+                    t += (m.group('param')).ljust(len_max[ilvl]['param']+1)
                 elif len_max[ilvl]['param']!=0:
                     len_type += len_max[ilvl]['param']+1
                 # Add Scope+type
-                if m.group('scope'):
-                    l += (m.group('scope')+m.group('type')).ljust(len_type)
-                else:
-                    l += m.group('type').ljust(len_type)
-                #Align with signess only if it exist in at least one of the line
-                if len_max[ilvl]['sign']>0:
-                    if m.group('sign'):
-                        l += m.group('sign').ljust(len_max[ilvl]['sign']+1)
+                if is_usertype :
+                    if m.group('scope'):
+                        t += (m.group('scope')+m.group('type'))
                     else:
-                        l += ''.ljust(len_max[ilvl]['sign']+1)
-                #Align with width only if it exist in at least one of the line
-                if len_max[ilvl]['bw_sum']>0:
-                    s = ''
-                    if m.group('bw'):
-                        bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m.group('bw')))
-                        for i,bw in enumerate(bw_a):
-                            s += '[' + bw.rjust(len_max[ilvl]['bw'][i]) + ']'
-                    l += s.ljust(len_max[ilvl]['bw_sum']+1)
+                        t += m.group('type')
+                else :
+                    t += m.group('type').ljust(len_type)
+                    #Align with signess only if it exist in at least one of the line
+                    if len_max[ilvl]['sign']>0:
+                        if m.group('sign'):
+                            t += m.group('sign').ljust(len_max[ilvl]['sign']+1)
+                        else:
+                            t += ''.ljust(len_max[ilvl]['sign']+1)
+                    #Align with width only if it exist in at least one of the line
+                    if len_max[ilvl]['bw_sum']>0:
+                        s = ''
+                        if m.group('bw'):
+                            bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m.group('bw')))
+                            for i,bw in enumerate(bw_a):
+                                s += '[' + bw.rjust(len_max[ilvl]['bw'][i]) + ']'
+                        t += s.ljust(len_max[ilvl]['bw_sum']+1)
+                l += t.ljust(len_type_full)
                 d = l # save signal declaration before signal name in case it needs to be repeated for a signal list
                 # list of signals : do not align with the end of lign
                 if m.group('sig_list'):
