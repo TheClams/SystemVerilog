@@ -86,7 +86,7 @@ def get_type_info(txt,var_name,search_decl=True):
         # print('[get_type_info] {} type is Clocking'.format(var_name))
         return get_clocking_info(var_name,m.group(3))
     # Signal declaration
-    re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'\{.+?\}|\{.+?\}|[^,;]+))?[^\.]*?$'
+    re_str = re_decl+r'('+var_name+r'\b\s*((?:\[[^=\^\&\|,;]*?\]\s*)*))(\s*=\s*(\'\{.+?\}|\{.+?\}|[^,;]+))?[^\.]*?($|,|;)'
     # print('[get_type_info] RE Decl = {}'.format(re_str))
     m = re.search(re_str, txt, flags=re.MULTILINE)
     if m:
@@ -222,7 +222,7 @@ def get_all_type_info(txt,no_inst=False):
         if x['name'] in ti_dict:
             ti_index = ti_dict[x['name']][1]
             # print('[get_all_type_info] Duplicate found for %s => %s and %s' %(x['name'],ti_dict[x['name']],x))
-            if ti[ti_index]['type'].split()[0] in ['input', 'output', 'inout']:
+            if ti[ti_index]['type'].split()[0] in port_dir:
                 ti[ti_index]['decl'] = ti[ti_index]['decl'].replace(ti[ti_index]['type'],ti[ti_index]['type'].split()[0] + ' ' + x['type'])
                 ti[ti_index]['type'] = x['type']
                 pop_list.append(i)
@@ -284,7 +284,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             signal_list += re.findall(re_str, s, flags=re.MULTILINE)
             # print("[SV:get_type_info_from_match] idxmax+1 => signal_list = " + str(signal_list))
     # remove reserved keyword that could end up in the list
-    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'casex', 'casez', 'for', 'foreach', 'generate', 'input', 'output', 'inout']]
+    signal_list = [s for s in signal_list if s[0] not in ['if','case', 'casex', 'casez', 'for', 'foreach', 'generate', 'input', 'output', 'inout', 'return']]
     if not signal_list:
         return [ti_not_found]
     # print("[SV:get_type_info_from_match] signal_list = " + str(signal_list) + ' for line ' + line)

@@ -364,7 +364,10 @@ class VerilogTypePopup :
             #If inside a function try first in the function body
             ti = {'type':None}
             if 'meta.function.body' in scope:
-                r_func = sublimeutil.expand_to_scope(self.view,'meta.function.body',region)
+                r_func = sublimeutil.expand_to_scope(self.view,'meta.function',region)
+                ti = verilog_module.type_info(self.view,self.view.substr(r_func),var_name)
+            elif 'meta.task.body' in scope:
+                r_func = sublimeutil.expand_to_scope(self.view,'meta.task',region)
                 ti = verilog_module.type_info(self.view,self.view.substr(r_func),var_name)
             if not ti['type'] :
                 # select whole file until end of current line
