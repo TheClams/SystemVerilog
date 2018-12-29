@@ -10,8 +10,8 @@ package my_pkg;
 
   // Block {}
   typedef struct packed {
-    logic        [2:0] mode   ;
-    my_subtype_u       subtype;
+    logic [2:0]  mode   ;
+    my_subtype_u subtype;
   } my_type_t;
 
   // Block {} with other indent style

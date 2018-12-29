@@ -21,6 +21,7 @@
 	"sv.strip_empty_line"      : true,  // Strip empty line inside Module declaration/alignement
 	"sv.mod_import_same_line"  : false, // When aligning module declaration, put import statement on same line as module
 	"sv.alignment_ignore_tick" : false, // Ignore line identation for every line starting with `ifdef,`elsif,...
+	"sv.align_comma_semicolon" : true,  // Aligne comma/semi-colon for signal/port declaration
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
 	"sv.rst_name"           : "rst",    // Default reset active high

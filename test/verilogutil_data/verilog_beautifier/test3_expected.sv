@@ -28,9 +28,9 @@ module my_module (
    logic [ 3:0] cnt ; // counter
    logic [15:0] test; // tests comment
 
-   reg             [ 4:0] reg0 ;
-   logic           [15:0] t1,t2,t3;
-   my_pkg::my_type        data0;
+   reg   [ 4:0]    reg0 ;
+   logic [15:0]    t1,t2,t3;
+   my_pkg::my_type data0;
 
 
 //------------------------------------------------------------------------------

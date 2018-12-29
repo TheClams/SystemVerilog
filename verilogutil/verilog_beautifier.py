@@ -5,7 +5,7 @@ import verilogutil
 
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True):
         self.settings = {'nbSpace': nbSpace,
                         'useTab':useTab,
                         'oneBindPerLine':oneBindPerLine,
@@ -16,7 +16,9 @@ class VerilogBeautifier():
                         'stripEmptyLine': stripEmptyLine,
                         'instAlignPort' : instAlignPort ,
                         'importSameLine' : importSameLine,
-                        'ignoreTick' : ignoreTick}
+                        'ignoreTick' : ignoreTick,
+                        'alignComma' : alignComma,
+        }
         self.indentSpace = ' ' * nbSpace
         if useTab:
             self.indent = '\t'
@@ -516,7 +518,7 @@ class VerilogBeautifier():
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
             len_param = max([len(x[4]) for x in decl])
-            len_value = max([len(x[5]) for x in decl])
+            len_value = max([len(verilogutil.clean_comment(x[5]).strip()) for x in decl])
             len_comment = max([len(x[-1]) for x in decl])
             has_param_list = [x[0] for x in decl if x[0] != '']
             has_param_all = len(has_param_list)==len(decl)
@@ -545,7 +547,7 @@ class VerilogBeautifier():
 
             # print('[sv.beautifier.param] len_type = {}, len_sign = {}, len_bw = {}, len_param = {}, len_value = {}, len_comment = {}, has_param_all = {}, has_param = {}, '.format(len_type,len_sign,len_bw,len_param,len_value,len_comment,has_param_all,has_param))
 
-           # If not on one line align parameter together, otherwise keep as is
+            # If not on one line align parameter together, otherwise keep as is
             if '\n' in param_txt or not self.settings['paramOneLine']:
                 txt_new += '\n'
                 lines = param_txt.splitlines()
@@ -586,16 +588,29 @@ class VerilogBeautifier():
                                     s += '[' + bw.rjust(len_bw_a[i]) + ']'
                             l_new += s.ljust(len_bw+1)
                         l_new += m_param.group('param').ljust(len_param)
-                        l_new += ' = ' + m_param.group('value').ljust(len_value)
-                        if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
-                            l_new += m_param.group('sep')
-                        #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
+                        v = verilogutil.clean_comment(m_param.group('value')).strip()
+                        l_new += ' = ' + v.ljust(len_value)
+                        if self.settings['alignComma']:
+                            if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
+                                l_new += m_param.group('sep')
+                            else :
+                                l_new += ' '
+                        else :
+                            l_tmp = l_new.rstrip()
+                            nb_pad = len(l_new) - len(l_tmp)
+                            if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
+                                sep = m_param.group('sep')
+                            else :
+                                sep = ' '
+                            l_new = l_tmp + sep + ' ' * nb_pad
+                       #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
                         if m_param.group('list'):
                             l_new += ' ' + m_param.group('list')
-                        if i==(len(lines)-1) and m_param.group('comment'):
-                            l_new += ' '
                         if m_param.group('comment'):
                             l_new += ' ' + m_param.group('comment')
+                        # Comment not parsed correctly on last line because there is no separator
+                        elif v != m_param.group('value') :
+                            l_new += ' ' + (m_param.group('value')[len(v):]).strip()
                     if not self.settings['stripEmptyLine'] or l_new.strip() !='':
                         txt_new += l_new.rstrip() + '\n'# + self.indent*(ilvl)
             else :
@@ -768,9 +783,17 @@ class VerilogBeautifier():
                     s = re.sub(r'\s*,\s*',', ',m_port.group('ports').rstrip())
                     l_new += ' '
                     if s.endswith(', '):
-                        l_new += s[:-2].ljust(max_port_len)
+                        nb_pad = 0
+                        if self.settings['alignComma']:
+                            l_new += s[:-2].ljust(max_port_len)
+                        else :
+                            l_new += s[:-2]
+                            nb_pad = max_port_len - len(s[:-2])
+                        # Only add comma if not last line (allow to remove extra comma)
                         if i!=(len(lines)-1):
                             l_new += ','
+                        if nb_pad > 0:
+                            l_new += ' ' * nb_pad
                     else:
                         l_new += s.ljust(max_port_len) + ' '
                     # Add comment
@@ -1051,6 +1074,8 @@ class VerilogBeautifier():
                         len_full += 1 + len(m.group('sign').strip())
                     if m.group('bw') :
                         len_full += 1 + len(m.group('bw').strip())
+                    if t=='type_user' and m.group('scope'):
+                        len_full +=  len(m.group('scope').strip())
                     if len_full > len_max[ilvl]['type_full'] :
                         len_max[ilvl]['type_full'] = len_full
             else:
@@ -1073,12 +1098,13 @@ class VerilogBeautifier():
                 # print('[sv.beautifier.decl] Line = {} -> {}'.format(line,m.groups()))
                 l = self.indent*ilvl
                 is_usertype = m.group('type') not in ['logic', 'wire', 'reg', 'bit']
-                len_type_full = len_max[ilvl]['scope']+len_max[ilvl]['type_full']+1
+                len_type_full = len_max[ilvl]['type_full']+1
                 len_type = len_max[ilvl]['type']+1
                 t = ''
                 # Add localparam/parameter. Adjust align length if not present on this line but present on other line
                 if m.group('param'):
                     t += (m.group('param')).ljust(len_max[ilvl]['param']+1)
+                    len_type_full += len_max[ilvl]['param']+1
                 elif len_max[ilvl]['param']!=0:
                     len_type += len_max[ilvl]['param']+1
                 # Add Scope+type
@@ -1116,7 +1142,10 @@ class VerilogBeautifier():
                     if one_decl_per_line:
                         for s in m.group('sig_list').split(','):
                             if s != '':
-                                l += ';\n' + d + s.strip().ljust(len_max[ilvl]['name'])
+                                if self.settings['alignComma']:
+                                    l += ';\n' + d + s.strip().ljust(len_max[ilvl]['name'])
+                                else :
+                                    l += ';\n' + d + s.strip()
                     else :
                         l += m.group('sig_list').strip()
                 else :
@@ -1135,7 +1164,12 @@ class VerilogBeautifier():
                             l += ' = ' + m.group('init').strip().ljust(len_max[ilvl]['init'])
                         else:
                             l += ''.rjust(len_max[ilvl]['init']+3)
-                l += ';'
+                if self.settings['alignComma']:
+                    l += ';'
+                else :
+                    l_tmp = l.rstrip()
+                    nb_pad = len(l) - len(l_tmp)
+                    l = l_tmp + ';' + ' ' * nb_pad
                 if m.group('comment'):
                     l += ' ' + m.group('comment').strip()
             else : # Not a declaration ? don't touch
