@@ -10,3 +10,5 @@ SystemVerilog 2.21.0 Changelog:
     * Fix alignement of multidimensionnal vector for parameters and signals
     * Fix alignement for declaration of user_defined type and standard type
     * Fix issue with comment on last parameter
+  - Parsing:
+    * Support init value for output port in the parse_module function
