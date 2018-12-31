@@ -14,6 +14,7 @@
 	"sv.tooltip_hide_on_move" : true, // True to hide the tooltip when the mouse move away from the tooltip
 	"sv.tooltip_show_module_on_port" : false, // True to include module type and instance when showing tooltip for a port
 	"sv.tooltip_show_refs" : true, // True to show reference to module/interface/...
+	"sv.tooltip_show_signal_links" : false, // True to show links to driver/reference for signals
 	// SystemVerilog Alignment configuration
 	"sv.one_bind_per_line"     : true,  // When aligning module instantiation force only one binding per line
 	"sv.one_decl_per_line"     : false, // When aligning signal declaration force only one signal per line

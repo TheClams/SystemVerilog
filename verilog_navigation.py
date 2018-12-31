@@ -17,6 +17,7 @@ TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 use_tooltip = False
 show_ref = False
+show_signal_links = False
 debug = False
 sv_settings = None
 tooltip_css = ''
@@ -46,8 +47,10 @@ def init_css():
     global tooltip_css
     global tooltip_flag
     global show_ref
+    global show_signal_links
     if int(sublime.version()) >= 3072 :
         use_tooltip = sv_settings.get('sv.tooltip',True)
+        show_signal_links = sv_settings.get('sv.tooltip_show_signal_links',False)
         if sv_settings.get('sv.tooltip_hide_on_move',True):
             tooltip_flag = sublime.HIDE_ON_MOUSE_MOVE_AWAY
         else:
@@ -135,7 +138,8 @@ class VerilogTypePopup :
         v = self.view.substr(region)
         if debug:  print('[SV:Popup.show] Word to show = {0}'.format(v));
         if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
-            s,ti,colored = self.get_type(v,region)
+            s,ti,colored,is_local = self.get_type(v,region)
+            # print('s={},is_local={}, ti={},colored={}'.format(s,is_local,ti,colored))
             ref_name = ''
             if not s:
                 sublime.status_message('No definition found for ' + v)
@@ -241,6 +245,9 @@ class VerilogTypePopup :
                             l_name = os.path.basename(l[0])
                             ref_links.append('<a href="LINK@{}" class="ref_links">{}</a>'.format(l_href,l_name))
                         s += '<h1><br>Reference:</h1><span>{}</span>'.format('<br>'.join(ref_links))
+                elif is_local and show_signal_links:
+                    s += '<span><br><a href="DRIVER@__CURRENT__@{}" class="ref_links">Goto Driver</a><br>'.format(v)
+                    s += '<a href="REFERENCE@__CURRENT__@{}" class="ref_links">Goto Reference</a></span>'.format(v)
                 s = '<style>{css}</style><div class="content">{txt}</div>'.format(css=tooltip_css, txt=s)
                 # print(s)
                 self.view.show_popup(s,location=location, flags=tooltip_flag, max_width=500, on_navigate=self.on_navigate)
@@ -272,6 +279,7 @@ class VerilogTypePopup :
 
     def get_type(self,var_name,region):
         vs = None
+        is_local = False
         if '::' in var_name:
             vs = var_name.split('::')
             var_name = vs[1]
@@ -380,6 +388,8 @@ class VerilogTypePopup :
                 bti = verilog_module.type_info_from_base(self.view,region,var_name)
                 if bti:
                     ti = bti
+            elif ti['tag'] == 'decl' :
+                is_local = True
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
@@ -388,7 +398,7 @@ class VerilogTypePopup :
                 if 'value' in ti and ti['value']:
                     txt += ' = ' + ti['value']
         #if debug: print('[SV:get_type] {0}'.format(ti))
-        return txt,ti,colored
+        return txt,ti,colored,is_local
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'default', 'extends']
@@ -470,7 +480,10 @@ class VerilogTypePopup :
     def on_navigate(self, href):
         href_s = href.split('@')
         pos = sublime.Region(0,0)
-        v = self.view.window().find_open_file(href_s[1])
+        if href_s[1]=='__CURRENT__' :
+            v = self.view
+        else :
+            v = self.view.window().find_open_file(href_s[1])
         if v :
             self.view.window().focus_view(v)
             if href_s[0]=='DRIVER':

@@ -3,7 +3,7 @@ SystemVerilog 2.21.0 Changelog:
 ## Improvements ##
  - Syntax : add full scope for task body. This allows better type extraction.
  - Alignement : Add option to control comma/semi-colon alignement (sv.align_comma_semicolon)
-
+ - Tooltip : Add option (sv.tooltip_show_signal_links) to give link to driver/reference for signals
 
 ## Bug Fix ##
   - Alignment :
