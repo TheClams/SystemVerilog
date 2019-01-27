@@ -635,6 +635,7 @@ class VerilogBeautifier():
         re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
         # print(re_str)
         # handle case of multiple input/output declared on same line
+        # TODO : use a function to split text in code/comment and apply substitution only on the code part
         txt_port = re.sub(r'[ \t]*,[ \t]*(input|output|inout)\b[ \t]+',r',\n\1 ',m.group('ports'))
         decl = re.findall(re_str,txt_port,flags=re.MULTILINE)
         # Extract max length of the different field for vertical alignement

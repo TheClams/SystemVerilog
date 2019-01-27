@@ -188,7 +188,7 @@ contexts:
         3: keyword.operator.systemverilog
         4: entity.label.systemverilog
 
-    - match: \s*\b(begin|end|fork|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
+    - match: \s*\b(begin|end|fork|disable|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|case|casex|casez|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
       captures:
         1: keyword.control.systemverilog
   struct-assign :
@@ -445,7 +445,8 @@ contexts:
               scope: keyword.operator.systemverilog
         - include: port-dir
         - match: \s*(parameter)
-          scope: keyword.other.systemverilog
+          captures:
+            1: keyword.other.systemverilog
         - include: base-grammar
         - include: ifmodport
 
@@ -458,8 +459,11 @@ contexts:
       scope: keyword.operator.constraint.systemverilog
     - match: (\-|\+|\*|\/|<<|>>|%)
       scope: keyword.operator.arithmetic.systemverilog
-    - match: (!|&&|\|\||\bor\b)
+    - match: (!|&&|\|\|)
       scope: keyword.operator.logical.systemverilog
+    - match: \s*(\bor\b)
+      captures:
+        1: keyword.operator.logical.systemverilog
     - match: '(&|\||\^|~)'
       scope: keyword.operator.bitwise.systemverilog
     - match: '(\{|''\{|})'
@@ -798,8 +802,8 @@ contexts:
     - include: port-dir
     - include: casting
     - include: keyword-control
-    - include: user-defined-type
     - include: base-grammar
+    - include: user-defined-type
     - include: function-call
     - include: struct-assign
 
@@ -852,7 +856,7 @@ contexts:
     - include: port-dir
     - include: casting
     - include: keyword-control
-    - include: user-defined-type
     - include: base-grammar
+    - include: user-defined-type
     - include: function-call
     - include: struct-assign

@@ -399,6 +399,8 @@ fork : f_label
     begin : b_label
 
     end : b_label
+    disable fork;
+//  ^^^^^^^ keyword.control.systemverilog
 join : f_label
 
 
