@@ -252,9 +252,18 @@ def lookup_function(view,funcname):
 
 def lookup_type(view, t):
     ti = None
+    pkg_fl = []
     if '::' in t:
-        t = t.split('::')[-1]
+        ts = t.split('::')
+        pkg_fl = view.window().lookup_symbol_in_index(ts[0])
+        #print('[lookup_type] Package {} defined in {}'.format(ts[0],pkg_fl))
+        # Try to retrieve package filename
+        t = ts[-1]
     filelist = view.window().lookup_symbol_in_index(t)
+    if pkg_fl :
+        fl = []
+        fl_name = [x[0] for x in filelist]
+        filelist = [x for x in pkg_fl if x[0] in fl_name]
     if filelist:
         # Check if symbol is defined in current file first
         fname = view.file_name()

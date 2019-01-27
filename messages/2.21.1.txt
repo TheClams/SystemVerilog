@@ -1,0 +1,9 @@
+SystemVerilog 2.21.1 Changelog:
+
+## Bug Fix ##
+  - Syntax Highlight :
+    * Fix regression in task highlight (disable, or, ... not properly highlighted)
+    * Fix highlight of system function call in function return type
+  - Tooltip:
+    * Now works for field of a 1 letter signal
+    * Now take into account package scope if available

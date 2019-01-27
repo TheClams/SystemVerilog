@@ -263,6 +263,16 @@ endfunction : my_func
 import "DPI-C" pure function real cos  (input real a);
 //             ^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
 //                                ^^^ meta.function.prototype.systemverilog entity.name.function.systemverilog
+
+function automatic logic [$clog2(4)-1:0] first_func (logic in);
+//                        ^^^^^^ support.function.system.systemverilog   
+//                                       ^^^^^^^^^^ meta.function.systemverilog meta.function.body.systemverilog entity.name.function.systemverilog 
+  return '0;
+endfunction : first_func
+//            ^^^^^^^^^^ entity.label.systemverilog
+
+
+
 /*------------------------------------------------------------------------------
 --  Invalid syntax
 ------------------------------------------------------------------------------*/

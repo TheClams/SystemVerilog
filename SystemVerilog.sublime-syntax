@@ -750,6 +750,7 @@ contexts:
             6: entity.name.function.systemverilog
           set: [function-body, function-port]
         - include: base-grammar
+        - include: system-task
     - match: ^\s*(?:(extern|pure)\s+|(import)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog

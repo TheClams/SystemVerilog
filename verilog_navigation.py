@@ -131,7 +131,10 @@ class VerilogTypePopup :
         # Optionnaly extend selection to parent object (parent.var)
         if 'support.function.port' not in self.view.scope_name(region.a):
             while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
-                region.a = self.view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
+                if self.view.classify(region.a-2) & sublime.CLASS_WORD_START:
+                    region.a = region.a-2
+                else :
+                    region.a = self.view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
         # Optionnaly extend selection to scope specifier
         if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
             region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
@@ -209,7 +212,7 @@ class VerilogTypePopup :
                 elif not colored :
                     s,ti = self.color_str(s=s, addLink=True)
                     if ti:
-                        # print(ti)
+                        if debug: print('Default : {}'.format(ti))
                         if 'tag' in ti and ti['tag'] == 'enum':
                             m = re.search(r'\{(.*)\}', ti['decl'])
                             if m:
@@ -434,7 +437,8 @@ class VerilogTypePopup :
                 ws = w.split('::')
                 sh+='<span class="support">{0}</span><span class="operator">::</span>'.format(ws[0])
                 if addLink:
-                    ti = verilog_module.lookup_type(self.view,ws[1])
+                    ti = verilog_module.lookup_type(self.view,w)
+                    if debug: print('[SV:color_str] user-defined type: word={}::{} => ti={}'.format(ws[0],ws[1],ti));
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
                     sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,ws[1])
