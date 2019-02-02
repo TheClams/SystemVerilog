@@ -69,6 +69,23 @@ typedef logic [31:0] queue_of_levels [$];
 //                 ^ keyword.operator
 //                      ^ entity.name.type
 
+typedef interface class ftd_c_t;
+//      ^^^^^^^^^^^^^^^ keyword.other.systemverilog
+//                      ^^^^^^^ meta.typedef_forward.systemverilog storage.type.userdefined.systemverilog
+typedef class  ftd_c_t;
+//      ^^^^^ keyword.other.systemverilog
+//             ^^^^^^^ meta.typedef_forward.systemverilog storage.type.userdefined.systemverilog
+typedef struct ftd_s_t;
+//      ^^^^^^ keyword.other.systemverilog
+//             ^^^^^^^ meta.typedef_forward.systemverilog storage.type.userdefined.systemverilog
+typedef union  ftd_u_t;
+//      ^^^^^ keyword.other.systemverilog
+//             ^^^^^^^ meta.typedef_forward.systemverilog storage.type.userdefined.systemverilog
+typedef enum   ftd_e_t;
+//      ^^^^ keyword.other.systemverilog
+//             ^^^^^^^ meta.typedef_forward.systemverilog storage.type.userdefined.systemverilog
+typedef ftd_t;
+//      ^^^^^ meta.typedef_symbol storage.type.systemverilog
 
 /*------------------------------------------------------------------------------
 --  Module declaration

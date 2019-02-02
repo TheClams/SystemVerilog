@@ -1,0 +1,7 @@
+SystemVerilog 2.21.2 Changelog:
+
+## Bug Fix ##
+  - Syntax Highlight :
+    * Support forward typedef
+  - Tooltip : 
+    * now works with forward typedef

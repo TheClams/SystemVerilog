@@ -143,11 +143,12 @@ contexts:
         1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
   storage-type-systemverilog:
-    - match: ^\s*(typedef)\s+(class)\s+({{id}})\s*;
+    - match: ^\s*(typedef)\s+(class|enum|struct|union|interface\s+class)\s+({{id}})\s*;
+      scope: meta.typedef_forward.systemverilog
       captures:
         1: keyword.control.systemverilog
         2: keyword.other.systemverilog
-        3: entity.name.class.systemverilog
+        3: storage.type.userdefined.systemverilog
     - match: \s*\b(typedef)\b
       captures:
         1: keyword.control.systemverilog
@@ -538,11 +539,11 @@ contexts:
     - match: '\benum\b'
       scope: keyword.control.systemverilog
       set:
-        - meta_scope: "meta.typedef_decl.enum"
+        - meta_scope: meta.typedef_decl.enum
         - match: '\b{{id}}\b'
           scope: storage.type.systemverilog
           set:
-            - meta_scope: "meta.typedef_decl.enum.list"
+            - meta_scope: meta.typedef_decl.enum.list
             - match: "}"
               scope: keyword.operator.other.systemverilog
               pop: true
@@ -561,12 +562,12 @@ contexts:
       scope: storage.type.systemverilog
       pop: true
   typedef_symbol:
-    - meta_scope: "meta.typedef_symbol"
+    - meta_scope: meta.typedef_symbol
     - match: ;
       pop: true
     - match: '\['
       push:
-        - meta_scope: "inside_bracket"
+        - meta_scope: inside_bracket
         - match: '\]'
           pop: true
         - include: comments

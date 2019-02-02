@@ -297,6 +297,7 @@ class VerilogTypePopup :
         if '.' in var_name:
             ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
             if ti:
+                # print('[SV:get_type] Return {0}'.format(ti))
                 txt = ti['decl']
         # Extract type info from module if we are on port connection
         elif 'support.function.port' in scope:
@@ -400,7 +401,7 @@ class VerilogTypePopup :
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:
                     txt += ' = ' + ti['value']
-        #if debug: print('[SV:get_type] {0}'.format(ti))
+        # if debug: print('[SV:get_type] Return {0}'.format(ti))
         return txt,ti,colored,is_local
 
     keywords = ['localparam', 'parameter', 'module', 'interface', 'package', 'class', 'typedef', 'struct', 'union', 'enum', 'packed', 'automatic',
