@@ -298,12 +298,22 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             autocomplete_max_lvl = self.settings.get("sv.autocomplete_max_lvl",4)
             while r.a>1 and self.view.substr(sublime.Region(r.a-1,r.a))=='.' and (cnt < autocomplete_max_lvl or autocomplete_max_lvl<0):
                 if 'support.function.port' not in self.view.scope_name(r.a):
-                    r.a = self.view.find_by_class(r.a-2,False,sublime.CLASS_WORD_START)
+                    # check previous char for array selection
+                    c = self.view.substr(sublime.Region(r.a-2,r.a-1))
+                    # Array selection -> extend to start of array
+                    if c == ']':
+                        r.a = self.view.find_by_class(r.a-3,False,sublime.CLASS_WORD_START)
+                        # print('[SV:dot_completion] Extending array selection -> {}'.format(view.substr(r)))
+                    if self.view.classify(r.a-2) & sublime.CLASS_WORD_START:
+                        r.a = r.a-2
+                    else :
+                        r.a = self.view.find_by_class(r.a-2,False,sublime.CLASS_WORD_START)
                 cnt += 1
             if (cnt >= autocomplete_max_lvl and autocomplete_max_lvl>=0):
                 print("[SV:dot_completion] Reached max hierarchy level for autocompletion. You can change setting sv.autocomplete_max_lvl")
                 return completion
             w = str.rstrip(view.substr(r))
+            # print('[SV:dot_completion] Word = {}'.format(w))
             # get type information on the variable
             txt = view.substr(sublime.Region(0, view.size()))
             ti = verilog_module.type_info_on_hier(view,w,txt,r)
@@ -1013,12 +1023,12 @@ class VerilogHelper():
         return (a_l[7:],a_h[7:],a_nr[7:])
 
     def get_case_template(view, sig_name, ti=None):
-        m = re.search(r'(?P<name>\w+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)
+        m = re.search(r'(?P<name>[\w\.]+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)
         if not m:
             print('[SV:get_case_template] Could not parse ' + sig_name)
             return (None,None)
         if not ti:
-            ti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),m.group('name'))
+            ti = verilog_module.type_info_on_hier(view,m.group('name'),view.substr(sublime.Region(0, view.size())))
         if not ti['type']:
             print('[SV:get_case_template] Could not retrieve type of ' + m.group('name'))
             return (None,None)

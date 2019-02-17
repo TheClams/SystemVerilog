@@ -513,7 +513,7 @@ class VerilogBeautifier():
             if not decl:
                 print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
                 return ''
-            #print(decl)
+            # print(decl)
             len_kw = max([len(x[0]) for x in decl])
             len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
             len_sign  = max([len(x[2]) for x in decl])
@@ -588,7 +588,9 @@ class VerilogBeautifier():
                                     s += '[' + bw.rjust(len_bw_a[i]) + ']'
                             l_new += s.ljust(len_bw+1)
                         l_new += m_param.group('param').ljust(len_param)
-                        v = verilogutil.clean_comment(m_param.group('value')).strip()
+                        vp = m_param.group('value').strip()
+                        v = verilogutil.clean_comment(vp).strip()
+                        c = '' if len(vp)<=len(v) else vp[len(v):].strip() + ' '
                         l_new += ' = ' + v.ljust(len_value)
                         if self.settings['alignComma']:
                             if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
@@ -603,14 +605,11 @@ class VerilogBeautifier():
                             else :
                                 sep = ' '
                             l_new = l_tmp + sep + ' ' * nb_pad
-                       #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
+                        #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
                         if m_param.group('list'):
                             l_new += ' ' + m_param.group('list')
-                        if m_param.group('comment'):
-                            l_new += ' ' + m_param.group('comment')
-                        # Comment not parsed correctly on last line because there is no separator
-                        elif v != m_param.group('value') :
-                            l_new += ' ' + (m_param.group('value')[len(v):]).strip()
+                        if m_param.group('comment') or c:
+                            l_new += ' ' + c + m_param.group('comment')
                     if not self.settings['stripEmptyLine'] or l_new.strip() !='':
                         txt_new += l_new.rstrip() + '\n'# + self.indent*(ilvl)
             else :

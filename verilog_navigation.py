@@ -131,6 +131,10 @@ class VerilogTypePopup :
         # Optionnaly extend selection to parent object (parent.var)
         if 'support.function.port' not in self.view.scope_name(region.a):
             while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
+                c = self.view.substr(sublime.Region(region.a-2,region.a-1))
+                # Array selection -> extend to start of array
+                if c == ']':
+                    region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
                 if self.view.classify(region.a-2) & sublime.CLASS_WORD_START:
                     region.a = region.a-2
                 else :

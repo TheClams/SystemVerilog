@@ -7,3 +7,5 @@ SystemVerilog 2.21.3 Changelog:
     * Improve struct assignement highlight (highlight was broken between end of struct and ;)
   - Auto-completion :
     * Struct: Add default
+    * Support array of struct
+    * Case : suuport structure fields
