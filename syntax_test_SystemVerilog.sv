@@ -226,6 +226,8 @@ bind i_dut dut_tb_bind#(
 --  Structure / Typedef
 ------------------------------------------------------------------------------*/
 typedef struct {logic a; int b; bit [3:0] c;} mystruct;
+//             ^ keyword.operator.other.systemverilog
+//                                          ^ meta.typedef_symbol meta.struct.anonymous.systemverilog keyword.operator.other.systemverilog
 protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0};
 //                                 ^ support.function.field
 //                                                   ^^^^^^^ meta.struct.assign keyword.control
@@ -272,7 +274,7 @@ endfunction : my_func
         endfunction : CLOG
 //                    ^^^^ invalid.illegal.systemverilog
 
-   import "DPI-C" function void rnd(input int a, output int b);
+   import "DPI-C" function void rnd(input int a, output int unsigned b);
 // ^^^^^^ keyword.control.systemverilog
 //         ^^^^^ string.quoted.double.systemverilog
 //                ^^^^^^^^ keyword.control.systemverilog
@@ -281,9 +283,10 @@ import "DPI-C" pure function real cos  (input real a);
 //             ^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
 //                                ^^^ meta.function.prototype.systemverilog entity.name.function.systemverilog
 
-function automatic logic [$clog2(4)-1:0] first_func (logic in);
-//                        ^^^^^^ support.function.system.systemverilog   
-//                                       ^^^^^^^^^^ meta.function.systemverilog meta.function.body.systemverilog entity.name.function.systemverilog 
+function automatic logic [$clog2(4)-1:0] first_func (logic in, int unsigned a);
+//                        ^^^^^^ support.function.system.systemverilog
+//                                       ^^^^^^^^^^ meta.function.systemverilog meta.function.body.systemverilog entity.name.function.systemverilog
+//                                                                 ^^^^^^^^ storage.type
   return '0;
 endfunction : first_func
 //            ^^^^^^^^^^ entity.label.systemverilog

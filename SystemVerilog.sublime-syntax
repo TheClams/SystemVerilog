@@ -65,6 +65,7 @@ contexts:
         3: keyword.operator.scope.systemverilog
         4: entity.other.inherited-class.systemverilog
     - include: all-types
+    - include: struct-assign
     - include: operators
     - include: port-dir
     - match: '\b(and|nand|nor|or|xor|xnor|buf|not|bufif[01]|notif[01]|r?[npc]mos|tran|r?tranif[01]|pullup|pulldown)\b'
@@ -88,7 +89,6 @@ contexts:
     - match: \s*\b(rand|randc)\b
       scope: storage.type.rand.systemverilog
     - include: module-inst
-    - include: struct-assign
     - include: storage-scope-systemverilog
     - include: function-call
     - include: constants
@@ -193,21 +193,13 @@ contexts:
       captures:
         1: keyword.control.systemverilog
   struct-assign :
-    - match: '\s*(<?=|\?)\s*(\''{)'
-      captures:
-        1: keyword.operator.other.systemverilog
-        2: keyword.operator.other.systemverilog
-        3: keyword.operator.other.systemverilog
+    - match: '(\''{)'
+      scope: keyword.operator.struct.begin.systemverilog
       push:
         - meta_scope: meta.struct.assign.systemverilog
-        - match: ;
+        - match: \}
+          scope: keyword.operator.struct.end.systemverilog
           pop: true
-        - match: '\?'
-          scope: keyword.operator.systemverilog
-          push:
-            - match: '(?:,|})'
-              pop: true
-            - include: base-grammar
         - match: '\b(default)\s*(:)(?!:)'
           captures:
             1: keyword.control.systemverilog
@@ -216,6 +208,24 @@ contexts:
           captures:
             1: support.function.field.systemverilog
             2: keyword.operator.other.systemverilog
+        - include: concat
+        - include: struct-assign
+        - include: comments
+        - include: strings
+        - include: operators
+        - include: constants
+        - include: system-task
+        - include: storage-scope-systemverilog
+  concat :
+    - match: \{
+      scope: keyword.operator.concat.begin.systemverilog
+      push:
+        - meta_scope: meta.concat.systemverilog
+        - match: \}
+          scope: keyword.operator.concat.end.systemverilog
+          pop: true
+        - include: concat
+        - include: struct-assign
         - include: comments
         - include: strings
         - include: operators
@@ -467,8 +477,8 @@ contexts:
         1: keyword.operator.logical.systemverilog
     - match: '(&|\||\^|~)'
       scope: keyword.operator.bitwise.systemverilog
-    - match: '(\{|''\{|})'
-      scope: keyword.operator.array.systemverilog
+    - match: '(\{|})'
+      scope: keyword.operator.other.systemverilog
     - match: '(\?|:)'
       scope: keyword.operator.ternary.systemverilog
     - match: (#|@)
@@ -784,17 +794,18 @@ contexts:
         - match: \)\s*;
           pop: true
         - include: port-dir
-        - match: '\s*\b(?:({{id}})(::))?({{id}})\s+({{id}})'
+        - match: '\s*\b(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.systemverilog
+            4: storage.type.systemverilog
         - include: base-grammar
     - include: comments
     - include: else-pop
   function-body:
     - meta_scope: meta.function.body.systemverilog
-    - match: (endfunction)(?:\s(:)\s*(?:(\6)\b|({{id}})))?
+    - match: (endfunction)(?:\s*(:)\s*(?:(\6)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog
@@ -848,7 +859,7 @@ contexts:
     - include: else-pop
   task-body:
     - meta_scope: meta.task.body.systemverilog
-    - match: (endtask)(?:\s(:)\s*(?:(\6)\b|({{id}})))?
+    - match: (endtask)(?:\s*(:)\s*(?:(\6)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog

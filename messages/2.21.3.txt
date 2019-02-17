@@ -1,0 +1,9 @@
+SystemVerilog 2.21.3 Changelog:
+
+## Bug Fix ##
+  - Syntax Highlight :
+    * Allow more than one space for endfunction/endtask
+    * Fix signed/unsigned not highlighted in function ports
+    * Improve struct assignement highlight (highlight was broken between end of struct and ;)
+  - Auto-completion :
+    * Struct: Add default
