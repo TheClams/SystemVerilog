@@ -83,9 +83,6 @@ contexts:
       captures:
         1: keyword.other.systemverilog
     - include: user-defined-type
-    - match: \s*\b(static|local|const|protected|virtual|localparam|parameter)\b
-      captures:
-        1: keyword.other.systemverilog
     - match: \s*\b(rand|randc)\b
       scope: storage.type.rand.systemverilog
     - include: module-inst
@@ -130,6 +127,9 @@ contexts:
         7: support.type.scope.systemverilog
         8: keyword.operator.scope.systemverilog
         9: storage.type.userdefined.systemverilog
+    - match: \s*\b(static|local|const|protected|virtual|localparam|parameter)\b
+      captures:
+        1: keyword.other.systemverilog
   storage-modifier-systemverilog:
     - match: '\b(signed|unsigned|small|medium|large|supply[01]|strong[01]|pull[01]|weak[01]|highz[01])\b'
       scope: storage.modifier.systemverilog

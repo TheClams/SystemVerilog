@@ -48,4 +48,9 @@ package my_pkg;
     mode          : my_other_pkg::DEFAULT_MODE
   };
 
+  logic     [4:0]      var0;
+  u8_t      [4:0]      var1;
+  my_type_t [4:0][2:0] var2;
+  my_type2_t           var3;
+
 endpackage

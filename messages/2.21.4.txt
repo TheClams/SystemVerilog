@@ -1,0 +1,9 @@
+SystemVerilog 2.21.4 Changelog:
+
+## Bug Fix ##
+  - Alignment:
+    * Fix case of user type with packed array
+    * Support ref in module port declaration
+
+  - Highlight:
+    * Fix virtual keyword not highlighted in some cases

@@ -631,7 +631,7 @@ class VerilogBeautifier():
             txt_new += ' '
         txt_new += '(\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
-        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
+        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var|ref\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
         # print(re_str)
         # handle case of multiple input/output declared on same line
         # TODO : use a function to split text in code/comment and apply substitution only on the code part
@@ -1039,7 +1039,7 @@ class VerilogBeautifier():
                 # print('[alignDecl] {0} => {1}'.format(l,m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
-                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'type_full':0,'type_user':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
+                    len_max[ilvl] = {'param':0,'scope':0,'type':0,'type_full':0,'type_user':0,'type_user_pa':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
                 len_full = 0
                 for k,g in m.groupdict().items():
                     if g:
@@ -1056,7 +1056,7 @@ class VerilogBeautifier():
                         elif k == 'type' :
                             len_full = len(w)
                             if w not in ['logic', 'wire', 'reg', 'bit'] :
-                                t = 'type_user'
+                                t = 'type_user_pa' if m.group('bw') else 'type_user'
                             else:
                                 t = 'type'
                             if len_full > len_max[ilvl][t]:
@@ -1074,7 +1074,7 @@ class VerilogBeautifier():
                         len_full += 1 + len(m.group('sign').strip())
                     if m.group('bw') :
                         len_full += 1 + len(m.group('bw').strip())
-                    if t=='type_user' and m.group('scope'):
+                    if t!='type' and m.group('scope'):
                         len_full +=  len(m.group('scope').strip())
                     if len_full > len_max[ilvl]['type_full'] :
                         len_max[ilvl]['type_full'] = len_full
@@ -1090,6 +1090,8 @@ class VerilogBeautifier():
                 x['array_sum'] += 2 + y
             for y in x['bw']:
                 x['bw_sum'] += 2 + y
+            if x['type_user_pa']>x['type']:
+                x['type'] = x['type_user_pa']
         # print('[sv.beautifier.decl] len_max = {}'.format(len_max))
         # Update alignement of each line
         txt_new = ''
@@ -1113,6 +1115,13 @@ class VerilogBeautifier():
                         t += (m.group('scope')+m.group('type'))
                     else:
                         t += m.group('type')
+                    if m.group('bw'):
+                        t = t.ljust(len_type)
+                        s = ''
+                        bw_a = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',m.group('bw')))
+                        for i,bw in enumerate(bw_a):
+                            s += '[' + bw.rjust(len_max[ilvl]['bw'][i]) + ']'
+                        t += s.ljust(len_max[ilvl]['bw_sum']+1)
                 else :
                     t += m.group('type').ljust(len_type)
                     #Align with signess only if it exist in at least one of the line
