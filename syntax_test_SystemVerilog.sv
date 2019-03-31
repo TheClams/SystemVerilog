@@ -494,3 +494,66 @@ endpackage : example_pkg
 //     ^^^^^^^^^^^^^^^^^ support.variable.systemverilog
     typedef logic unsigned [3:0] mytype;
 `endif
+
+/*------------------------------------------------------------------------------
+--  Rand sequence
+------------------------------------------------------------------------------*/
+
+task randseq1;
+
+  randsequence(m)
+    m : {x=1;};
+
+    PP_OP : if ( depth < 2 ) PUSH_OPER else POP ;
+    PUSH_OPER : repeat( $urandom_range( 2, 6 ) ) PUSH ;
+    PUSH : { ++depth; do_push(); };
+    POP : { --depth; do_pop(); };
+
+    TOP : rand join (0.0) SETUP P2 ;
+    SETUP : { if( fifo_length >= max_length ) break; } COMMAND ;
+    P2 : A { if( flag == 1 ) return; } B C ;
+    A : { $display( "A" ); } ;
+    B : { if( flag == 2 ) return; $display( "B" ); } ;
+
+    SELECT : case ( device & 7 )
+      0 : NETWORK ;
+      1, 2 : DISK ;
+      default : MEMORY ;
+    endcase ;
+
+    main : first second gen ;
+    first :  add := 3
+          | dec := (1 + 1) // 2
+          ;
+    second : pop | push ;
+    add : gen("add") ;
+    dec : gen("dec") ;
+    pop : gen("pop") ;
+    push : gen("push") ;
+    gen ( string s = "done" ) : { $display( s ); } ;
+
+  endsequence
+
+endtask : randseq1
+
+
+function void randseq2();
+
+  randsequence(m)
+    void A : A1 A2;
+    void A1 : { cnt = 1; } B repeat(5) C B
+      { $display("c=%d, b1=%d, b2=%d", C, B[1], B[2]); }
+    ;
+    void A2 : if (cond) D(5) else D(20)
+      { $display("d1=%d, d2=%d", D[1], D[2]); }
+    ;
+    int B : C { return C;}
+      | C C { return C[2]; }
+      | C C C { return C[3]; }
+      ;
+    int C : { cnt = cnt + 1; return cnt; };
+    int D (int prm) : { return prm; };
+  endsequence
+
+endfunction : randseq2 ;
+

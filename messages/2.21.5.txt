@@ -1,0 +1,5 @@
+SystemVerilog 2.21.5 Changelog:
+
+## Bug Fix ##
+  - Syntax Highlight :
+    * Support randsequence

@@ -814,6 +814,7 @@ contexts:
       pop: true
     - include: port-dir
     - include: casting
+    - include: randseq
     - include: keyword-control
     - include: base-grammar
     - include: user-defined-type
@@ -868,8 +869,30 @@ contexts:
       pop: true
     - include: port-dir
     - include: casting
+    - include: randseq
     - include: keyword-control
     - include: base-grammar
     - include: user-defined-type
     - include: function-call
     - include: struct-assign
+
+  randseq:
+    - match: ^\s*(randsequence)\s*\(\s*({{id}})?\s*\)
+      captures:
+        1: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.randsequence.systemverilog
+        - match: \b(endsequence)\b
+          scope: keyword.control.systemverilog
+          pop: true
+        - include: keyword-control
+        - match: ^\s*(?:({{id}})\s+)?({{id}})(?:\s*(:))
+          captures:
+            1: storage.type.systemverilog
+            2: entity.name.tag.systemverilog
+            3: keyword.operator.systemverilog
+        - match: \brand\s+join\b
+          scope: keyword.control.systemverilog
+        - include: base-grammar
+        - include: system-task
+        - include: function-call
