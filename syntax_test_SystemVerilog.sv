@@ -87,6 +87,22 @@ typedef enum   ftd_e_t;
 typedef ftd_t;
 //      ^^^^^ meta.typedef_symbol storage.type.systemverilog
 
+typedef enum logic [4:0] {
+    ISA_ADD = {OP_RR, RR_ADD},
+    ISA_SUB = {OP_RR, RR_SUB},
+//  ^^^^^^^ meta.typedef_symbol constant.other.net.systemverilog
+    ISA_BEQ = {OP_BR, 3'bXXX}
+}  isa_t;
+// ^^^^^ meta.typedef_symbol entity.name.type.systemverilog
+
+// ^^^^^ meta.typedef_symbol entity.name.type.systemverilog
+typedef enum {M[2], N, O, P} b__t;
+//              ^ meta.typedef_symbol constant.numeric.decimal.systemverilog
+//                           ^^^^ meta.typedef_symbol entity.name.type.systemverilog
+
+  typedef enum logic {TRUE=0, FASLE=0} z_t;
+//                        ^ meta.typedef_symbol keyword.operator.assignment.systemverilog
+//                                     ^^^ meta.typedef_symbol entity.name.type.systemverilog
 /*------------------------------------------------------------------------------
 --  Module declaration
 ------------------------------------------------------------------------------*/

@@ -551,13 +551,16 @@ contexts:
       set:
         - meta_scope: meta.typedef_decl.enum
         - match: '\b{{id}}\b'
-          scope: storage.type.systemverilog
-          set:
-            - meta_scope: meta.typedef_decl.enum.list
-            - match: "}"
-              scope: keyword.operator.other.systemverilog
-              pop: true
-            - include: base-grammar
+          scope: storage.type.enum.systemverilog
+          push:
+            - include: packed-array
+            - include: else-pop
+          # set:
+          #   - meta_scope: meta.typedef_decl.enum.list
+          #   - match: "}"
+          #     scope: keyword.operator.other.systemverilog
+          #     pop: true
+          #   - include: base-grammar
         - match: "{"
           scope: keyword.operator.other.systemverilog
           set:
@@ -565,6 +568,7 @@ contexts:
               scope: keyword.operator.other.systemverilog
               pop: true
             - include: comments
+            - include: concat
             - include: constants
             - include: operators
             - include: strings
@@ -598,6 +602,18 @@ contexts:
   else-pop:
     - match: (?=\S)
       pop: true
+
+  packed-array :
+    - match: '\['
+      push:
+        - meta_scope: meta.type.packed_array
+        - match: '\]'
+          pop: true
+        - include: comments
+        - include: constants
+        - include: operators
+        - include: strings
+
 # Assertions
   assertion :
     - match: \b(property)\s+(\w+)
