@@ -488,7 +488,6 @@ class VerilogTypePopup :
 
     def on_navigate(self, href):
         href_s = href.split('@')
-        pos = sublime.Region(0,0)
         if href_s[1]=='__CURRENT__' :
             v = self.view
         else :

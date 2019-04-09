@@ -1,0 +1,6 @@
+SystemVerilog 2.21.6 Changelog:
+
+## Bug Fix ##
+  - Syntax Highlight :
+    * Enum: support concatenation in enum declaration value
+  - Parsing : fix performance issue for function popup when defined out-of-block in alrge files

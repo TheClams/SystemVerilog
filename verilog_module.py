@@ -247,13 +247,14 @@ def lookup_function(view,funcname):
         else:
             for f in filelist:
                 fname, display_fname, rowcol = f
-                fname = sublimeutil.normalize_fname(fname)
-                with open(fname,'r') as f:
+                fname_ = sublimeutil.normalize_fname(fname)
+                with open(fname_,'r') as f:
                     flines = str(f.read())
                 flines = verilogutil.clean_comment(flines)
                 fi = verilogutil.parse_function(flines,funcname)
                 if fi:
-                    fi['fname'] = (fname,rowcol[0],rowcol[1])
+                    # rowcols = [x for fn,_,x in filelist if fn==fname_]
+                    fi['fname'] = (fname_,rowcol[0],rowcol[1])
                     break
     return fi
 

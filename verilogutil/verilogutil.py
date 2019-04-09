@@ -501,6 +501,7 @@ def parse_function(flines,funcname):
     if not fi:
         return None
     else :
+        # print(fi)
         return fi[0]
 
 # Parse a class for function and members
@@ -545,10 +546,15 @@ def parse_class(flines,cname=r'\w+'):
 def get_all_function(txt,funcname=r'\w+'):
     fil = [] # Function Info list
     names = []
-    fl = re.findall(r'(?s)(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\3\b',txt,flags=re.MULTILINE)
-    fl += re.findall(r'(?s)extern\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
-    fl += re.findall(r'(?s)^[ \t]*import\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()',txt,flags=re.MULTILINE)
-    for ( f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
+    re_str = r'(?s)(extern)\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()'
+    fl = re.findall(re_str,txt,flags=re.MULTILINE)
+    txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
+    re_str = r'(?s)^[ \t]*(import)\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()'
+    fl += re.findall(re_str,txt,flags=re.MULTILINE)
+    txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
+    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\3\b'
+    fl += re.findall(re_str,txt,flags=re.MULTILINE)
+    for ( f_def, f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
         if f_name in names:
             continue
         else :
@@ -560,7 +566,7 @@ def get_all_function(txt,funcname=r'\w+'):
             pi = [x for x in ti_all if x['decl'].startswith(('input','output','inout','ref'))]
         f_decl = '{acc} {virt} {type} {ret} {name}'.format(acc=f_access, virt=f_virtual, type=f_type, ret=f_return,name=f_name)
         f_decl = re.sub(r'\s+',' ',f_decl.strip())
-        d = {'name': f_name, 'type': f_type, 'port': pi, 'return': f_return, 'decl': f_decl}
+        d = {'name': f_name, 'type': f_type, 'port': pi, 'return': f_return, 'decl': f_decl, 'definition': f_def}
         if f_access:
             d['access'] = f_access
         if d['return'].startswith('automatic'):
