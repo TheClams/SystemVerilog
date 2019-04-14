@@ -498,6 +498,7 @@ def parse_package(flines,pname=r'\w+'):
 
 def parse_function(flines,funcname):
     fi = get_all_function(flines,funcname)
+    # print('Parse function {} in :\n{}'.format(flines,funcname))
     if not fi:
         return None
     else :
@@ -552,7 +553,7 @@ def get_all_function(txt,funcname=r'\w+'):
     re_str = r'(?s)^[ \t]*(import)\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()'
     fl += re.findall(re_str,txt,flags=re.MULTILINE)
     txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
-    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\3\b'
+    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\4\b'
     fl += re.findall(re_str,txt,flags=re.MULTILINE)
     for ( f_def, f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
         if f_name in names:
