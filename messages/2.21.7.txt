@@ -1,0 +1,6 @@
+SystemVerilog 2.21.7 Changelog:
+
+## Bug Fix ##
+  - Tooltip :
+    * Fix regression for functions
+    * Support for extended class

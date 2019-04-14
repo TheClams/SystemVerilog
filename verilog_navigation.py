@@ -365,6 +365,11 @@ class VerilogTypePopup :
         # Get Macro text
         elif 'constant.other.define' in scope:
             txt,_ = verilog_module.lookup_macro(self.view,var_name)
+        # Get Base Class
+        elif 'entity.other.inherited-class' in scope:
+            ti = verilog_module.lookup_type(self.view,var_name)
+            if ti:
+                txt = ti['decl']
         # Variable inside a scope
         elif vs:
             if len(vs)==2:
