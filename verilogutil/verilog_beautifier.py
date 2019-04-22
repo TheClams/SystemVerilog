@@ -166,10 +166,11 @@ class VerilogBeautifier():
                 # Search for split line requiring temporary increase of the indentation level
                 if self.state not in ['comment_block','{'] and self.block_state not in ['module','instance','struct']:
                     # Retrieve the complete last line without verilog comment
-                    idx_eol = block.rfind('\n')
+                    block_c = verilogutil.clean_comment(block)
+                    idx_eol = block_c.rfind('\n')
                     last_line = line
-                    if idx_eol>-1 and idx_eol<(len(block)-2):
-                        last_line = block[idx_eol+1:]+ line
+                    if idx_eol>-1 and idx_eol<(len(block_c)-2):
+                        last_line = block_c[idx_eol+1:]+ line
                     tmp = verilogutil.clean_comment(last_line).strip()
                     # print('block="{0}"" => eol={1} => last_line="{2}"'.format(block,idx_eol,last_line))
                     if tmp:
@@ -330,6 +331,7 @@ class VerilogBeautifier():
                     self.stateUpdate()
                     block += line
                     line = ''
+                    # print('End of block, restting line')
                     if not self.block_state:
                         block_handled = True
             elif self.state=='string':

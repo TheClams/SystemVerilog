@@ -4,3 +4,6 @@ SystemVerilog 2.21.7 Changelog:
   - Tooltip :
     * Fix regression for functions
     * Support for extended class
+  - Beautifier :
+    * Fix potential issue with block comment before block end keyword
+    * Improve auto text selection to try to correctly capture full block of code

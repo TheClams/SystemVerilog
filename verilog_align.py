@@ -69,6 +69,80 @@ class VerilogAlign(sublime_plugin.TextCommand):
             # empty region ? select all lines before and after until an empty line is found
             if region.empty():
                 region = sublimeutil.expand_to_block(self.view,region)
+                # try to find begin/end block
+                kw_l = ['begin','end','case','endcase','module','endmodule','function','endfunction','task','endtask','class','endclass']
+                txt = verilogutil.clean_comment(self.view.substr(region))
+                # print(txt)
+                cnt = {}
+                for kw in kw_l:
+                    f = re.findall(r'\b{}\b'.format(kw),txt)
+                    cnt[kw] = len(f)
+                # print(cnt)
+                if(cnt['module']!=cnt['endmodule']):
+                    if cnt['module']>0:
+                        r_stop = self.view.find(r'\bendmodule\b',region.a)
+                        if r_stop.b!=-1:
+                            region.b = r_stop.b
+                    else:
+                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\bmodule\b')
+                        if len(rl)>0 and rl[-1].b!=-1:
+                            region.a = rl[-1].a
+                elif(cnt['class']!=cnt['endclass']):
+                    if cnt['class']>0:
+                        r_stop = self.view.find(r'\bendclass\b',region.a)
+                        if r_stop.b!=-1:
+                            region.b = r_stop.b
+                    else:
+                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\bclass\b')
+                        if len(rl)>0 and rl[-1].b!=-1:
+                            region.a = rl[-1].a
+                elif(cnt['function']!=cnt['endfunction']):
+                    if cnt['function']>0:
+                        r_stop = self.view.find(r'\bendfunction\b',region.a)
+                        if r_stop.b!=-1:
+                            region.b = r_stop.b
+                    else:
+                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\bfunction\b')
+                        if len(rl)>0 and rl[-1].b!=-1:
+                            region.a = rl[-1].a
+                elif(cnt['task']!=cnt['endtask']):
+                    if cnt['task']>0:
+                        r_stop = self.view.find(r'\bendtask\b',region.a)
+                        if r_stop.b!=-1:
+                            region.b = r_stop.b
+                    else:
+                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\btask\b')
+                        if len(rl)>0 and rl[-1].b!=-1:
+                            region.a = rl[-1].a
+                elif(cnt['begin']!=cnt['end']):
+                    if cnt['begin']>cnt['end']:
+                        ra = self.view.find_all(r'\bend\b',region.a)
+                        rl = []
+                        for r in ra:
+                            if ra.a>region.a:
+                                rl.append(r)
+                        if len(rl)>0 :
+                            idx = cnt['begin']-cnt['end']
+                            if idx<0:
+                                idx = -1
+                            region.b = rl[idx].b
+                    else:
+                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\bbegin\b')
+                        if len(rl)>0 :
+                            idx = cnt['begin']-cnt['end']
+                            if idx>=len(rl):
+                                idx = 0
+                            region.a = rl[idx].a
+                if self.view.classify(region.a) & sublime.CLASS_LINE_START == 0:
+                    p = self.view.find_by_class(region.a,False,sublime.CLASS_LINE_START)
+                    if p>=0 and p<region.a:
+                        region.a = p
+                if self.view.classify(region.b) & sublime.CLASS_LINE_END == 0:
+                    p = self.view.find_by_class(region.b,True,sublime.CLASS_LINE_END)
+                    if p>-1 and self.view.classify(p) & sublime.CLASS_LINE_END == 0:
+                        region.b = p-1
+                    elif p>region.b:
+                        region.b = p
             else:
                 region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
@@ -76,6 +150,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
                 region.a += 1
             txt = self.view.substr(region)
+            # print(txt)
             txt = beautifier.beautifyText(txt)
         if txt:
             self.view.replace(edit,region,txt)

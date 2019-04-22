@@ -110,14 +110,19 @@ def find_closest(view, r, re_str):
     ra = view.find_all(re_str,0,'$1',nl)
     base_name = ''
     full_name = ''
+    regions = []
     if ra:
         for (rf,n) in zip(ra,nl):
             if rf.a < r.a:
-                base_name = re.findall(r'\w+',n)[0]
+                # print('[find_closest] Region {}, txt={} ({})'.format(rf,n,re_str))
+                regions.append(rf)
+                fa = re.findall(r'\w+',n)
+                if fa:
+                    base_name = fa[0]
                 full_name = n
             else:
                 break
-    return base_name,full_name
+    return base_name,full_name,regions
 
 # Create a panel and display a text
 def print_to_panel(txt,name):

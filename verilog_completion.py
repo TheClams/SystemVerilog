@@ -235,12 +235,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         completion = []
         # print ('previous word: ' + w)
         if w == 'this':
-            cname,_ = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
+            cname,_,_ = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
             if cname :
                 txt = self.view.substr(sublime.Region(0,self.view.size()))
                 return self.class_completion('',cname,txt,False)
         elif w == 'super':
-            cname,_ = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+(.*?);')
+            cname,_,_ = sublimeutil.find_closest(view,r,r'\bclass\s+.*?\bextends\s+(.*?);')
             if cname :
                 if cname:
                     ci = verilog_module.lookup_type(self.view,cname)
@@ -1023,6 +1023,7 @@ class VerilogHelper():
         return (a_l[7:],a_h[7:],a_nr[7:])
 
     def get_case_template(view, sig_name, ti=None):
+        debug = view.settings().get("sv.debug",False)
         m = re.search(r'(?P<name>[\w\.]+)(\s*\[(?P<h>\d+)\:(?P<l>\d+)\])?',sig_name)
         if not m:
             print('[SV:get_case_template] Could not parse ' + sig_name)
@@ -1036,7 +1037,8 @@ class VerilogHelper():
         if m.group('h'):
             length = int(m.group('h')) - int(m.group('l')) + 1
         t = ti['type'].split()[0]
-        # print('[get_case_template] ti = {0}'.format(ti))
+        if debug:
+            print('[get_case_template] ti = {0}'.format(ti))
         if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
             tti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),ti['type'])
@@ -1049,7 +1051,8 @@ class VerilogHelper():
                         tti = verilog_module.type_info_file(view,fname,t)
                         if tti:
                             break
-            # print('[get_case_template] tti = {0}'.format(tti))
+            if debug:
+                print('[get_case_template] tti = {0}'.format(tti))
             ti = tti
         return verilogutil.fill_case(ti,length)
 

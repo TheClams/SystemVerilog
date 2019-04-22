@@ -1,6 +1,7 @@
 [
 	{
 		"decl": "function integer abs",
+		"definition": "",
 		"name": "abs",
 		"port": [
 			{
@@ -18,6 +19,7 @@
 	},
 	{
 		"decl": "function automatic string join_string",
+		"definition": "",
 		"name": "join_string",
 		"port":
 		[
