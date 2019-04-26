@@ -865,12 +865,13 @@ contexts:
         - match: \)\s*;
           pop: true
         - include: port-dir
-        - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+({{id}})'
+        - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
           captures:
             1: keyword.other.systemverilog
             2: support.type.scope.systemverilog
             3: keyword.operator.scope.systemverilog
             4: storage.type.systemverilog
+            5: storage.type.systemverilog
         - include: base-grammar
     - include: comments
     - include: else-pop

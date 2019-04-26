@@ -95,7 +95,6 @@ typedef enum logic [4:0] {
 }  isa_t;
 // ^^^^^ meta.typedef_symbol entity.name.type.systemverilog
 
-// ^^^^^ meta.typedef_symbol entity.name.type.systemverilog
 typedef enum {M[2], N, O, P} b__t;
 //              ^ meta.typedef_symbol constant.numeric.decimal.systemverilog
 //                           ^^^^ meta.typedef_symbol entity.name.type.systemverilog
@@ -307,6 +306,12 @@ function automatic logic [$clog2(4)-1:0] first_func (logic in, int unsigned a);
 endfunction : first_func
 //            ^^^^^^^^^^ entity.label.systemverilog
 
+task first_task (int unsigned a);
+// <- meta.task.systemverilog keyword.control.systemverilog
+//   ^^^^^^^^^^ meta.task.systemverilog entity.name.function.systemverilog
+//               ^^^ meta.task.port.systemverilog storage.type.systemverilog
+//                   ^^^^^^^^ meta.task.body.systemverilog meta.task.port.systemverilog storage.type.systemverilog
+endtask : first_task
 
 
 /*------------------------------------------------------------------------------

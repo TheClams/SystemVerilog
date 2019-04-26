@@ -72,7 +72,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                 # try to find begin/end block
                 kw_l = ['begin','end','case','endcase','module','endmodule','function','endfunction','task','endtask','class','endclass']
                 txt = verilogutil.clean_comment(self.view.substr(region))
-                # print(txt)
+                # print('Initial region = {}\n{}\n-------------'.format(region,txt))
                 cnt = {}
                 for kw in kw_l:
                     f = re.findall(r'\b{}\b'.format(kw),txt)
@@ -119,7 +119,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         ra = self.view.find_all(r'\bend\b',region.a)
                         rl = []
                         for r in ra:
-                            if ra.a>region.a:
+                            if r.a>region.a:
                                 rl.append(r)
                         if len(rl)>0 :
                             idx = cnt['begin']-cnt['end']
@@ -143,6 +143,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         region.b = p-1
                     elif p>region.b:
                         region.b = p
+                # print('Final region = {}\n{}\n-------------'.format(region,txt))
             else:
                 region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
