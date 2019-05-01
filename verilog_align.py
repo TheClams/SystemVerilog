@@ -42,10 +42,11 @@ class VerilogAlign(sublime_plugin.TextCommand):
         region = self.view.sel()[0]
         row,col = self.view.rowcol(region.a)
         scope = self.view.scope_name(region.a)
-        if region.b > region.a :
+        if region.b != region.a :
             if self.view.scope_name(region.b) != scope :
                 scope = ''
         txt = ''
+        # print('[VerilogAlign] Region= {}, Scope = {} -- {})'.format(region,scope,self.view.scope_name(region.b)))
         if cmd == 'reindent':
             # Select whole text if nothing is selected
             # Otherwise expand to the line
@@ -60,10 +61,12 @@ class VerilogAlign(sublime_plugin.TextCommand):
             # Make sure to get complete line to be able to get initial indentation
             region = self.view.line(region)
             txt = self.view.substr(region)
+            # print('[VerilogAlign] Scope inst : expanding to {}'.format(region))
             ilvl = beautifier.getIndentLevel(txt)
             txt = beautifier.alignInstance(txt,ilvl)
         elif 'meta.module.systemverilog' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
+            # print('[VerilogAlign] Scope Module: expanding to {}'.format(region))
             txt = beautifier.alignModulePort(self.view.substr(region),0)
         else :
             # empty region ? select all lines before and after until an empty line is found
@@ -115,23 +118,40 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         if len(rl)>0 and rl[-1].b!=-1:
                             region.a = rl[-1].a
                 elif(cnt['begin']!=cnt['end']):
-                    if cnt['begin']>cnt['end']:
-                        ra = self.view.find_all(r'\bend\b',region.a)
-                        rl = []
-                        for r in ra:
-                            if r.a>region.a:
-                                rl.append(r)
-                        if len(rl)>0 :
-                            idx = cnt['begin']-cnt['end']
-                            if idx<0:
-                                idx = -1
+                    wl = []
+                    rl = self.view.find_all(r'\b(begin|end)\b',0,'$1',wl)
+                    cnt_diff = cnt['begin'] - cnt['end']
+                    if rl :
+                        idx = 0
+                        # More begin than end ? Expand forward for the missing end
+                        if cnt_diff > 0:
+                            # Find first region following initial block
+                            while idx<len(rl) and rl[idx].b < region.b :
+                                idx += 1
+                            # Iterate over following begin/end until the difference of begin end is 0
+                            while idx<len(rl) and cnt_diff>0 :
+                                if wl[idx] == 'begin':
+                                    cnt_diff += 1
+                                else :
+                                    cnt_diff -= 1
+                                if cnt_diff > 0:
+                                    idx += 1
                             region.b = rl[idx].b
-                    else:
-                        _,_,rl  = sublimeutil.find_closest(self.view,region,r'\bbegin\b')
-                        if len(rl)>0 :
-                            idx = cnt['begin']-cnt['end']
-                            if idx>=len(rl):
-                                idx = 0
+                        # More end than begin ? Expand backward for the missing begin
+                        else:
+                            # Find first region preceding initial block
+                            while idx<len(rl) and rl[idx].a < region.a :
+                                idx += 1
+                            if idx>0:
+                                idx -= 1
+                            # Iterate over following begin/end until the difference of begin end is 0
+                            while idx<len(rl) and cnt_diff<0 :
+                                if wl[idx] == 'begin':
+                                    cnt_diff += 1
+                                else :
+                                    cnt_diff -= 1
+                                if cnt_diff < 0:
+                                    idx -= 1
                             region.a = rl[idx].a
                 if self.view.classify(region.a) & sublime.CLASS_LINE_START == 0:
                     p = self.view.find_by_class(region.a,False,sublime.CLASS_LINE_START)
@@ -143,7 +163,6 @@ class VerilogAlign(sublime_plugin.TextCommand):
                         region.b = p-1
                     elif p>region.b:
                         region.b = p
-                # print('Final region = {}\n{}\n-------------'.format(region,txt))
             else:
                 region = self.view.line(self.view.sel()[0])
             if self.view.classify(region.b) & sublime.CLASS_EMPTY_LINE :
@@ -151,6 +170,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
             if self.view.classify(region.a) & sublime.CLASS_EMPTY_LINE :
                 region.a += 1
             txt = self.view.substr(region)
+            # print('Final region = {}\n{}\n-------------'.format(region,txt))
             # print(txt)
             txt = beautifier.beautifyText(txt)
         if txt:

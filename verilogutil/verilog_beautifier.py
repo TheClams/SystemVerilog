@@ -180,7 +180,9 @@ class VerilogBeautifier():
                             if tmp.startswith('always'):
                                 split_always = 1
                                 # print('[Beautify] Always split on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
-                            elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' and (self.state != '' or self.block_state=='always') :
+                            elif ilvl==ilvl_prev and self.state != '(' :
+                            # elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' and (self.state != '' or self.block_state=='always') :
+                                # print('[Beautify] confirming ...')
                                 if ilvl not in split:
                                     if self.state == 'case' and re.match(r'\s*\w+\s*,$',tmp):
                                         # print('[Beautify] Multiple state case at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
