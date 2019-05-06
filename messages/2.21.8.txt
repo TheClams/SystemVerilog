@@ -7,3 +7,5 @@ SystemVerilog 2.21.8 Changelog:
     * Fix auto selection when in the middle of multiple begin/end blocks
     * Fix alignement of if/else block with no begin/end
     * Fix issue when whole text was manually selected
+  - Autocompletion :
+    * support function using a scope (contribution from Chi Chen)
