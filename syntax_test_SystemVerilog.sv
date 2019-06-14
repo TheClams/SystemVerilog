@@ -311,6 +311,9 @@ task first_task (int unsigned a);
 //   ^^^^^^^^^^ meta.task.systemverilog entity.name.function.systemverilog
 //               ^^^ meta.task.port.systemverilog storage.type.systemverilog
 //                   ^^^^^^^^ meta.task.body.systemverilog meta.task.port.systemverilog storage.type.systemverilog
+  #1step;
+//^ meta.task.body.systemverilog keyword.operator.delay.systemverilog
+// ^^^^^ keyword.other.systemverilog
 endtask : first_task
 
 

@@ -481,6 +481,10 @@ contexts:
       scope: keyword.operator.other.systemverilog
     - match: '(\?|:)'
       scope: keyword.operator.ternary.systemverilog
+    - match: (#)(1step)
+      captures:
+        1: keyword.operator.delay.systemverilog
+        2: keyword.other.systemverilog
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
   port-dir:

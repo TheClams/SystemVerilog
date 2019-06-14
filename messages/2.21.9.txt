@@ -1,0 +1,4 @@
+SystemVerilog 2.21.9 Changelog:
+
+## Bug Fix ##
+  - Highlight : support #1step
