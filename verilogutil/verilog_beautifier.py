@@ -148,7 +148,7 @@ class VerilogBeautifier():
                     # print('[Beautify] line {line_cnt}: split={split} states={s} block={b} => ilvl = {it}={i}+{sa} : "{line}"'.format(line_cnt=line_cnt,split=split,it=ilvl_tmp,i=ilvl,sa=split_always,s=self.states, b=self.block_state,line=line))
             # Handle end of split
             if ilvl in split:
-                if self.state not in ['comment_line','ignore_line','comment_block','string'] and w in [';','end','endcase'] :
+                if self.state not in ['comment_line','ignore_line','comment_block','string'] and (w in [';','end','endcase']  or line.strip().startswith('`')):
                     # print('[Beautify] End Split on line {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line+w, state=self.state, block_state=self.block_state, ilvl=ilvl))
                     last_split = split.pop(ilvl,0)
                     split_else = (w=='end') and (':' in last_split[1]) # detect only cases where the if/else is inside a case
