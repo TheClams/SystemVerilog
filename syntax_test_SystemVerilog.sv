@@ -243,7 +243,7 @@ bind i_dut dut_tb_bind#(
 typedef struct {logic a; int b; bit [3:0] c;} mystruct;
 //             ^ keyword.operator.other.systemverilog
 //                                          ^ meta.typedef_symbol meta.struct.anonymous.systemverilog keyword.operator.other.systemverilog
-protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0};
+protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0, e: mytype'(50)};
 //                                 ^ support.function.field
 //                                                   ^^^^^^^ meta.struct.assign keyword.control
 

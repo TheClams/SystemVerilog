@@ -1,6 +1,8 @@
 SystemVerilog 2.21.9 Changelog:
 
 ## Bug Fix ##
-  - Highlight : support #1step
+  - Highlight :
+   * support #1step
+   * support casting
   - Beautifier :
     * Fix issue with macro inside if single statement (contribution from Dillan Mills)

@@ -215,6 +215,7 @@ contexts:
         - include: operators
         - include: constants
         - include: system-task
+        - include: casting
         - include: storage-scope-systemverilog
   concat :
     - match: \{
