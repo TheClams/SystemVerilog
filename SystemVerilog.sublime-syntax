@@ -763,7 +763,7 @@ contexts:
 
 # Function
   function-def:
-    - match: ^\s*(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
+    - match: \s*(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
@@ -772,7 +772,7 @@ contexts:
         5: keyword.control.systemverilog
       push:
         - meta_scope: meta.function.systemverilog
-        - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
+        - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}})\s*(?=\(|;)'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
@@ -783,7 +783,7 @@ contexts:
           set: [function-body, function-port]
         - include: base-grammar
         - include: system-task
-    - match: ^\s*(?:(extern|pure)\s+|(import)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
+    - match: \s*\b(?:(extern|pure)\s+|(import)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
@@ -798,14 +798,19 @@ contexts:
         11: keyword.control.systemverilog
       push:
         - meta_scope: meta.function.prototype.systemverilog
-        - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
+        - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)({{id}})\b'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.systemverilog
-            4: support.type.scope.systemverilog
-            5: keyword.operator.scope.systemverilog
-            6: entity.name.function.systemverilog
+            4: entity.name.function.systemverilog
+          set: function-port
+        - match: '\b(?:({{id}})(::))?({{id}}\s+)?({{id}})\s*(?=\(|;)'
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.systemverilog
+            4: entity.name.function.systemverilog
           set: function-port
         - include: base-grammar
   function-port:
@@ -853,16 +858,28 @@ contexts:
         5: keyword.control.systemverilog
       push:
         - meta_scope: meta.task.systemverilog
-        - match: '\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}}*)\s*(?=\(|;)'
+        - match: '\b(?:({{id}})(::))?({{id}})\b'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
-            3: storage.type.systemverilog
-            4: support.type.scope.systemverilog
-            5: keyword.operator.scope.systemverilog
-            6: entity.name.function.systemverilog
+            3: entity.name.function.systemverilog
           set: [task-body, task-port]
-        - include: base-grammar
+        # - include: base-grammar
+    - match: \s*\b(?:(extern))\s+(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(task)\b(?:\s+(automatic))?
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
+        3: keyword.control.systemverilog
+        4: keyword.control.systemverilog
+        5: keyword.control.systemverilog
+        6: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.task.prototype.systemverilog
+        - match: '\b({{id}})\b'
+          captures:
+            1: entity.name.function.systemverilog
+          set: task-port
+        # - include: base-grammar
   task-port:
     - match: \(
       set:
@@ -882,7 +899,7 @@ contexts:
     - include: else-pop
   task-body:
     - meta_scope: meta.task.body.systemverilog
-    - match: (endtask)(?:\s*(:)\s*(?:(\6)\b|({{id}})))?
+    - match: (endtask)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog

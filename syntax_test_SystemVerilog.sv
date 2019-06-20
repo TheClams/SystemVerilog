@@ -581,3 +581,19 @@ function void randseq2();
 
 endfunction : randseq2 ;
 
+   extern virtual function bit Xcheck_accessX
+// ^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//        ^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//                ^^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//                         ^^^ meta.function.prototype.systemverilog storage.type.systemverilog
+                                (input uvm_reg_item rw,
+                                 output uvm_reg_map_info map_info,
+                                 input string caller);
+
+
+    extern virtual task do_write(uvm_reg_item rw);
+//  ^^^^^^ meta.task.prototype.systemverilog keyword.control.systemverilog
+//         ^^^^^^^ keyword.control.systemverilog
+//                 ^^^^ keyword.control.systemverilog
+//                      ^^^^^^^^ entity.name.function.systemverilog
+//                               ^^^^^^^^^^^^ meta.task.port.systemverilog storage.type.systemverilog
