@@ -34,7 +34,7 @@
 		<key>increaseIndentPattern</key>
 		<string>(.*\bbegin\b)|(^\s*(function|case|module|class|task|generate|interface|fork|sequence|property|covergroup|clocking|program|package|config|table|primitive)\b)</string>
 		<key>bracketIndentNextLinePattern</key>
-		<string>^\s*(if|else|for|foreach)\b.*[^;]\s*$</string>
+		<string>^\s*(if|else|for|foreach|((\w+\s*:\s*)?\w+\s*property))\b[^;]*$</string>
 		<key>disableIndentNextLinePattern</key>
 		<string>(.*\bbegin\b)</string>
 	</dict>
