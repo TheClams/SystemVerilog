@@ -3,3 +3,8 @@ SystemVerilog 2.21.10 Changelog:
 ## Bug Fix ##
   - Highlight : Fix issues around extern task/function
   - Indent : Improve auto-indent with else and property
+  - Module list :
+    * fix issue where the cached infomration woudld not immediately show up if a cache update is ongoing
+    * Save cache in a file to always have a responsive command
+
+

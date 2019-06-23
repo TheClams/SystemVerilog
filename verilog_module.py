@@ -1,5 +1,6 @@
 import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, imp
+import time, json
 
 try:
     from SystemVerilog.verilogutil import verilogutil
@@ -9,12 +10,20 @@ except ImportError:
     import verilogutil
     import sublimeutil
 
+list_module_files = {}
+lmf_update_ongoing = False
+
 def plugin_loaded():
     imp.reload(verilogutil)
     imp.reload(sublimeutil)
+    fname = os.path.join(sublime.cache_path(),"systemverilog_lmf.json")
+    # print('Cache file = {}'.format(fname))
+    if os.path.isfile(fname) :
+        global list_module_files
+        list_module_files = json.load(open(fname))
+        # print('Found list of modules files for projects {}'.format(list(list_module_files.keys())))
 
-list_module_files = {}
-lmf_update_ongoing = False
+
 
 ############################################################################
 # Helper function: retrieve type info with support for import statement
@@ -347,11 +356,12 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         elif projname not in list_module_files:
             sublime.set_timeout_async(functools.partial(self.get_list_file,projname,functools.partial(self.on_list_done,projname)), 0)
             sublime.status_message('Please wait while module list is being built')
-        elif not lmf_update_ongoing:
+        else:
             # Create a copy so that the background update does not change the content of the list
             list_module_files['__COPY__'] = list_module_files[projname][:]
             # Start background update of the list
-            sublime.set_timeout_async(functools.partial(self.get_list_file,projname), 0)
+            if not lmf_update_ongoing :
+                sublime.set_timeout_async(functools.partial(self.get_list_file,projname), 0)
             # Display quick panel
             self.on_list_done('__COPY__')
 
@@ -362,18 +372,28 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         lmf = []
         settings = self.view.settings()
         file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv'))
+        lf = []
+        t0 = time.time()
         for folder in sublime.active_window().folders():
             for root, dirs, files in os.walk(folder):
+                print('Directory {} : {} files'.format(dirs, len(lifes)))
                 for fn in files:
                     if fn.lower().endswith(file_ext):
                         ffn = os.path.join(root,fn)
-                        f = open(ffn)
-                        if os.stat(ffn).st_size:
-                            s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                            if s.find(b'module') != -1:
-                                lmf.append(ffn)
-        sublime.status_message('List of module files updated')
+                        lf.append(ffn)
+        # print('Directory scanning done after {}s. Start scanning {} files'.format(int(time.time() - t0), len(lf)))
+        for ffn in lf :
+            f = open(ffn)
+            if os.stat(ffn).st_size:
+                s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                if s.find(b'module') != -1:
+                    lmf.append(ffn)
+        # print('List of module files updated in {}s'.format(int(time.time() - t0)))
         list_module_files[projname] = lmf[:]
+        #
+        fname = os.path.join(sublime.cache_path(),"systemverilog_lmf.json")
+        with open(fname,'wb') as f:
+            f.write(json.dumps(list_module_files).encode('UTF-8'))
         lmf_update_ongoing = False
         if callback:
             callback()
