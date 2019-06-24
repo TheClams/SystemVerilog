@@ -376,18 +376,21 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         t0 = time.time()
         for folder in sublime.active_window().folders():
             for root, dirs, files in os.walk(folder):
-                print('Directory {} : {} files'.format(dirs, len(lifes)))
                 for fn in files:
                     if fn.lower().endswith(file_ext):
                         ffn = os.path.join(root,fn)
                         lf.append(ffn)
         # print('Directory scanning done after {}s. Start scanning {} files'.format(int(time.time() - t0), len(lf)))
         for ffn in lf :
-            f = open(ffn)
-            if os.stat(ffn).st_size:
-                s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                if s.find(b'module') != -1:
-                    lmf.append(ffn)
+            try :
+                f = open(ffn)
+                if os.stat(ffn).st_size:
+                    s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                    if s.find(b'module') != -1:
+                        lmf.append(ffn)
+            # Silently discard opening file
+            except : 
+                pass
         # print('List of module files updated in {}s'.format(int(time.time() - t0)))
         list_module_files[projname] = lmf[:]
         #

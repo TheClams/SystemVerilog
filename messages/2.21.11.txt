@@ -1,0 +1,8 @@
+SystemVerilog 2.21.11 Changelog:
+
+## Bug Fix ##
+  - Module list : 
+    * fix regression on file list creation
+    * Handles exception when opening files
+
+
