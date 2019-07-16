@@ -772,17 +772,19 @@ contexts:
         5: keyword.control.systemverilog
       push:
         - meta_scope: meta.function.systemverilog
-        - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)?(?:({{id}})(::))?({{id}})\s*(?=\(|;)'
+        - match: '\s*\b(?:({{id}})(::))?({{id}})\s*(?=\(|;)'
           captures:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
-            3: storage.type.systemverilog
-            4: support.type.scope.systemverilog
-            5: keyword.operator.scope.systemverilog
-            6: entity.name.function.systemverilog
+            3: entity.name.function.systemverilog
           set: [function-body, function-port]
         - include: base-grammar
         - include: system-task
+        - match: \b(?:({{id}})(::))?({{id}})\b\s*(?=(\[|\w))
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.userdefined.systemverilog
     - match: \s*\b(?:(extern|pure)\s+|(import)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
@@ -831,7 +833,7 @@ contexts:
     - include: else-pop
   function-body:
     - meta_scope: meta.function.body.systemverilog
-    - match: (endfunction)(?:\s*(:)\s*(?:(\6)\b|({{id}})))?
+    - match: (endfunction)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog

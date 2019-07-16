@@ -285,6 +285,7 @@ endfunction : my_func
 
         function automatic integer CLOGB2;
 //      ^^^^^^^^ meta.function.systemverilog keyword.control.systemverilog
+//                         ^^^^^^^ storage.type.systemverilog
 //                                 ^^^^^^ entity.name.function.systemverilog
         endfunction : CLOG
 //                    ^^^^ invalid.illegal.systemverilog
@@ -305,6 +306,18 @@ function automatic logic [$clog2(4)-1:0] first_func (logic in, int unsigned a);
   return '0;
 endfunction : first_func
 //            ^^^^^^^^^^ entity.label.systemverilog
+
+function automatic test_t [1:0] my_func (test_t in);
+//                 ^^^^^^ meta.function.systemverilog storage.type.userdefined.systemverilog
+   my_func = in;
+
+endfunction
+
+function automatic test_t my_func (test_t in);
+//                 ^^^^^^ meta.function.systemverilog storage.type.userdefined.systemverilog
+   my_func = in;
+
+endfunction
 
 task first_task (int unsigned a);
 // <- meta.task.systemverilog keyword.control.systemverilog

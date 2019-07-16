@@ -1,0 +1,6 @@
+SystemVerilog 2.22.0 Changelog:
+
+## Bug Fix ##
+  - Highlight : Fix highlight of user-defined type
+
+
