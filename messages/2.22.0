@@ -1,5 +1,9 @@
 SystemVerilog 2.22.0 Changelog:
 
+## Feature ##
+  - end_* block autocomplete: when a label is associated to a block, you can now control
+    the style of the end label: either as comment or as identifier (sv.end_label_comment)
+
 ## Bug Fix ##
   - Highlight : Fix highlight of user-defined type
 

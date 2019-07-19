@@ -907,7 +907,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     name = m.groups()[21]
         # Provide completion with optional label
         if name:
-            if kw in ['end', 'endcase', 'endmodule', 'endgroup']:
+            if kw in self.settings.get("sv.end_label_comment"):
                 c_str = kw + ' // ' + name.strip()
             else:
                 c_str = kw + ' : ' + name.strip()

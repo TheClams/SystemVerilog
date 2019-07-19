@@ -35,6 +35,7 @@
 	"sv.clk_en_name"        : "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
 	"sv.always_ce_auto"     : true,     // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block
 	"sv.indent_style"       : "1tbs",   // Indentation style used by autocompletion and beautifier when force is enabled. Options are 1tbs or gnu
+	"sv.end_label_comment"  : ["endcase"],  // List of end keyword which should use a comment style (end // label) instead of an identifier syle (end : label) on auto-completion
 	// SystemVerilog Module instantiation configuration
 	"sv.fillparam"               : true,  // On module instantiation with parameter user is asked a value for each parameter
 	"sv.param_oneline"           : true,  // On module instantiation with parameter, check if paramter binding can fit on one line
