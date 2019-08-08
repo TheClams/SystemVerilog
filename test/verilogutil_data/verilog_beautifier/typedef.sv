@@ -53,4 +53,11 @@ u8_t [4:0] var1;
 my_type_t  [4:0][2:0] var2;
 my_type2_t var3;
 
+
+   import "DPI-C" pure function real cos  (input real a);
+   import "DPI-C" pure function real sin  (input real a);
+   pure virtual function foo();
+   export "DPI-C" function dpi_report_error;
+   export "DPI-C" function dpi_report_warning;
+
 endpackage

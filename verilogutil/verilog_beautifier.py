@@ -453,7 +453,7 @@ class VerilogBeautifier():
     def processWord(self,w, w_prev, state_end, txt):
         if w in self.kw_block:
             # Handle case where this is an external declaration (meaning no block following)
-            if w_prev[-2] in ['extern','cover','assert'] or (w_prev[-4]=='extern' and w_prev[-2]=='virtual') :
+            if w_prev[-2] in ['extern','cover','assert','pure'] or (w_prev[-4] in ['extern','pure'] and w_prev[-2]=='virtual') or w_prev[-2]=='"' :
                 return ""
             if w.startswith('case'):
                 self.stateUpdate('case')
