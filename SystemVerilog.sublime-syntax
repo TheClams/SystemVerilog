@@ -240,12 +240,13 @@ contexts:
     - include: operators
     - include: constants
     - include: strings
-    - match: '^\s*(?:(var|wire)\s+)?(({{id}})(::))?({{id}})\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
+    - match: '^\s*(?:(static)\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}})\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
       captures:
-        1: storage.type.userdefined.systemverilog
-        3: support.type.scope.systemverilog
-        4: keyword.operator.scope.systemverilog
-        5: storage.type.userdefined.systemverilog
+        1: keyword.other.static.systemverilog
+        2: storage.type.userdefined.systemverilog
+        4: support.type.scope.systemverilog
+        5: keyword.operator.scope.systemverilog
+        6: storage.type.userdefined.systemverilog
     - match: \b(var|wire)\b
       scope: storage.type.net.systemverilog
     - include: storage-scope-systemverilog
@@ -785,7 +786,7 @@ contexts:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.userdefined.systemverilog
-    - match: \s*\b(?:(extern|pure)\s+|(import)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
+    - match: \s*\b(?:(extern|pure)\s+|(import|export)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
@@ -815,6 +816,10 @@ contexts:
             4: entity.name.function.systemverilog
           set: function-port
         - include: base-grammar
+        - include: system-task
+        - match: '({{id}})\s*(?=\[)'
+          captures:
+            1: storage.type.userdefined.systemverilog
   function-port:
     - match: \(
       set:

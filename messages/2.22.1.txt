@@ -1,0 +1,7 @@
+SystemVerilog 2.22.1 Changelog:
+
+## Bug Fix ##
+  - Alignement : Support extern/pure/import function declaration
+  - Highlight :
+    * Fix export function definition
+    * Fix static variable

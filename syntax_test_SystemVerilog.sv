@@ -294,7 +294,10 @@ endfunction : my_func
 // ^^^^^^ keyword.control.systemverilog
 //         ^^^^^ string.quoted.double.systemverilog
 //                ^^^^^^^^ keyword.control.systemverilog
-
+  export "DPI-C" function dpi_report_error;
+//^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//               ^^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+//                        ^^^^^^^^^^^^^^^^ meta.function.prototype.systemverilog entity.name.function.systemverilog
 import "DPI-C" pure function real cos  (input real a);
 //             ^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
 //                                ^^^ meta.function.prototype.systemverilog entity.name.function.systemverilog
@@ -329,6 +332,10 @@ task first_task (int unsigned a);
 // ^^^^^ keyword.other.systemverilog
 endtask : first_task
 
+function test_t [1:0] my_func (test_t in);
+//       ^^^^^^ meta.function.systemverilog storage.type.userdefined.systemverilog
+   my_func = in;
+endfunction : my_func
 
 /*------------------------------------------------------------------------------
 --  Invalid syntax
