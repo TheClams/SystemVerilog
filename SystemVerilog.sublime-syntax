@@ -82,6 +82,7 @@ contexts:
       scope: meta.param.systemverilog
       captures:
         1: keyword.other.systemverilog
+    - include: nettype
     - include: user-defined-type
     - match: \s*\b(rand|randc)\b
       scope: storage.type.rand.systemverilog
@@ -240,16 +241,28 @@ contexts:
     - include: operators
     - include: constants
     - include: strings
-    - match: '^\s*(?:(static)\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}})\s+[a-zA-Z_][a-zA-Z0-9_,=\s]*'
+    - include: nettype
+    - match: '^\s*(?:(static)\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}})\s+{{id}}'
       captures:
         1: keyword.other.static.systemverilog
-        2: storage.type.userdefined.systemverilog
+        2: storage.type.net.systemverilog
         4: support.type.scope.systemverilog
         5: keyword.operator.scope.systemverilog
         6: storage.type.userdefined.systemverilog
     - match: \b(var|wire)\b
       scope: storage.type.net.systemverilog
     - include: storage-scope-systemverilog
+  nettype:
+    - match: '^\s*(var|wire)\s+(({{id}})(::))?({{id}})\s+{{id}}'
+      scope: meta.userdefined.systemverilog
+      captures:
+        1: storage.type.net.systemverilog
+        3: support.type.scope.systemverilog
+        4: keyword.operator.scope.systemverilog
+        5: storage.type.userdefined.systemverilog
+    - match: '^\s*(var|wire)\s+{{id}}'
+      captures:
+        1: storage.type.net.systemverilog
   process:
     - match: \s*\b(initial|always|always_comb|always_ff|always_latch|assign)\b
       captures:

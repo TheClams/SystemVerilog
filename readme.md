@@ -10,7 +10,7 @@ Description
  * UCF (Xilinx Constraint file)
 
 Note: the default color scheme (Monokai) is missing a lot of scope, and might not give the best results.
-You can try my personal variation of Sunburst : https://bitbucket.org/Clams/sublimesystemverilog/downloads/Sunburst2.tmTheme
+You can try my personal variation of Sunburst : https://gist.github.com/TheClams/5811d7bc8829abe58c11d4c98e729dc0
 
 #### Code Navigation:
 

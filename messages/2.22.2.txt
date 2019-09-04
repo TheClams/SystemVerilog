@@ -1,0 +1,6 @@
+SystemVerilog 2.22.2 Changelog:
+
+
+## Bug Fix ##
+  - Highlight : Fix highlighting of wire declaration in some condition
+
