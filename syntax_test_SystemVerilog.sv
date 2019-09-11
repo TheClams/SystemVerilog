@@ -458,6 +458,12 @@ assert(a.randomize(ack) with {}; );
 --  MISC
 ------------------------------------------------------------------------------*/
 
+  $sformatf("%s %h %b %c %d %l %m %o %p %x %u %t %v %z %e %f %g %%1 ");
+  $sformatf("%S %H %B %C %D %L %M %O %P %X %U %T %V %Z %E %F %G");
+
+  $sformatf("%0d %1h %2s", 4'b01xz);
+  $sformatf("%4.3f %3e %-5.4g", a,b,c);
+
    nettype t_mytype mytype with myresolve;
 // ^ keyword.control
 //         ^ storage.type

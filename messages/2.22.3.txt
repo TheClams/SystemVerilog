@@ -1,0 +1,6 @@
+SystemVerilog 2.22.3 Changelog:
+
+
+## Bug Fix ##
+  - Highlight : add missing string format specifier (%z, %l, ...)
+
