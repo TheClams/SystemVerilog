@@ -21,7 +21,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>^\s+(-|\+) (\w+)(\s+\((\w+)\)(?:\s+(\[U\]))?)?</string>
+			<string>^\s*(-|\+) (\w+)(\s*\(([^\)]+)\)(?:\s+(\[U\]))?)?</string>
 			<key>captures</key>
 			<dict>
 				<key>1</key>

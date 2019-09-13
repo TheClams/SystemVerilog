@@ -33,8 +33,12 @@
         "command": "verilog_insert_fsm_template"
     },
     {
-        "caption": "Verilog: Show Hierarchy",
+        "caption": "Verilog: Show Module Hierarchy",
         "command": "verilog_show_hierarchy"
+    },
+    {
+        "caption": "Verilog: Show Class Hierarchy",
+        "command": "verilog_show_class_hierarchy"
     },
     {
         "caption": "Verilog: Find Instance",

@@ -905,6 +905,163 @@ class VerilogHierarchyGotoDefinitionCommand(sublime_plugin.TextCommand):
         if row>=0:
             sublimeutil.move_cursor(v,v.text_point(row,col))
 
+def getClassName(view):
+    r = view.sel()[0]
+    # Empty selection ? get current class name
+    if r.empty():
+        p = r'(?s)^[ \t]*(class)\s+(\w+\b)'
+        mnameList = []
+        rList = view.find_all(p,0,r'\2',mnameList)
+        mname = ''
+        # print(rList)
+        # print(mnameList)
+        if rList:
+            # print(nl)
+            for (rf,n) in zip(rList,mnameList):
+                if rf.a < r.a:
+                    mname = n
+                else:
+                    break
+    else:
+        mname = view.substr(r)
+    # print(mname)
+    return mname
+
+######################################################################################
+# Create a new buffer showing the class hierarchy (sub-class instances) of current class #
+classHierarchyInfo = {'dict':{}, 'view':None,'fname':''}
+classHierarchyView = None
+
+class VerilogShowClassHierarchyCommand(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        mname = getClassName(self.view)
+        txt = self.view.substr(sublime.Region(0, self.view.size()))
+        mi = verilogutil.parse_class(txt,mname)
+        if not mi:
+            print('[VerilogShowClassHierarchyCommand] Not inside a class !')
+            return
+        sublime.status_message("Show Class Hierarchy can take some time, please wait ...")
+        sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showClassHierarchy(mi,w,txt))
+
+    def showClassHierarchy(self,mi,w,txt):
+        # Save info in global for later access
+        global classHierarchyInfo
+        classHierarchyInfo['view'] = self.view
+        classHierarchyInfo['fname'] = self.view.file_name()
+
+        # Create Dictionnary where each type is associated with a list of tuple (instance type, instance name)
+        self.classes = {}
+        top_level = mi['name']
+        bottom_level = mi['name']
+        # Extract Symbol position
+        for x in self.view.symbols() :
+            if x[1] == top_level:
+                row,col = self.view.rowcol(x[0].a)
+                classHierarchyInfo['fname'] += ':{}:{}'.format(row,col+2)
+                break
+
+        self.methods = []
+        for f in mi['function']:
+            self.methods.append((f['name'], f['type']))
+
+        self.subClasses = []
+        for c in mi['member']:
+            self.subClasses.append((c['type'], c['name']))
+        
+        li = mi['extend']
+        self.unresolved = []
+        while li :
+            self.classes[li] = (mi['name'], mi['type'])
+            top_level = li
+
+            li_next = None
+            if li not in self.unresolved:
+                filelist = w.lookup_symbol_in_index(li)
+                if filelist:
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        mi = verilogutil.parse_class_file(fname,li)
+                        if mi:
+                            classHierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
+                            break
+                # Not in project ? try in current file
+                else :
+                    mi = verilogutil.parse_class(txt,li)
+                    if mi:
+                        classHierarchyInfo['dict'][mi['name']] = self.view.file_name()
+                if mi:
+                    li_next = mi['extend']
+                    # if mi['type'] not in ['interface']:
+                    #     self.classes[li] = [(mi['type'],mi['name'])]
+                else:
+                    self.unresolved.append(li)
+            li = li_next
+
+        for c in self.subClasses:
+            if c[0] not in self.unresolved:
+                filelist = w.lookup_symbol_in_index(c[0])
+                if filelist:
+                    for f in filelist:
+                        fname = sublimeutil.normalize_fname(f[0])
+                        mi = verilogutil.parse_class_file(fname,c[0]) if c[0] == 'class' else verilogutil.parse_module_file(fname,c[0], True)
+                        if mi:
+                            classHierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
+                            break
+
+                if not mi:
+                    self.unresolved.append(c[0])
+
+        self.maxOffset = len(self.classes) + max(max(len(x) for x in self.classes), \
+                                                 len(bottom_level), \
+                                                 max(len(x[0]) for x in self.subClasses), \
+                                                 max(len(x[0]) for x in self.methods)) + 4
+
+        txt = bottom_level + '\n'
+        txt += '-'*len(bottom_level) + '\n'
+        txt += '+ ' + top_level + ' '*(self.maxOffset-len(top_level)) + '(class)' + '\n'
+        tempTxt,lvl = self.printSubclass(top_level,1)
+        txt += tempTxt
+
+        txt += self.printMethods(lvl+1)
+
+        nw = self.view.settings().get('sv.hierarchy_new_window',False)
+        if nw:
+            sublime.run_command('new_window')
+            w = sublime.active_window()
+
+        v = w.new_file()
+        v.settings().set("tab_size", 2)
+        v.set_name(bottom_level + ' Hierarchy')
+        v.set_syntax_file('Packages/SystemVerilog/Find Results SV.hidden-tmLanguage')
+        v.set_scratch(True)
+        v.run_command('insert_snippet',{'contents':str(txt)})
+
+    def printSubclass(self,name,lvl):
+        txt = ''
+        if name in self.classes:
+            txt += '  '*lvl
+            if self.classes[name][0] in self.classes:
+                txt += '+ {name}{space}({type})\n'.format(name=self.classes[name][0],space=(' '*(self.maxOffset-len(self.classes[name][0])-2*lvl)),type=self.classes[name][1])
+                tempTxt, lvl = self.printSubclass(self.classes[name][0],lvl+1)
+                txt += tempTxt
+            else:
+                ustr = '  [U]' if self.classes[name][0] in self.unresolved else ''
+                txt += '+ {name}{space}({type}){unresolved}\n'.format(name=self.classes[name][0],space=(' '*(self.maxOffset-len(self.classes[name][0])-2*lvl)),type=self.classes[name][1],unresolved=ustr)
+
+        return (txt,lvl)
+
+    def printMethods(self,lvl):
+        txt = ''
+        for c in self.subClasses:
+            txt += '  '*lvl
+            txt += '+ {name}{space}({type})\n'.format(name=c[1],space=(' '*(self.maxOffset-len(c[1])-2*lvl)),type=c[0])
+        for f in self.methods:
+            txt += '  '*lvl
+            txt += '- {name}{space}({type})\n'.format(name=f[0],space=(' '*(self.maxOffset-len(f[0])-2*lvl)),type=f[1])
+
+        return txt
+
 
 ###########################################################
 # Find all instances of current module or selected module #
