@@ -142,4 +142,13 @@ To map key to the different features, simply add the following to your user .sub
 			{ "key": "num_selections", "operator": "equal", "operand": 1 },
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
-	}
+	},
+	{
+		"keys": ["f1"], "command": "verilog_show_class_hierarchy",
+		"context":
+		[
+			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
+		]
+	},
+	{"keys": ["ctrl+f1"], "command": "verilog_close_navbar"}
+

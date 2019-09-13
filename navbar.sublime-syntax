@@ -1,0 +1,22 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Navigational Bar SV
+scope: text.hierarchy-systemverilog
+hidden: true
+
+contexts:
+  main:
+    - match: ^\s*(-|\+) (\w+)(\s*\(([^\)]+)\)(?:\s+(\[U\]))?)?
+      captures:
+        1: keyword.operator.hierarchy-systemverilog
+        2: entity.name.hierarchy-systemverilog
+        4: storage.name.type.hierarchy-systemverilog
+        5: comment.block.hierarchy-systemverilog
+    - match: '^(\w+)(?:\s*:\s*)?$'
+      captures:
+        1: keyword.hierarchy-systemverilog
+    - match: '^  (extends) (\w+)'
+      captures:
+        1: keyword.hierarchy-systemverilog
+        2: storage.name.type.hierarchy-systemverilog

@@ -22,6 +22,7 @@ debug = False
 sv_settings = None
 tooltip_css = ''
 tooltip_flag = 0
+navBar = {}
 
 def plugin_loaded():
     imp.reload(verilogutil)
@@ -645,22 +646,22 @@ def getModuleName(view):
     # Empty selection ? get current module name
     if r.empty():
         p = r'(?s)^[ \t]*(module|interface)\s+(\w+\b)'
-        mnameList = []
-        rList = view.find_all(p,0,r'\2',mnameList)
-        mname = ''
-        # print(rList)
-        # print(mnameList)
+        nameList = []
+        rList = view.find_all(p,0,r'\2',nameList)
+        name = ''
         if rList:
-            # print(nl)
-            for (rf,n) in zip(rList,mnameList):
+            name = nameList[0]
+            # Handle case where there is multiple class in a file
+            # and select the one closest to the cursor
+            for (rf,n) in zip(rList,nameList):
                 if rf.a < r.a:
-                    mname = n
+                    name = n
                 else:
                     break
     else:
-        mname = view.substr(r)
-    # print(mname)
-    return mname
+        name = view.substr(r)
+    # print(name)
+    return name
 
 def goto_driver(view,signal):
     signal_word = r'\b'+signal+r'\b'
@@ -755,7 +756,6 @@ def goto_signal_ref(view,signal):
 ######################################################################################
 # Create a new buffer showing the hierarchy (sub-module instances) of current module #
 hierarchyInfo = {'dict':{}, 'view':None,'fname':''}
-hierarchyView = None
 
 class VerilogShowHierarchyCommand(sublime_plugin.TextCommand):
 
@@ -905,43 +905,40 @@ class VerilogHierarchyGotoDefinitionCommand(sublime_plugin.TextCommand):
         if row>=0:
             sublimeutil.move_cursor(v,v.text_point(row,col))
 
+######################################################################################
+# Create a new buffer showing the class hierarchy (sub-class instances) of current class #
+classHierarchyInfo = {'dict':{}, 'view':None,'fname':''}
+
 def getClassName(view):
     r = view.sel()[0]
     # Empty selection ? get current class name
     if r.empty():
         p = r'(?s)^[ \t]*(class)\s+(\w+\b)'
-        mnameList = []
-        rList = view.find_all(p,0,r'\2',mnameList)
-        mname = ''
-        # print(rList)
-        # print(mnameList)
+        nameList = []
+        rList = view.find_all(p,0,r'\2',nameList)
+        name = ''
         if rList:
-            # print(nl)
-            for (rf,n) in zip(rList,mnameList):
+            name = nameList[0]
+            # Handle case where there is multiple class in a file
+            # and select the one closest to the cursor
+            for (rf,n) in zip(rList,nameList):
                 if rf.a < r.a:
-                    mname = n
+                    name = n
                 else:
                     break
     else:
-        mname = view.substr(r)
-    # print(mname)
-    return mname
-
-######################################################################################
-# Create a new buffer showing the class hierarchy (sub-class instances) of current class #
-classHierarchyInfo = {'dict':{}, 'view':None,'fname':''}
-classHierarchyView = None
+        name = view.substr(r)
+    return name
 
 class VerilogShowClassHierarchyCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
-        mname = getClassName(self.view)
+        name = getClassName(self.view)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
-        mi = verilogutil.parse_class(txt,mname)
+        mi = verilogutil.parse_class(txt,name)
         if not mi:
-            print('[VerilogShowClassHierarchyCommand] Not inside a class !')
+            # print('[VerilogShowClassHierarchyCommand] Not inside a class !')
             return
-        sublime.status_message("Show Class Hierarchy can take some time, please wait ...")
         sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showClassHierarchy(mi,w,txt))
 
     def showClassHierarchy(self,mi,w,txt):
@@ -953,7 +950,7 @@ class VerilogShowClassHierarchyCommand(sublime_plugin.TextCommand):
         # Create Dictionnary where each type is associated with a list of tuple (instance type, instance name)
         self.classes = {}
         top_level = mi['name']
-        bottom_level = mi['name']
+        base_class = mi['extend']
         # Extract Symbol position
         for x in self.view.symbols() :
             if x[1] == top_level:
@@ -965,102 +962,117 @@ class VerilogShowClassHierarchyCommand(sublime_plugin.TextCommand):
         for f in mi['function']:
             self.methods.append((f['name'], f['type']))
 
-        self.subClasses = []
+        self.members = []
         for c in mi['member']:
-            self.subClasses.append((c['type'], c['name']))
-        
-        li = mi['extend']
-        self.unresolved = []
-        while li :
-            self.classes[li] = (mi['name'], mi['type'])
-            top_level = li
+            self.members.append((c['type'], c['name']))
 
-            li_next = None
-            if li not in self.unresolved:
-                filelist = w.lookup_symbol_in_index(li)
-                if filelist:
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_class_file(fname,li)
-                        if mi:
-                            classHierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
-                            break
-                # Not in project ? try in current file
-                else :
-                    mi = verilogutil.parse_class(txt,li)
+        self.unresolved = ['logic','bit','int','event', 'string','real']
+
+        for c in self.members:
+            if ' ' in c[0] or c[0] in self.unresolved:
+                continue
+            filelist = w.lookup_symbol_in_index(c[0])
+            if filelist:
+                for f in filelist:
+                    fname = sublimeutil.normalize_fname(f[0])
+                    mi = verilogutil.parse_class_file(fname,c[0]) if c[0] == 'class' else verilogutil.parse_module_file(fname,c[0], True)
                     if mi:
-                        classHierarchyInfo['dict'][mi['name']] = self.view.file_name()
-                if mi:
-                    li_next = mi['extend']
-                    # if mi['type'] not in ['interface']:
-                    #     self.classes[li] = [(mi['type'],mi['name'])]
-                else:
-                    self.unresolved.append(li)
-            li = li_next
+                        classHierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
+                        break
 
-        for c in self.subClasses:
-            if c[0] not in self.unresolved:
-                filelist = w.lookup_symbol_in_index(c[0])
-                if filelist:
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_class_file(fname,c[0]) if c[0] == 'class' else verilogutil.parse_module_file(fname,c[0], True)
-                        if mi:
-                            classHierarchyInfo['dict'][mi['name']] = '{}:{}:{}'.format(fname,f[2][0],f[2][1])
-                            break
+            if not mi:
+                self.unresolved.append(c[0])
 
-                if not mi:
-                    self.unresolved.append(c[0])
+        self.maxOffset = 1
 
-        self.maxOffset = len(self.classes) + max(max(len(x) for x in self.classes), \
-                                                 len(bottom_level), \
-                                                 max(len(x[0]) for x in self.subClasses), \
-                                                 max(len(x[0]) for x in self.methods)) + 4
+        txt = top_level + '\n'
+        if base_class:
+            txt += '  extends {}\n'.format(base_class)
+        txt += '-'*len(top_level) + '\n'
+        txt += self.printContent(1)
 
-        txt = bottom_level + '\n'
-        txt += '-'*len(bottom_level) + '\n'
-        txt += '+ ' + top_level + ' '*(self.maxOffset-len(top_level)) + '(class)' + '\n'
-        tempTxt,lvl = self.printSubclass(top_level,1)
-        txt += tempTxt
+        # print(classHierarchyInfo)
+        global navBar
+        w = sublime.active_window()
+        wid = w.id()
+        if wid not in navBar :
+            l = w.get_layout()
+            nb_col = len(l['cols'])
+            l['cols'].append(1.0)
+            width = self.view.settings().get('sv.navbar_width',0.2)
+            delta = width / (nb_col-1)
+            for i in range(1,nb_col) :
+                l['cols'][i] -= i * delta
+            l['cells'].append([nb_col-1,0,nb_col,1])
+            w.set_layout(l)
+            w.focus_group(len(l['cells'])-1)
+            navBar[wid] = w.new_file()
+            navBar[wid].settings().set("tab_size", 2)
+            navBar[wid].set_syntax_file('Packages/SystemVerilog/navbar.sublime-syntax')
+            navBar[wid].set_scratch(True)
+        else :
+            navBar[wid].run_command("select_all")
+            navBar[wid].run_command("right_delete")
 
-        txt += self.printMethods(lvl+1)
+        navBar[wid].set_name(top_level + ' Hierarchy')
+        navBar[wid].run_command('insert_snippet',{'contents':str(txt)})
 
-        nw = self.view.settings().get('sv.hierarchy_new_window',False)
-        if nw:
-            sublime.run_command('new_window')
-            w = sublime.active_window()
-
-        v = w.new_file()
-        v.settings().set("tab_size", 2)
-        v.set_name(bottom_level + ' Hierarchy')
-        v.set_syntax_file('Packages/SystemVerilog/Find Results SV.hidden-tmLanguage')
-        v.set_scratch(True)
-        v.run_command('insert_snippet',{'contents':str(txt)})
-
-    def printSubclass(self,name,lvl):
+    def printContent(self,lvl):
         txt = ''
-        if name in self.classes:
+        txt += '  '*(lvl-1)
+        txt += 'Members:\n'
+        for c in self.members:
             txt += '  '*lvl
-            if self.classes[name][0] in self.classes:
-                txt += '+ {name}{space}({type})\n'.format(name=self.classes[name][0],space=(' '*(self.maxOffset-len(self.classes[name][0])-2*lvl)),type=self.classes[name][1])
-                tempTxt, lvl = self.printSubclass(self.classes[name][0],lvl+1)
-                txt += tempTxt
-            else:
-                ustr = '  [U]' if self.classes[name][0] in self.unresolved else ''
-                txt += '+ {name}{space}({type}){unresolved}\n'.format(name=self.classes[name][0],space=(' '*(self.maxOffset-len(self.classes[name][0])-2*lvl)),type=self.classes[name][1],unresolved=ustr)
-
-        return (txt,lvl)
-
-    def printMethods(self,lvl):
-        txt = ''
-        for c in self.subClasses:
-            txt += '  '*lvl
-            txt += '+ {name}{space}({type})\n'.format(name=c[1],space=(' '*(self.maxOffset-len(c[1])-2*lvl)),type=c[0])
+            if ' ' in c[0] or c[0] in self.unresolved:
+                symb = '-'
+            else :
+                symb = '+'
+            txt += '{} {name} ({type})\n'.format(symb,name=c[1],type=c[0])
+        txt += '  '*(lvl-1)
+        txt += 'Methods:\n'
         for f in self.methods:
             txt += '  '*lvl
-            txt += '- {name}{space}({type})\n'.format(name=f[0],space=(' '*(self.maxOffset-len(f[0])-2*lvl)),type=f[1])
+            txt += '+ {name} ({type})\n'.format(name=f[0],type=f[1])
 
         return txt
+
+class VerilogCloseNavbarCommand(sublime_plugin.WindowCommand):
+
+    def run(self):
+        global navBar
+        wid = self.window.id()
+        if wid in navBar :
+            av = self.window.active_view()
+            # Close the navBar view
+            self.window.focus_view(navBar[wid])
+            navBar[wid].set_scratch(True)
+            self.window.run_command("close_file")
+            del navBar[wid]
+            # Remove the extra group in which the navbar was created
+            l = self.window.get_layout()
+            width = l['cols'][-1] - l['cols'][-2]
+            l['cols'].pop()
+            nb_col = len(l['cols'])
+            delta = width / (nb_col-1)
+            for i in range(1,nb_col) :
+                l['cols'][i] += i*delta
+            l['cells'].pop()
+            self.window.set_layout(l)
+            # Focus back on initial view
+            self.window.focus_view(av)
+
+# Update the navigation bar
+class VerilogUpdateNavbarCommab(sublime_plugin.EventListener):
+
+    def on_activated_async(self,view):
+        wid = sublime.active_window().id()
+        if wid not in navBar:
+            return;
+        if 'source.systemverilog' not in view.scope_name(0):
+            return
+        view.run_command("verilog_show_class_hierarchy")
+
+
 
 
 ###########################################################
