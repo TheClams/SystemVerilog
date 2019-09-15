@@ -9,7 +9,7 @@ To use the new function to display the class hierarchy:
 
 ```
 	{
-		"keys": ["f1"], "command": "verilog_show_class_hierarchy",
+		"keys": ["f1"], "command": "verilog_show_navbar",
 		"context":
 		[
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
