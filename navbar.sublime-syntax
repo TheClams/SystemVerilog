@@ -7,21 +7,45 @@ hidden: true
 
 contexts:
   main:
-    - match: ^\s*(-|\+) (\w+)(\s*\(([^\)]+)\))
+    - match: ^\s*(-) (\w+)\s*\(
       captures:
         1: keyword.operator.hierarchy-systemverilog
         2: entity.name.hierarchy-systemverilog
-        4: storage.name.type.hierarchy-systemverilog
+      push:
+        - match: \)
+          pop: true
+        - include: numbers
+        - match: \w+
+          scope: storage.name.type.hierarchy-systemverilog
     - match: ^\s+(\w+)(?:\s*\((function|task)\))
       captures:
         1: entity.name.method.hierarchy-systemverilog
         2: storage.name.method.hierarchy-systemverilog
-    - match: ^\s*(​) (\w+)(\s*\(([^\)]+)\))
+    - match: ^\s*(​)(\w+)\s*\(
       captures:
         1: keyword.operator.list.hierarchy-systemverilog
         2: entity.name.hierarchy-systemverilog
-        4: storage.name.type.hierarchy-systemverilog
+      push:
+        - match: \)
+          pop: true
+        - include: numbers
+        - match: \w+
+          scope: storage.name.type.userdefined.hierarchy-systemverilog
+    - match: ^\s+(\*)
+      captures:
+        1: keyword.operator.list.hierarchy-systemverilog
+      push:
+        - match: \n
+          pop: true
+        - match: (input|output|inout)
+          scope: support.type.hierarchy-systemverilog
+        - match: (\w+)\s+\w+
+          captures:
+            1: storage.name.type.argument.hierarchy-systemverilog
     - match: '^(\w+)(?:\s*:\s*)?$'
+      captures:
+        1: keyword.hierarchy-systemverilog
+    - match: '^\s*(Members|Methods)'
       captures:
         1: keyword.hierarchy-systemverilog
     - match: '^  (‌)(\w+)'
