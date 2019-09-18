@@ -9,6 +9,11 @@ SystemVerilog 2.23.0 Changelog:
     * Double cliking on a class name (from base class or members type) immediately open the file
     * Auto-updated when changing file (file type configurable with setting sv.navbar_update)
 
+## Bug Fix ##
+  - Parsing:
+    * Fix potential deadlock created by extern static function
+
+
 ## Keybind Update ##
 To use the new function to display the class hierarchy:
 

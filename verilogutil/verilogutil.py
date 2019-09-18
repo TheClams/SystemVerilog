@@ -536,6 +536,7 @@ def parse_class(flines,cname=r'\w+'):
         extend='' if not ci['extend'] else 'extends {0}'.format(ci['extend']) )
     # print('Init ci:\n'+str(ci))
     ci['param'] = extract_params(m)
+    # print('ci after params extract\n'+str(ci))
     # Extract all functions
     ci['function'] = get_all_function(txt)
     # print('ci after function extract\n'+str(ci))
@@ -547,22 +548,32 @@ def parse_class(flines,cname=r'\w+'):
 def get_all_function(txt,funcname=r'\w+'):
     fil = [] # Function Info list
     names = []
-    re_str = r'(?s)(extern)\s+(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()'
+    re_str = r'(?s)(extern)\s+(?:\b(protected|local)\s+)?(\b(?:virtual|static)\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(\((.*?)\s*\))?\s*;()'
     fl = re.findall(re_str,txt,flags=re.MULTILINE)
     txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
-    re_str = r'(?s)^[ \t]*(import)\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;()'
+    re_str = r'(?s)^[ \t]*(import)\s+".*?"\s*()()(function)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b('+funcname+r')\b\s*(\((.*?)\s*\))?\s*;()'
     fl += re.findall(re_str,txt,flags=re.MULTILINE)
     txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
-    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(?:\((.*?)\s*\))?\s*;(.*?)\bend\4\b'
+    # txt = re.sub(r'\n([ \t]*\n)+','\n',txt,flags=re.MULTILINE)
+    # print('Content after filter : \n' + txt)
+    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(\((.*?)\s*\))?\s*;(.*?)\bend\4\b'
     fl += re.findall(re_str,txt,flags=re.MULTILINE)
-    for ( f_def, f_access, f_virtual, f_type, f_return,f_name,f_args, f_content) in fl:
+    for ( f_def, f_access, f_virtual, f_type, f_return,f_name,f_args_,f_args, f_content) in fl:
+        # print('Parsing function {} {}'.format(f_name,f_args_))
         if f_name in names:
             continue
         else :
             names.append(f_name)
+        # Arguments in declaration -> parse them
         if f_args:
+            # print('Parsing type from arguments {}'.format(f_args))
             pi = get_all_type_info(f_args + ';')
+        # Empty list of argument in declaration -> nothing to do
+        elif f_args_:
+            pi=[]
+        # Non-Ansi style declaration -> search for arguments in the function body
         else:
+            # print('Parsing type from content {}'.format(f_content))
             ti_all = get_all_type_info(f_content)
             pi = [x for x in ti_all if x['decl'].startswith(('input','output','inout','ref'))]
         f_decl = '{acc} {virt} {type} {ret} {name}'.format(acc=f_access, virt=f_virtual, type=f_type, ret=f_return,name=f_name)
@@ -573,7 +584,7 @@ def get_all_function(txt,funcname=r'\w+'):
         if d['return'].startswith('automatic'):
             d['return'] = ' '.join(d['return'].split()[1:])
         fil.append(d)
-    #print([x['name'] for x in fil])
+    # print([x['name'] for x in fil])
     return fil
 
 # Fill all entry of a case for enum or vector (limited to 8b)
