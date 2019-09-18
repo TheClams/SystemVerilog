@@ -99,7 +99,7 @@ def init_css():
         tooltip_css+= '.string {{color: {c};}}\n'.format(c=scheme.get_color('string'))
         tooltip_css+= '.extra-info {font-size: 0.9em; }\n'
         tooltip_css+= '.ref_links {font-size: 0.9em; color: #0080D0; padding-left: 0.6em}\n'
-        colors['operator'] = scheme.get_color('keyword.operator')         
+        colors['operator'] = scheme.get_color('keyword.operator')
     else :
        use_tooltip  = False
        tooltip_css = ''
@@ -959,9 +959,9 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         if not mi:
             # print('[VerilogShowNavbarCommand] Not inside a class !')
             return
-        sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showClassHierarchy(mi,w,txt))
+        sublime.set_timeout_async(lambda mi=mi, w=self.view.window(), txt=txt: self.showHierarchy(mi,w,txt))
 
-    def showClassHierarchy(self,mi,w,txt):
+    def showHierarchy(self,mi,w,txt):
         # Save info in global for later access
         ci = {'dict':{}, 'view':None,'fname':''}
         ci['view'] = self.view
@@ -979,7 +979,8 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
 
         txt = top_level + '\n'
         if base_class:
-            txt += '  ‌{}\n'.format(base_class)
+            txt += '  {}\n'.format(base_class)
+            # txt += '  ‌{}\n'.format(base_class)
         txt += '-'*len(top_level) + '\n'
         txt += self.printClassContent(1,mi)
 
@@ -1002,7 +1003,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             navBarView.settings().set("tab_size", 2)
             navBarView.set_syntax_file('Packages/SystemVerilog/navbar.sublime-syntax')
             navBarView.set_scratch(True)
-            navBar[wid] = {'view':navBarView, 'info':ci}
+            navBar[wid] = {'view':navBarView, 'info':ci, 'update': self.view.settings().get('sv.navbar_update',15)}
         else :
             navBar[wid]['view'].run_command("select_all")
             navBar[wid]['view'].run_command("right_delete")
@@ -1030,7 +1031,8 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                 if ' ' in t or t in ['logic','bit','int','event', 'string','real']:
                     symb = '- '
                 else :
-                    symb = '​'
+                    symb = ''
+                    # symb = '​'
                 txt += '{}{}{name} ({type})\n'.format('  '*lvl,symb,name=c['name'],type=t)
         if ci['function'] :
             txt += '{}Methods:\n'.format( '  '*(lvl-1))
@@ -1054,7 +1056,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                     m = re.search(re_str,flines,flags=re.MULTILINE)
                     if m :
                         mbc = re.search(r'\bextends\s+([^;]+)',m.group(1),flags=re.MULTILINE)
-                        if mbc :                        
+                        if mbc :
                             return mbc.group(1)
                         else:
                             return None
@@ -1063,10 +1065,10 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
     def build_phantoms(self,wid):
         view = navBar[wid]['view']
         # Clear exiting phantoms if nay
-        if 'phantomSet-e' in navBar[wid] : 
+        if 'phantomSet-e' in navBar[wid] :
             navBar[wid]['view'].erase_phantoms('sv-navbar-extends')
-        if 'phantomSet-m' in navBar[wid] : 
-            navBar[wid]['view'].erase_phantoms('sv-navbar-member')        
+        if 'phantomSet-m' in navBar[wid] :
+            navBar[wid]['view'].erase_phantoms('sv-navbar-member')
         # Phantoms for base type
         regions = view.find_by_selector('storage.name.base-type.hierarchy-systemverilog')
         phantoms_e = []
@@ -1078,8 +1080,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             if ilc>=iln :
                 content = '<a href="extend:{}:{}">+</a>'.format(name,regions[0].a)
             else :
-                content = '-'.format(regions[0].a)
-                # content = '<a href="collapse:{}">-</a>'.format(regions[0].a)
+                content = '<a href="fold:{}:-1">-</a>'.format(regions[0].a)
             phantoms_e.append(sublime.Phantom(
                 region=regions[0],
                 content=PHANTOM_TEMPLATE.format(content,colors['operator']),
@@ -1088,10 +1089,12 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             )
         if len(phantoms_e)>0:
             navBar[wid]['phantomSet-e'] = sublime.PhantomSet(navBar[wid]['view'], "sv-navbar-extends")
+            navBar[wid]['phantom-e'] = phantoms_e
             navBar[wid]['phantomSet-e'].update(phantoms_e)
         # Phantoms for members
         regions = view.find_by_selector('storage.name.type.userdefined.hierarchy-systemverilog')
         phantoms_m = []
+        pid = 0
         for r in regions :
             name = view.substr(r)
             ilc = view.indentation_level(r.a)
@@ -1100,8 +1103,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             if ilc>=iln :
                 content = '<a href="type:{}:{}:{}">+</a>'.format(name,r.a,ilc)
             else :
-                content = '<a href="collapse:{}">-</a>'.format(r.a)
-                # content = '<a href="collapse:{}">-</a>'.format(r.a)
+                content = '<a href="fold:{}:{}">-</a>'.format(r.a,pid)
             p = view.find_by_class(view.line(r).a,True,sublime.CLASS_WORD_START)
             phantoms_m.append(sublime.Phantom(
                 region=sublime.Region(p),
@@ -1109,8 +1111,10 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                 layout=sublime.LAYOUT_INLINE,
                 on_navigate=self.on_navigate)
             )
+            pid += 1
         if len(phantoms_m)>0:
             navBar[wid]['phantomSet-m'] = sublime.PhantomSet(navBar[wid]['view'], "sv-navbar-member")
+            navBar[wid]['phantom-m'] = phantoms_m
             navBar[wid]['phantomSet-m'].update(phantoms_m)
 
     def on_navigate(self,href):
@@ -1133,31 +1137,73 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                 lvl += 1
             r = navBar[wid]['view'].line(sublime.Region(int(href_s[2])))
             navBar[wid]['view'].sel().clear()
-            navBar[wid]['view'].sel().add(r.b+1)                
+            navBar[wid]['view'].sel().add(r.b+1)
             navBar[wid]['view'].run_command('insert_snippet', {'contents': txt})
 
             self.build_phantoms(wid)
         elif href_s[0]=="type" :
             ti = verilog_module.lookup_type(navBar[wid]['info']['view'],href_s[1])
-            if 'type' not in ti:
+            if not ti or 'type' not in ti:
                 return
             if ti['type'] == 'class':
-                if 'fname' in ti : 
+                if 'fname' in ti :
                     ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
-                    txt = self.printClassContent(int(href_s[3])+2,ci)
-                    r = navBar[wid]['view'].line(sublime.Region(int(href_s[2])))
-                    navBar[wid]['view'].sel().clear()
-                    navBar[wid]['view'].sel().add(r.b+1)
-                    # print(txt)
-                    navBar[wid]['view'].run_command('insert_snippet', {'contents': txt})
+                    txt = self.printClassContent(int(href_s[3])+1,ci)
+                    v =  navBar[wid]['view']
+                    r = v.line(sublime.Region(int(href_s[2])))
+                    v.sel().clear()
+                    v.sel().add(r.b)
+                    # Workaround weird auto-indentation behavior of insert_snippet
+                    v.run_command('insert_snippet', {'contents': '\n'})
+                    v.run_command('insert_snippet', {'contents': txt[:-1]})
                     self.build_phantoms(wid)
+                    # Fold methods if any
+                    if ci['function'] :
+                        self.fold_methods(v,r)
             elif ti['type'] == 'enum':
                 # print(ti['decl'])
                 return
             elif ti['type'] == 'interface':
-                if 'fname' in ti : 
+                if 'fname' in ti :
                     ci = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
                     # print(ci)
+        elif href_s[0]=="fold" :
+            v =  navBar[wid]['view']
+            r_start = int(href_s[1])
+            pid = int(href_s[2])
+            s = sublime.Region(v.line(r_start).b+1)
+            s = v.indented_region(s.b)
+            if not s.empty():
+                s.a -= 1
+                s.b -= 1
+                v.fold(s)
+            if pid == -1 :
+                v.erase_phantoms('sv-navbar-extends')
+                navBar[wid]['phantomSet-e'] = sublime.PhantomSet(v, "sv-navbar-extends")
+                navBar[wid]['phantom-e'][0].content = PHANTOM_TEMPLATE.format('<a href="unfold:{}:-1">+</a>'.format(r_start),colors['operator'])
+                navBar[wid]['phantomSet-e'].update(navBar[wid]['phantom-e'])
+            else :
+                v.erase_phantoms('sv-navbar-member')
+                navBar[wid]['phantomSet-m'] = sublime.PhantomSet(v, "sv-navbar-member")
+                navBar[wid]['phantom-m'][pid].content = PHANTOM_TEMPLATE.format('<a href="unfold:{}:{}">+</a>'.format(r_start,pid),colors['operator'])
+                navBar[wid]['phantomSet-m'].update(navBar[wid]['phantom-m'])
+        elif href_s[0]=="unfold" :
+            v =  navBar[wid]['view']
+            r_start = int(href_s[1])
+            pid = int(href_s[2])
+            s = sublime.Region(v.line(r_start).b+1)
+            v.unfold(s)
+            if pid == -1 :
+                v.erase_phantoms('sv-navbar-extends')
+                navBar[wid]['phantomSet-e'] = sublime.PhantomSet(v, "sv-navbar-extends")
+                navBar[wid]['phantom-e'][0].content = PHANTOM_TEMPLATE.format('<a href="fold:{}:-1">-</a>'.format(r_start),colors['operator'])
+                navBar[wid]['phantomSet-e'].update(navBar[wid]['phantom-e'])
+            else :
+                v.erase_phantoms('sv-navbar-member')
+                navBar[wid]['phantomSet-m'] = sublime.PhantomSet(v, "sv-navbar-member")
+                navBar[wid]['phantom-m'][pid].content = PHANTOM_TEMPLATE.format('<a href="fold:{}:{}">-</a>'.format(r_start,pid),colors['operator'])
+                navBar[wid]['phantomSet-m'].update(navBar[wid]['phantom-m'])
+                self.fold_methods(v,s)
         elif href_s[0]=="goto" :
             filelist = sublime.active_window().lookup_symbol_in_index(href_s[1])
             flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
@@ -1174,6 +1220,35 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             w.focus_view(view)
             v = view.window().open_file(fname,sublime.ENCODED_POSITION)
             w.focus_view(v)
+
+    def fold_methods(self, v, r_start) :
+        folds = []
+        rs = v.indented_region(r_start.b)
+        r = v.find("Methods:",r_start.b)
+        ilm = v.indentation_level(r.a)+1
+        if r.a >= rs.b:
+            return
+        while(True) :
+            # Go next line
+            r = sublime.Region(v.line(r).b+1)
+            il = v.indentation_level(r.a)
+            if il < ilm or r.b >= rs.b:
+                break
+            else :
+                s = sublime.Region(v.line(r).b+1)
+                il = v.indentation_level(s.a)
+                if il < ilm or r.b >= rs.b:
+                    break
+                elif il > ilm :
+                    s = v.indented_region(s.b)
+                    if not s.empty():
+                        r = s
+                        s.a -= 1
+                        s.b -= 1
+                        folds.append(s)
+        v.fold(folds)
+
+
 
 
 class VerilogCloseNavbarCommand(sublime_plugin.WindowCommand):
@@ -1212,6 +1287,8 @@ class VerilogUpdateNavbarCommand(sublime_plugin.EventListener):
             return;
         if navBar[wid]['info']['fname'] == view.file_name():
             return
+        if navBar[wid]['update'] == 0:
+            return
         if 'source.systemverilog' not in view.scope_name(0):
             return
         view.run_command("verilog_show_navbar")
@@ -1225,7 +1302,7 @@ class VerilogHandleNavbarCommand(sublime_plugin.ViewEventListener):
 
     def on_close(self):
         sublime.active_window().run_command("verilog_close_navbar")
-        
+
     def on_text_command(self, command_name, args):
         # Detect double click
         double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'

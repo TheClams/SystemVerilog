@@ -18,8 +18,9 @@ You can try my personal variation of Sunburst : https://gist.github.com/TheClams
  * Goto declaration : move cursor to the declaration of the selected signal
  * Goto driver : select a signal a go to the driver (port, assignement, connection)
  * Find Instances: find all instance of a module inside a project
- * Show hierarchy of a module (all its sub-module)
  * Move cursor / select text between start/end of block (like [], {}, begin/end, function/endfunction, ...)
+ * Show hierarchy of a module (all its sub-module)
+ * Navigation Bar: Side-bar displaying a class members and method, allowing to jump quickly to method/type definition by double-clicking.
 
 #### Code Completion :
 

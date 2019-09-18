@@ -21,10 +21,9 @@ contexts:
       captures:
         1: entity.name.method.hierarchy-systemverilog
         2: storage.name.method.hierarchy-systemverilog
-    - match: ^\s*(​)(\w+)\s*\(
+    - match: ^\s*(\w+)\s*\(
       captures:
-        1: keyword.operator.list.hierarchy-systemverilog
-        2: entity.name.hierarchy-systemverilog
+        1: entity.name.hierarchy-systemverilog
       push:
         - match: \)
           pop: true
@@ -48,10 +47,9 @@ contexts:
     - match: '^\s*(Members|Methods)'
       captures:
         1: keyword.hierarchy-systemverilog
-    - match: '^  (‌)(\w+)'
+    - match: '^  (\w+)'
       captures:
-        1: keyword.extends.hierarchy-systemverilog
-        2: storage.name.base-type.hierarchy-systemverilog
+        1: storage.name.base-type.hierarchy-systemverilog
       push:
         - meta_scope: meta.extends.hierarchy-systemverilog
         - match: ^--
