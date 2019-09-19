@@ -25,6 +25,7 @@
 		[
 			{
 				"array": "dynamic",
+              	"array_dim": "[]",
 				"bw": "",
 				"decl": "ref string a[]",
 				"name": "a",

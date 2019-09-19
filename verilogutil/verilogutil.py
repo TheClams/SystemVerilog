@@ -346,6 +346,8 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             if not value and len(signal)>=4:
                 value = signal[3]
             d = {'decl':fts,'type':t,'array':at,'bw':bw, 'name':signal[0], 'tag':tag, 'value': value}
+            if at:
+                d['array_dim'] = signal[1].strip()
             ft0 = ft.split()[0]
             if ft0 in ['local','protected']:
                 d['access'] = ft0

@@ -7,7 +7,7 @@ hidden: true
 
 contexts:
   main:
-    - match: ^\s*(-) (\w+)\s*\(
+    - match: ^\s*(-) (\w+)\s*(?=\(|\[)
       captures:
         1: keyword.operator.hierarchy-systemverilog
         2: entity.name.hierarchy-systemverilog
@@ -15,21 +15,23 @@ contexts:
         - match: \)
           pop: true
         - include: numbers
-        - match: \w+
-          scope: storage.name.type.hierarchy-systemverilog
+        - match: \((\w+)
+          captures:
+            1: storage.name.type.hierarchy-systemverilog
     - match: ^\s+(\w+)(?:\s*\((function|task)\))
       captures:
         1: entity.name.method.hierarchy-systemverilog
         2: storage.name.method.hierarchy-systemverilog
-    - match: ^\s*(\w+)\s*\(
+    - match: ^\s*(\w+)\s*(?=\(|\[)
       captures:
         1: entity.name.hierarchy-systemverilog
       push:
         - match: \)
           pop: true
         - include: numbers
-        - match: \w+
-          scope: storage.name.type.userdefined.hierarchy-systemverilog
+        - match: \((\w+)
+          captures:
+            1: storage.name.type.userdefined.hierarchy-systemverilog
     - match: ^\s+(\*)
       captures:
         1: keyword.operator.list.hierarchy-systemverilog
@@ -41,9 +43,23 @@ contexts:
         - match: (\w+)\s+\w+
           captures:
             1: storage.name.type.argument.hierarchy-systemverilog
-    - match: '^(\w+)(?:\s*:\s*)?$'
+    - match: '^(\w+)'
       captures:
-        1: keyword.hierarchy-systemverilog
+        1: keyword.top-level.hierarchy-systemverilog
+      push:
+        - match: \n
+          pop: true
+        - include: strings
+        - include: numbers
+        - include: operators
+        - match: type
+          scope: keyword.hierarchy-systemverilog
+        - match: logic|bit|int|event|string|real|signed|unsigned
+          scope: storage.name.params.hierarchy-systemverilog
+        - match: (\w+)\s+\w+
+          captures:
+            1: storage.name.params.userdefined.hierarchy-systemverilog
+
     - match: '^\s*(Members|Methods)'
       captures:
         1: keyword.hierarchy-systemverilog
@@ -99,7 +115,6 @@ contexts:
       scope: constant.numeric.decimal.systemverilog
     - match: \b(\d+(fs|ps|ns|us|ms|s)?)\b
       scope: constant.numeric.time.systemverilog
-    - match: '\b([A-Z][A-Z0-9_]*)\b'
   operators:
     - match: (==|===|!=|!==|<=|>=|<|>)
       scope: keyword.operator.comparison.systemverilog

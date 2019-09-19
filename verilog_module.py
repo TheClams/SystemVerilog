@@ -389,7 +389,7 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
                     if s.find(b'module') != -1:
                         lmf.append(ffn)
             # Silently discard opening file
-            except : 
+            except :
                 pass
         # print('List of module files updated in {}s'.format(int(time.time() - t0)))
         list_module_files[projname] = lmf[:]
