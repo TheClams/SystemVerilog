@@ -525,26 +525,28 @@ def parse_class_file_cache(fname, cname, fdate):
 
 def parse_class(flines,cname=r'\w+'):
     #print("Parsing for class " + cname + ' in \n' + flines)
-    re_class = re.compile(r"(?s)(?P<type>class)\s+(?P<name>"+cname+r")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>\w+(?:\s*#\(.*?\))?))?\s*;(?P<content>.*?)(?P<ending>endclass)", flags=re.MULTILINE)
+    re_str = r"(?s)(?P<type>class)\s+(?P<name>"+cname+r")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>\w+(?:\s*#\(.*?\))?))?\s*;(?P<content>.*?)(?P<ending>endclass)"
+    # print('[parse_class] regexp = {}'.format(re_str))
+    re_class = re.compile(re_str, flags=re.MULTILINE)
     m = re_class.search(flines)
     if m is None:
         return None
     txt = clean_comment(m.group('content'))
-    # print('Matched class in :\n'+txt)
+    # print('[parse_class] Matched class in :\n'+txt)
     ci = {'type':'class', 'name': m.group('name'), 'extend': None if 'extend' not in m.groupdict() else m.group('extend'), 'function' : []}
     ci['decl'] = 'class {name} {param}{extend}'.format(\
         name=ci['name'],\
         param='' if not m.group('param') else '#({0}) '.format(m.group('param')),\
         extend='' if not ci['extend'] else 'extends {0}'.format(ci['extend']) )
-    # print('Init ci:\n'+str(ci))
+    # print('[parse_class] Init ci:\n'+str(ci))
     ci['param'] = extract_params(m)
-    # print('ci after params extract\n'+str(ci))
+    # print('[parse_class] ci after params extract\n'+str(ci))
     # Extract all functions
     ci['function'] = get_all_function(txt)
-    # print('ci after function extract\n'+str(ci))
+    # print('[parse_class] ci after function extract\n'+str(ci))
     # Extract members
     ci['member'] = get_all_type_info(txt,no_inst=True)
-    # print('Final ci:\n'+str(ci))
+    # print('[parse_class] Final ci:\n'+str(ci))
     return ci
 
 def get_all_function(txt,funcname=r'\w+'):

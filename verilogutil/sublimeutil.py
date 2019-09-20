@@ -136,3 +136,31 @@ def move_cursor(view,pos):
     view.sel().clear()
     view.sel().add(sublime.Region(pos,pos))
     view.show_at_center(pos)
+
+#
+def goto_index_symbol(view,name):
+    w = view.window()
+    filelist = w.lookup_symbol_in_index(name)
+    if not filelist:
+        print('[SystemVerilog] Unable to find "{}"'.format(name))
+        return None,''
+    # Select first
+    fname = '{}:{}:{}'.format(filelist[0][0],filelist[0][2][0],filelist[0][2][1])
+    w.focus_view(view)
+    v = w.open_file(fname,sublime.ENCODED_POSITION)
+    w.focus_view(v)
+    return v,filelist[0][0]
+
+# Move cursor to a symbol with a known filename
+def goto_symbol_in_file(view,sname,fname):
+    w = view.window()
+    filelist = w.lookup_symbol_in_index(sname)
+    flist_norm = [normalize_fname(f[0]) for f in filelist]
+    if fname in flist_norm:
+        _,_,rowcol = filelist[flist_norm.index(fname)]
+        w.focus_view(view)
+        if fname == view.file_name():
+            move_cursor(view,view.text_point(rowcol[0]-1,rowcol[1]-1))
+        else :
+            fname += ':{}:{}'.format(rowcol[0],rowcol[1])
+            w.open_file(fname,sublime.ENCODED_POSITION)

@@ -756,6 +756,19 @@ def goto_signal_ref(view,signal):
     elif len(refs['row']) == 1 :
         sublimeutil.move_cursor(view,refs['point'][0])
 
+def goto_first_occurence(view,name):
+    r = sublime.Region(0)
+    max_rb = view.size()
+    while r.b < max_rb :
+        r = view.find(r'\b{}\b'.format(name),r.b)
+        # print('Found "{}"" at {}'.format(name,r))
+        if not r:
+            return
+        if 'comment' not in view.scope_name(r.a):
+            break;
+    view.window().focus_view(view)
+    sublimeutil.move_cursor(view,r.a)
+
 ######################################################################################
 # Create a new buffer showing the hierarchy (sub-module instances) of current module #
 hierarchyInfo = {'dict':{}, 'view':None,'fname':''}
@@ -1016,6 +1029,8 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
 
         # Fold functions arguments
         navBar[wid]['view'].run_command("fold_by_level", {"level": 2})
+        # Ensure focus is at beginning of file
+        sublimeutil.move_cursor(navBar[wid]['view'],0)
 
     def printClassContent(self,lvl,ci):
         txt = ''
@@ -1287,10 +1302,10 @@ class VerilogCloseNavbarCommand(sublime_plugin.WindowCommand):
         wid = self.window.id()
         if wid in navBar :
             av = self.window.active_view()
+            nv = navBar[wid]['view']
+            if av is None or av == nv :
+                av = navBar[wid]['info']['view']
             # Close the navBar view
-            self.window.focus_view(navBar[wid]['view'])
-            navBar[wid]['view'].set_scratch(True)
-            self.window.run_command("close_file")
             if wid not in navBar :
                 return
             del navBar[wid]
@@ -1346,29 +1361,40 @@ class VerilogHandleNavbarCommand(sublime_plugin.ViewEventListener):
         w = sublime.active_window()
         wid = w.id()
         v = navBar[wid]['info']['view']
+        # print('s = {}, r={} scope="{}"'.format(s,region,scope))
         if 'base-type' in scope or 'userdefined' in scope:
-            filelist = w.lookup_symbol_in_index(name)
-            if not filelist:
-                print('unable to find "{}"'.format(name))
-                return
-            # Select first
-            fname,_,rowcol = filelist[0]
-            fname += ':{}:{}'.format(rowcol[0],rowcol[1])
-            w = v.window()
-            w.focus_view(v)
-            v1 = w.open_file(fname,sublime.ENCODED_POSITION)
-            w.focus_view(v1)
+            sublimeutil.goto_index_symbol(v,name)
         elif 'entity.name.method' in scope:
-            filelist = w.lookup_symbol_in_index(name)
-            flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-            fname = navBar[wid]['info']['fname']
-            if fname in flist_norm:
-                _,_,rowcol = filelist[flist_norm.index(fname)]
-                v = navBar[wid]['info']['view']
-                v.window().focus_view(v)
-                sublimeutil.move_cursor(v,v.text_point(rowcol[0]-1,rowcol[1]-1))
+            cname = navbar_get_class(self.view,s)
+            if cname :
+                filelist = w.lookup_symbol_in_index(cname)
+                print('cname = {} found in {}'.format(cname,filelist))
+                if filelist :
+                    sublimeutil.goto_symbol_in_file(v,name,sublimeutil.normalize_fname(filelist[0][0]))
+            else :
+                sublimeutil.goto_symbol_in_file(v,name,v.file_name())
+        elif 'entity.name.hierarchy-systemverilog' in scope:
+            cname = navbar_get_class(self.view,s)
+            if cname :
+                v,fname = sublimeutil.goto_index_symbol(v,cname)
+                if v:
+                    global callbacks_on_load
+                    callbacks_on_load[fname] = lambda v=v, name=name: goto_first_occurence(v,name)
+                    return
+            else :
+                goto_first_occurence(v,name)
 
-
+def navbar_get_class(view,r):
+    il = view.indentation_level(r.a)
+    # Not local member : find to which class this belongs
+    if il > 1 :
+        r = view.indented_region(r.a)
+        r = view.indented_region(r.a-1)
+        r = view.find_by_class(r.a,False,sublime.CLASS_WORD_START)
+        cname = view.substr(view.word(r))
+    else :
+        cname = ''
+    return cname
 
 
 ###########################################################
