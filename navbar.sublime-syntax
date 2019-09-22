@@ -7,9 +7,9 @@ hidden: true
 
 contexts:
   main:
-    - match: ^\s*(-) (\w+)\s*(?=\(|\[)
+    - match: ^\s*(᠎)(\w+)\s*(?=\(|\[)
       captures:
-        1: keyword.operator.hierarchy-systemverilog
+        1: meta.annotation.marker.hierarchy-systemverilog
         2: entity.name.hierarchy-systemverilog
       push:
         - match: \)
@@ -36,13 +36,28 @@ contexts:
       captures:
         1: keyword.operator.list.hierarchy-systemverilog
       push:
+        - meta_scope: meta.simple-list.hierarchy-systemverilog
         - match: \n
           pop: true
         - match: (input|output|inout)
           scope: support.type.hierarchy-systemverilog
-        - match: (\w+)\s+\w+
+        - match: \b(logic|bit|int|event|string|real|signed|unsigned)\b
+          scope: storage.name.type.std.list.hierarchy-systemverilog
+        - match: (?:(\w+)(::))?(\w+)\s+(\w+)
           captures:
-            1: storage.name.type.argument.hierarchy-systemverilog
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.name.type.userdefined.list.hierarchy-systemverilog
+            4: source.name.hierarchy-systemverilog
+        - match: (?:(\w+)\.)?(\w+)\s+(\w+)
+          captures:
+            1: storage.name.type.userdefined.list.hierarchy-systemverilog
+            2: support.modport.scope.systemverilog
+            3: source.name.hierarchy-systemverilog
+        - match: \b[A-Z_][A-Z0-9_]*\b
+          scope: constant.other.systemverilog
+        - include: numbers
+        - include: operators
     - match: '^(\w+)'
       captures:
         1: keyword.top-level.hierarchy-systemverilog
@@ -59,8 +74,7 @@ contexts:
         - match: (\w+)\s+\w+
           captures:
             1: storage.name.params.userdefined.hierarchy-systemverilog
-
-    - match: '^\s*(Members|Methods)'
+    - match: '^\s*(Members|Methods|Ports|Signals|Instances|Clocking Blocks)'
       captures:
         1: keyword.hierarchy-systemverilog
     - match: '^  (\w+)'

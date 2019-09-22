@@ -2,16 +2,23 @@ SystemVerilog 2.23.0 Changelog:
 
 
 ## Enhancement ###
-  - Navigation: navigation bar to display class members (Contribution from Dillan Mills)
-    * Display base class which can be expanded to the full inheritance tree by clicking on the +
-    * Display methods arguments (folded by default, use arrow in the gutter to unfold)
+  - Navigation side-bar: (Contribution from Dillan Mills)
+    * For class: 
+      ~ Displays base class, members and methods
+      ~ Full inheritance tree can be expanded by clicking on +
+      ~ Displays methods arguments (folded by default, use arrow in the gutter to unfold)
+    * For module: display ports, signal and instances
+      ~ Ports and signals can be hidden with settings sv.navbar_show_module_port/signal
+      ~ for submodule only displya instances
+    * For instances: display ports, signals and modport
     * Double cliking on a method name jump to the definition
-    * Double cliking on a class name (from base class or members type) immediately open the file
+    * Double cliking on a class name/userdefined type immediately open the file
     * Auto-updated when changing file (file type configurable with setting sv.navbar_update)
+      ~ Navbar can be temporary locked with the command verilog_toggle_lock_navbar
 
 ## Bug Fix ##
-  - Parsing:
-    * Fix potential deadlock created by extern static function
+  - Parsing: Fix potential deadlock created by extern static function
+  - Highlight: Fix wire arrays highlight when semi-colon is on another line
 
 
 ## Keybind Update ##
@@ -20,10 +27,11 @@ To use the new function to display the class hierarchy:
 ```
     {
         "keys": ["f1"], "command": "verilog_show_navbar",
-        "context":
-        [
-            { "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
-        ]
+        "context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
+    },
+    {
+        "keys": ["f1"], "command": "verilog_toggle_lock_navbar",
+        "context":[{ "key": "selector", "operator": "equal", "operand": "text.hierarchy-systemverilog"}]
     },
     {"keys": ["ctrl+f1"], "command": "verilog_close_navbar"}
 ```

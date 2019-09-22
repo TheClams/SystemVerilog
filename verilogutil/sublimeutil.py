@@ -142,9 +142,15 @@ def goto_index_symbol(view,name):
     w = view.window()
     filelist = w.lookup_symbol_in_index(name)
     if not filelist:
-        print('[SystemVerilog] Unable to find "{}"'.format(name))
+        # print('[SystemVerilog] Unable to find "{}"'.format(name))
         return None,''
     # Select first
+    fnorm = normalize_fname(filelist[0][0])
+    v = view.window().find_open_file(fnorm)
+    if v:
+        w.focus_view(v)
+        # print('View already open : {}'.format(v.id()))
+        return v,''
     fname = '{}:{}:{}'.format(filelist[0][0],filelist[0][2][0],filelist[0][2][1])
     w.focus_view(view)
     v = w.open_file(fname,sublime.ENCODED_POSITION)

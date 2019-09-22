@@ -384,9 +384,11 @@ def parse_module_file_cache(fname, mname, fdate,inst_only=False,no_inst=False):
     return minfo
 
 def parse_module(flines,mname=r'\w+',inst_only=False,no_inst=False):
-    # print("Parsing for module " + mname + ' in \n' + flines)
     flines = clean_comment(flines)
-    m = re.search(r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+r")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)", flines, re.MULTILINE)
+    re_str = r"(?s)(?P<type>module|interface)\s+(?P<name>"+mname+r")(?P<import>\s+import\s+.*?;)?\s*(#\s*\((?P<param>.*?)\))?\s*(\((?P<port>.*?)\))?\s*;(?P<content>.*?)(?P<ending>endmodule|endinterface)"
+    # print("[SV:parse_module] name={} -> re = {}".format(mname,re_str))
+    # print("Parsing for module " + mname + ' in \n' + flines)
+    m = re.search(re_str, flines, re.MULTILINE)
     if m is None:
         return None
     mname = m.group('name')

@@ -146,10 +146,11 @@ To map key to the different features, simply add the following to your user .sub
 	},
 	{
 		"keys": ["f1"], "command": "verilog_show_navbar",
-		"context":
-		[
-			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
-		]
+		"context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
+	},
+	{
+		"keys": ["f1"], "command": "verilog_toggle_lock_navbar",
+		"context":[{ "key": "selector", "operator": "equal", "operand": "text.hierarchy-systemverilog"}]
 	},
 	{"keys": ["ctrl+f1"], "command": "verilog_close_navbar"}
 

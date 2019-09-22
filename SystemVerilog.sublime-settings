@@ -60,6 +60,9 @@
 	"sv.hierarchy_new_window" : false, // True to open a new window to display the module hierarchy
 	"sv.navbar_width" : 0.3, // Navigation bar width (default 0.2 means 20%)
 	"sv.navbar_update" : 15, // Navigation bar update : bit 0 update if current file contains class, bit 1 for module, bit 2 for interface
+	"sv.navbar_show_module_port"   : true, // Show all ports of current module
+	"sv.navbar_show_module_signal" : false, // Show all signal declared in a module
+	"sv.navbar_show_interface_cb"  : false, // Show all clocking block in an interface
 	// Debug option
 	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
 	"sv.disable_autocomplete": false,
