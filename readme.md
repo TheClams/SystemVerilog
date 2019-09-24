@@ -20,7 +20,9 @@ You can try my personal variation of Sunburst : https://gist.github.com/TheClams
  * Find Instances: find all instance of a module inside a project
  * Move cursor / select text between start/end of block (like [], {}, begin/end, function/endfunction, ...)
  * Show hierarchy of a module (all its sub-module)
- * Navigation Bar: Side-bar displaying a class members and method, allowing to jump quickly to method/type definition by double-clicking.
+ * Navigation side-bar:
+   - Displaying a class members/method, module port/signal/instances, ...
+   - Double click on instance/type to jump to it
 
 #### Code Completion :
 
@@ -144,13 +146,10 @@ To map key to the different features, simply add the following to your user .sub
 			{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}
 		]
 	},
+	{ "keys": ["f1"], "command": "verilog_toggle_navbar", "args":{"cmd":"toggle"}},
+	{ "keys": ["ctrl+f1"], "command": "verilog_toggle_lock_navbar"},
 	{
-		"keys": ["f1"], "command": "verilog_show_navbar",
-		"context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
-	},
-	{
-		"keys": ["f1"], "command": "verilog_toggle_lock_navbar",
-		"context":[{ "key": "selector", "operator": "equal", "operand": "text.hierarchy-systemverilog"}]
-	},
-	{"keys": ["ctrl+f1"], "command": "verilog_close_navbar"}
+	  "keys": ["alt+f1"], "command": "verilog_show_navbar",
+	  "context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
+	}
 

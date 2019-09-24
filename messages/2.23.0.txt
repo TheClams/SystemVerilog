@@ -3,7 +3,7 @@ SystemVerilog 2.23.0 Changelog:
 
 ## Enhancement ###
   - Navigation side-bar: (Contribution from Dillan Mills)
-    * For class: 
+    * For class:
       ~ Displays base class, members and methods
       ~ Full inheritance tree can be expanded by clicking on +
       ~ Displays methods arguments (folded by default, use arrow in the gutter to unfold)
@@ -22,16 +22,13 @@ SystemVerilog 2.23.0 Changelog:
 
 
 ## Keybind Update ##
-To use the new function to display the class hierarchy:
+Example of keybindings to use the new navbar:
 
 ```
-    {
-        "keys": ["f1"], "command": "verilog_show_navbar",
-        "context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
-    },
-    {
-        "keys": ["f1"], "command": "verilog_toggle_lock_navbar",
-        "context":[{ "key": "selector", "operator": "equal", "operand": "text.hierarchy-systemverilog"}]
-    },
-    {"keys": ["ctrl+f1"], "command": "verilog_close_navbar"}
+  { "keys": ["f1"], "command": "verilog_toggle_navbar", "args":{"cmd":"toggle"}},
+  { "keys": ["ctrl+f1"], "command": "verilog_toggle_lock_navbar"},
+  {
+    "keys": ["alt+f1"], "command": "verilog_show_navbar",
+    "context":[{ "key": "selector", "operator": "equal", "operand": "source.systemverilog"}]
+  }
 ```

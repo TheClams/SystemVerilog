@@ -966,7 +966,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         t,name = getObjName(self.view)
         if not name:
-            # print('[VerilogShowNavbarCommand] Not inside a class !')
+            print('[SV:NavBar] Not inside a module/interface/class !')
             return
         enable = self.view.settings().get('sv.navbar_update',15)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
@@ -983,7 +983,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                 return
             mi = verilogutil.parse_module(txt,name)
         if not mi:
-            # print('[VerilogShowNavbarCommand] Parsing for class {} failed!'.format(name))
+            print('[SV:NavBar] Unable to parse {}!'.format(name))
             return
         sublime.set_timeout_async(lambda mi=mi, w=self.view.window(): self.showHierarchy(mi,w))
 
@@ -1021,6 +1021,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             navBar[wid]['view'].run_command("right_delete")
             navBar[wid]['info'] = info
 
+        navBar[wid]['childless'] = ['logic','bit','int','event', 'string','real', 'semaphore', 'process', 'time']
 
         # Create content
         top_level = mi['name']
@@ -1035,7 +1036,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         else :
             txt = '{}\n'.format(top_level)
         txt += '-'*len(top_level) + '\n'
-        txt += self.printContent(1,mi,navBar[wid]['settings'])
+        txt += self.printContent(1,mi,navBar[wid])
 
         navBar[wid]['view'].set_name(top_level + ' Hierarchy')
         navBar[wid]['view'].run_command('insert_snippet',{'contents': '$x', 'x':txt})
@@ -1048,21 +1049,25 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         # Ensure focus is at beginning of file
         sublimeutil.move_cursor(navBar[wid]['view'],0)
 
-    def printContent(self,lvl,ti, cfg):
+    def printContent(self,lvl,ti, nb):
         txt = ''
-        if 'port' in ti and ti['port'] and ((cfg['show_module_port'] and lvl==1) or ti['type']!='module'):
+        if 'port' in ti and ti['port'] and ((nb['settings']['show_module_port'] and lvl==1) or ti['type']!='module'):
             txt += '{}Ports:\n'.format('  '*(lvl-1))
             for p in ti['port'] :
                 txt += '{}* {}\n'.format('  '*lvl,p['decl'])
-        if 'signal' in ti and ti['signal'] and ((cfg['show_module_signal'] and lvl==1) or ti['type']!='module'):
+        if 'signal' in ti and ti['signal'] and ((nb['settings']['show_module_signal'] and lvl==1) or ti['type']!='module'):
             txt += '{}Signals:\n'.format('  '*(lvl-1))
             for p in ti['signal'] :
                 txt += '{}* {}\n'.format('  '*lvl,p['decl'])
         if 'inst' in ti and ti['inst']:
-            if lvl==1 and (cfg['show_module_port'] or cfg['show_module_signal']):
+            if lvl==1 and (nb['settings']['show_module_port'] or nb['settings']['show_module_signal']):
                 txt += '{}Instances:\n'.format('  '*(lvl-1))
             for inst in ti['inst']:
-                txt += '{}{name} ({type})\n'.format('  '*lvl,name=inst['name'],type=inst['type'])
+                if inst['type'] in nb['childless']:
+                    symb = u'\u180E'
+                else :
+                    symb = ''
+                txt += '{}{}{name} ({type})\n'.format('  '*lvl,symb,name=inst['name'],type=inst['type'])
         if 'member' in ti and ti['member'] :
             txt += '{}Members:\n'.format('  '*(lvl-1))
             for c in ti['member']:
@@ -1073,11 +1078,10 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                 t = c['type']
                 if c['bw']:
                     t += ' ' + c['bw']
-                if ' ' in t or t in ['logic','bit','int','event', 'string','real', 'semaphore', 'process', 'time']:
-                    symb = u'\u180E' #'- '
+                if ' ' in t or t in nb['childless']:
+                    symb = u'\u180E'
                 else :
                     symb = ''
-                    # symb = '​'
                 dim = '' if not c['array'] else ' {}'.format(c['array_dim'])
                 txt += '{}{}{name}{dim} ({type})\n'.format('  '*lvl,symb,name=c['name'],type=t, dim=dim)
         if 'function' in ti and ti['function'] :
@@ -1151,7 +1155,9 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             iln = view.indentation_level(pnl)
             # print('Point {} ({}) : indent = {} vs {}, folded = {}'.format(pnl,view.rowcol(pnl),iln,ilc,view.is_folded(sublime.Region(pnl))))
             # print('indent level for member {} = {} {}'.format(name,ilc,iln))
-            if ilc>=iln :
+            if name in navBar[wid]['childless'] :
+                content = '<a>-</a>'
+            elif ilc>=iln :
                 content = '<a href="type:{}:{}:{}:{}">+</a>'.format(name,r.a,ilc,pid)
             elif view.is_folded(sublime.Region(pnl)) :
                 content = '<a href="unfold:{}:{}">+</a>'.format(r.a,pid)
@@ -1190,7 +1196,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         wid = w.id()
         view = navBar[wid]['info']['view']
         v =  navBar[wid]['view']
-        # print('[SV.Navbar] on_navigate = {}'.format(href_s))
+        # print('[SV.Navbar] on_navigate = {}\n\tChildless = {}'.format(href_s,navBar[wid]['childless']))
         if href_s[0]=="extend" :
             name = href_s[1]
             txt = ''
@@ -1207,18 +1213,22 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             v.sel().clear()
             v.sel().add(r.b+1)
             v.run_command('insert_snippet',{'contents': '$x', 'x':txt})
-
             self.build_phantoms(wid)
         elif href_s[0]=="type" :
+            if href_s[1] in navBar[wid]['childless'] :
+                self.change_phantom(wid,v,int(href_s[4]),'<a>-</a>')
+                return
             ti = verilog_module.lookup_type(view,href_s[1])
             # print(ti)
             if not ti or 'type' not in ti:
-                # print('Type {} not found: {}'.format(href_s[1],ti))
+                navBar[wid]['childless'].append(href_s[1])
+                self.change_phantom(wid,v,int(href_s[4]),'<a>-</a>')
+                print('Type {} not found: {}'.format(href_s[1],ti))
                 return
             if ti['type'] == 'class':
                 if 'fname' in ti :
                     ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
-                    txt = self.printContent(2,ci,navBar[wid]['settings'])
+                    txt = self.printContent(2,ci,navBar[wid])
                     if txt:
                         r = self.insert_text_next_line(v,int(href_s[2]),txt)
                         self.build_phantoms(wid)
@@ -1226,6 +1236,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                         if ci['function'] :
                             self.fold_methods(v,r)
                     else :
+                        navBar[wid]['childless'].append(ti['name'])
                         self.change_phantom(wid,v,int(href_s[4]),'<a>-</a>')
             elif ti['type'] == 'enum':
                 txt = ''
@@ -1249,11 +1260,12 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             elif ti['type'] == 'interface' or ti['type'] == 'module' :
                 if 'fname' in ti :
                     ci = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
-                    txt = self.printContent(2,ci,navBar[wid]['settings'])
+                    txt = self.printContent(2,ci,navBar[wid])
                     if txt:
                         r = self.insert_text_next_line(v,int(href_s[2]),txt)
                         self.build_phantoms(wid)
                     else :
+                        navBar[wid]['childless'].append(ti['name'])
                         self.change_phantom(wid,v,int(href_s[4]),'<a>-</a>')
             else :
                 # print('Unsupported Type {} not found: {}'.format(href_s[1],ti))
@@ -1330,23 +1342,26 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                         folds.append(s)
         v.fold(folds)
 
-# Close navigation Bar
-class VerilogCloseNavbarCommand(sublime_plugin.WindowCommand):
+# Toggle Open/close navigation Bar
+class VerilogToggleNavbarCommand(sublime_plugin.WindowCommand):
 
-    def run(self):
+    def run(self, cmd='toggle'):
         global navBar
         wid = self.window.id()
-        if wid in navBar :
-            av = self.window.active_view()
+        av = self.window.active_view()
+        if wid in navBar and cmd != 'open':
             nv = navBar[wid]['view']
             if av is None or av == nv :
                 av = navBar[wid]['info']['view']
-            # print('navbar id={}, active view={}'.format(nv.id(),av.id()))
             # Close the navBar view
             if wid not in navBar :
-                # print('Navbar disappeared !')
                 return
             del navBar[wid]
+            if cmd == 'toggle' :
+                self.window.focus_view(nv)
+                nv.set_scratch(True)
+                self.window.run_command("close_file")
+
             # Remove the extra group in which the navbar was created
             l = self.window.get_layout()
             width = l['cols'][-1] - l['cols'][-2]
@@ -1360,6 +1375,8 @@ class VerilogCloseNavbarCommand(sublime_plugin.WindowCommand):
             # Focus back on initial view
             # print('Focux back on orginal view!')
             self.window.focus_view(av)
+        elif cmd != 'close' :
+            av.run_command("verilog_show_navbar")
 
 # Update the navigation bar
 class VerilogUpdateNavbarCommand(sublime_plugin.EventListener):
@@ -1402,7 +1419,7 @@ class VerilogHandleNavbarCommand(sublime_plugin.ViewEventListener):
         return settings.get('syntax') == 'Packages/SystemVerilog/navbar.sublime-syntax'
 
     def on_close(self):
-        sublime.active_window().run_command("verilog_close_navbar")
+        sublime.active_window().run_command("verilog_toggle_navbar",{'cmd':'close'})
 
     def on_text_command(self, command_name, args):
         # Detect double click
@@ -1432,7 +1449,7 @@ class VerilogHandleNavbarCommand(sublime_plugin.ViewEventListener):
         elif 'entity.name.hierarchy-systemverilog' or 'source.name.hierarchy-systemverilog' in scope:
             cname = navbar_get_class(self.view,s)
             if cname :
-                print('[SV.Navbar] Class for {} is {}'.format(name,cname))
+                # print('[SV.Navbar] Class for {} is {}'.format(name,cname))
                 if cname in ['function','task']:
                     return
                 v,fname = sublimeutil.goto_index_symbol(v,cname)
