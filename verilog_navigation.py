@@ -1062,6 +1062,8 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         if 'inst' in ti and ti['inst']:
             if lvl==1 and (nb['settings']['show_module_port'] or nb['settings']['show_module_signal']):
                 txt += '{}Instances:\n'.format('  '*(lvl-1))
+            else :
+                lvl -= 1
             for inst in ti['inst']:
                 if inst['type'] in nb['childless']:
                     symb = u'\u180E'

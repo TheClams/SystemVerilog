@@ -74,7 +74,7 @@ contexts:
         - match: (\w+)\s+\w+
           captures:
             1: storage.name.params.userdefined.hierarchy-systemverilog
-    - match: '^\s*(Members|Methods|Ports|Signals|Instances|Clocking Blocks)'
+    - match: '^\s*(Members|Methods|Ports|Signals|Instances|Modports)'
       captures:
         1: keyword.hierarchy-systemverilog
     - match: '^  (\w+)'
