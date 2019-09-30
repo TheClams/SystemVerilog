@@ -966,7 +966,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         t,name = getObjName(self.view)
         if not name:
-            print('[SV:NavBar] Not inside a module/interface/class !')
+            # print('[SV:NavBar] Not inside a module/interface/class !')
             return
         enable = self.view.settings().get('sv.navbar_update',15)
         txt = self.view.substr(sublime.Region(0, self.view.size()))
@@ -996,22 +996,43 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         global navBar
         w = sublime.active_window()
         wid = w.id()
+        navbar_flag = w.settings().get('navbar-hdl-shared', 0)
+        # print('navbar_flag = {}'.format(navbar_flag))
         if wid not in navBar :
             l = w.get_layout()
             nb_col = len(l['cols'])
-            l['cols'].append(1.0)
-            width = self.view.settings().get('sv.navbar_width',0.2)
-            delta = width / (nb_col-1)
-            for i in range(1,nb_col) :
-                l['cols'][i] -= i * delta
-            l['cells'].append([nb_col-1,0,nb_col,1])
-            w.set_layout(l)
-            w.focus_group(len(l['cells'])-1)
-            navBarView = w.new_file()
-            navBarView.settings().set("tab_size", 2)
-            navBarView.set_syntax_file('Packages/SystemVerilog/navbar.sublime-syntax')
+            if navbar_flag != 0:
+                if nb_col < 2:
+                    navbar_flag = 0
+                else :
+                    gid = len(l['cells'])-1
+                    vl = w.views_in_group(gid)
+                    if len(vl) == 1:
+                        if not vl[0].name().endswith(' Hierarchy') :
+                            navbar_flag = 0
+                    else :
+                        navbar_flag = 0
+            if navbar_flag == 0:
+                l['cols'].append(1.0)
+                width = self.view.settings().get('sv.navbar_width',0.2)
+                delta = width / (nb_col-1)
+                for i in range(1,nb_col) :
+                    l['cols'][i] -= i * delta
+                l['cells'].append([nb_col-1,0,nb_col,1])
+                w.set_layout(l)
+                w.focus_group(len(l['cells'])-1)
+                navBarView = w.new_file()
+                navBarView.settings().set("tab_size", 2)
+            else :
+                l = w.get_layout()
+                w.focus_group(len(l['cells'])-1)
+                group_id = len(l['cells'])-1
+                w.focus_group(group_id)
+                navBarView = w.active_view_in_group(group_id)
+                navBarView.run_command("select_all")
+                navBarView.run_command("right_delete")
             navBarView.set_scratch(True)
-            navBar[wid] = {'view':navBarView, 'info':info, 'settings':{}}
+            navBar[wid] = {'view':navBarView, 'info':info, 'settings':{}, 'vhdl_on': False}
             navBar[wid]['settings']['update'            ] = self.view.settings().get('sv.navbar_update',15)
             navBar[wid]['settings']['show_module_port'  ] = self.view.settings().get('sv.navbar_show_module_port',True)
             navBar[wid]['settings']['show_module_signal'] = self.view.settings().get('sv.navbar_show_module_signal',False)
@@ -1020,6 +1041,10 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             navBar[wid]['view'].run_command("select_all")
             navBar[wid]['view'].run_command("right_delete")
             navBar[wid]['info'] = info
+
+        if 'systemverilog' not in navBar[wid]['view'].scope_name(0):
+            navBar[wid]['view'].set_syntax_file('Packages/SystemVerilog/navbar.sublime-syntax')
+        w.settings().set('navbar-hdl-shared', navbar_flag | 1)
 
         navBar[wid]['childless'] = ['logic','bit','int','event', 'string','real', 'semaphore', 'process', 'time']
 
@@ -1291,22 +1316,6 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             t = '<a href="fold:{}:{}">-</a>'.format(r_start,pid)
             self.change_phantom(wid,v,pid,t)
             self.fold_methods(v,s)
-        elif href_s[0]=="goto" :
-            filelist = sublime.active_window().lookup_symbol_in_index(href_s[1])
-            flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-            fname = navBar[wid]['info']['fname']
-            if fname in flist_norm:
-                _,_,rowcol = filelist[flist_norm.index(fname)]
-                w.focus_view(view)
-                sublimeutil.move_cursor(view,view.text_point(rowcol[0]-1,rowcol[1]-1))
-        elif href_s[0]=="open" :
-            filelist = sublime.active_window().lookup_symbol_in_index(href_s[1])
-            # Select first
-            fname,_,rowcol = filelist[0]
-            fname += ':{}:{}'.format(rowcol[0],rowcol[1])
-            w.focus_view(view)
-            v = view.window().open_file(fname,sublime.ENCODED_POSITION)
-            w.focus_view(v)
 
     def insert_text_next_line(self, v, r, txt):
         r = v.line(sublime.Region(r))
@@ -1349,17 +1358,24 @@ class VerilogToggleNavbarCommand(sublime_plugin.WindowCommand):
 
     def run(self, cmd='toggle'):
         global navBar
-        wid = self.window.id()
-        av = self.window.active_view()
+        w = self.window
+        wid = w.id()
+        av = w.active_view()
+        # print('[SV] : wid = {}, navbar={}, cmd={}'.format(wid,navBar.keys(),cmd))
         if wid in navBar and cmd != 'open':
             nv = navBar[wid]['view']
             if av is None or av == nv :
                 av = navBar[wid]['info']['view']
+            w.settings().set('navbar-hdl-shared', 0)
             # Close the navBar view
             if wid not in navBar :
                 return
             del navBar[wid]
+            sublime.active_window().run_command("vhdl_toggle_navbar",{'cmd':'disable'})
+            if cmd == 'disable' :
+                return
             if cmd == 'toggle' :
+                # print('[SV] Focus on view {}'.format(nv.id()))
                 self.window.focus_view(nv)
                 nv.set_scratch(True)
                 self.window.run_command("close_file")
@@ -1369,32 +1385,48 @@ class VerilogToggleNavbarCommand(sublime_plugin.WindowCommand):
             width = l['cols'][-1] - l['cols'][-2]
             l['cols'].pop()
             nb_col = len(l['cols'])
+            if nb_col == 1:
+                return
             delta = width / (nb_col-1)
             for i in range(1,nb_col) :
                 l['cols'][i] += i*delta
             l['cells'].pop()
             self.window.set_layout(l)
             # Focus back on initial view
-            # print('Focux back on orginal view!')
+            # print('[SV] Focus back on view {}'.format(av.id()))
             self.window.focus_view(av)
-        elif cmd != 'close' :
-            av.run_command("verilog_show_navbar")
+        elif self.window.settings().get('navbar-hdl-shared', 0) != 0 and cmd != 'open':
+            self.window.settings().set('navbar-hdl-shared', 0)
+            sublime.active_window().run_command("vhdl_toggle_navbar",{'cmd':'close'})
+        elif cmd in ['open','toggle'] and av :
+            if 'vhdl' in  av.scope_name(0):
+                av.run_command("vhdl_show_navbar")
+            else :
+                av.run_command("verilog_show_navbar")
 
 # Update the navigation bar
 class VerilogUpdateNavbarCommand(sublime_plugin.EventListener):
 
     def on_activated_async(self,view):
-        wid = sublime.active_window().id()
+        w = sublime.active_window()
+        wid = w.id()
         if wid not in navBar:
             return;
+        scope =  view.scope_name(0)
+        # print('[SV] : fnamer={} - {} ({}), update={}, scope={}, navbar_flag={}'.format(navBar[wid]['info']['fname'],view.file_name(),view.id(),navBar[wid]['settings']['update'],scope,w.settings().get('navbar-hdl-shared', 0)))
         if navBar[wid]['info']['fname'] == view.file_name():
-            return
+            if 'verilog' in navBar[wid]['view'].scope_name(0):
+                return
+            elif 'source.systemverilog' in scope :
+                view.run_command("verilog_show_navbar")
         if navBar[wid]['settings']['update'] == 0:
             return
-        if 'source.systemverilog' not in view.scope_name(0):
-            return
-        # print('[on_activated_async] view={}'.format(view.id()))
-        view.run_command("verilog_show_navbar")
+        if 'source.systemverilog' in scope:
+            view.run_command("verilog_show_navbar")
+        if 'source.vhdl' in scope:
+            navbar_flag = w.settings().get('navbar-hdl-shared', 0)
+            if navbar_flag & 2 == 0 :
+                view.run_command("vhdl_show_navbar")
 
 # Update the navigation bar
 class VerilogToggleLockNavbarCommand(sublime_plugin.WindowCommand):

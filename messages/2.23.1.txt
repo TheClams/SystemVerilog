@@ -1,0 +1,6 @@
+SystemVerilog 2.23.1 Changelog:
+
+## Enhancement ###
+  - Navigation side-bar: play nice with the Smart VHDL plugin side-bar
+
+
