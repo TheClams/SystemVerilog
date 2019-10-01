@@ -28,6 +28,47 @@ contexts:
       captures:
         1: keyword.modport.systemverilog
         2: entity.name.modport.systemverilog
+      push:
+        - meta_scope: meta.modport.systemverilog
+        - include: comments
+        - match: \s*(output|input|inout|ref)\b
+          captures:
+            1 : support.type.systemverilog
+        - match: \s*(import|export|clocking)\b
+          captures:
+            1 : keyword.other.systemverilog
+        - match: ';'
+          pop: true
+        - match: \s*(task)\s+({{id}})
+          captures:
+            1 : keyword.other.systemverilog
+            2 : entity.name.function.prototype.systemverilog
+          push: func-task-port-import
+        - match: \s*(function)\b
+          captures:
+            1 : keyword.other.systemverilog
+          push:
+            - meta_scope: meta.function.prototype.systemverilog
+            - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)({{id}})\b'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+                3: storage.type.systemverilog
+                4: entity.name.function.systemverilog
+              set: func-task-port-import
+            - match: '\b(?:({{id}})(::))?({{id}}\s+)?({{id}})\s*(?=\(|;)'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+                3: storage.type.systemverilog
+                4: entity.name.function.systemverilog
+              set: func-task-port-import
+            - include: base-grammar
+            - include: system-task
+            - match: '({{id}})\s*(?=\[)'
+              captures:
+                1: storage.type.userdefined.systemverilog
+        - include: base-grammar
     - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
@@ -940,6 +981,25 @@ contexts:
     - include: user-defined-type
     - include: function-call
     - include: struct-assign
+
+  func-task-port-import:
+    - match: \(
+      set:
+        - meta_scope: meta.functask.port.systemverilog
+        - match: \)\s*,
+          pop: true
+        - match: (?=;)
+          pop: true
+        - include: port-dir
+        - match: '\s*\b(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.systemverilog
+            4: storage.type.systemverilog
+        - include: base-grammar
+    - include: comments
+    - include: else-pop
 
   randseq:
     - match: ^\s*(randsequence)\s*\(\s*({{id}})?\s*\)

@@ -1,7 +1,10 @@
 SystemVerilog 2.23.2 Changelog:
 
 ## Enhancement ###
-  - Navigation side-bar: 
+  - Navigation side-bar:
   	* Support multiple module/class per file
 
+## Bug fixes ###
+  - Highlight : support import/export function/task in modport
+  - Alignment : support import/export function/task in modport
 

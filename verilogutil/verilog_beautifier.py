@@ -455,6 +455,8 @@ class VerilogBeautifier():
             # Handle case where this is an external declaration (meaning no block following)
             if w_prev[-2] in ['extern','cover','assert','pure'] or (w_prev[-4] in ['extern','pure'] and w_prev[-2]=='virtual') or w_prev[-2]=='"' :
                 return ""
+            if w in ['function', 'task'] and w_prev[-2] in ['import','export']:
+                return ""
             if w.startswith('case'):
                 self.stateUpdate('case')
             else :

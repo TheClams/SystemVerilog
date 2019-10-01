@@ -42,8 +42,17 @@ endinterface /* my_interface1 */
             output two,
             input  clk, rst,
 
-            import task parity_check(packet_t data),
+            import task parity_check(packet_t data) ,
+//          ^^^^^^ keyword.other.systemverilog
+//                 ^^^^ keyword.other.systemverilog
+//                      ^^^^^^^^^^^^ entity.name.function.prototype.systemverilog
+//                                   ^^^^^^^^ storage.type.systemverilog
             import function logic parity_gen(packet_t data)
+//          ^^^^^^ keyword.other.systemverilog
+//                 ^^^^^^^^ keyword.other.systemverilog
+//                          ^^^^^^ storage.type.systemverilog
+//                                ^^^^^^^^^^ entity.name.function.systemverilog
+//                                           ^^^^^^^^ storage.type.systemverilog
         );
 
     endinterface
