@@ -58,6 +58,9 @@ contexts:
           scope: constant.other.systemverilog
         - include: numbers
         - include: operators
+    - match: '^\s*(Members|Methods|Ports|Signals|Instances|Modports)'
+      captures:
+        1: keyword.hierarchy-systemverilog
     - match: '^(\w+)'
       captures:
         1: keyword.top-level.hierarchy-systemverilog
@@ -74,9 +77,6 @@ contexts:
         - match: (\w+)\s+\w+
           captures:
             1: storage.name.params.userdefined.hierarchy-systemverilog
-    - match: '^\s*(Members|Methods|Ports|Signals|Instances|Modports)'
-      captures:
-        1: keyword.hierarchy-systemverilog
     - match: '^  (\w+)'
       captures:
         1: storage.name.base-type.hierarchy-systemverilog
@@ -91,6 +91,8 @@ contexts:
         - include: strings
         - include: numbers
         - include: operators
+    - match: ^[=]+
+      scope: comment.line.hierarchy-systemverilog
   strings:
     - match: '"'
       captures:

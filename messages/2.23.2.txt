@@ -1,0 +1,7 @@
+SystemVerilog 2.23.2 Changelog:
+
+## Enhancement ###
+  - Navigation side-bar: 
+  	* Support multiple module/class per file
+
+

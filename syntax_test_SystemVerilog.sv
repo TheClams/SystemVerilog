@@ -39,7 +39,11 @@ endinterface /* my_interface1 */
         modport sys (
             inout one,
 //          ^ support.type
-            output two
+            output two,
+            input  clk, rst,
+
+            import task parity_check(packet_t data),
+            import function logic parity_gen(packet_t data)
         );
 
     endinterface

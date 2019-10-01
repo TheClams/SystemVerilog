@@ -158,12 +158,17 @@ def goto_index_symbol(view,name):
     return v,filelist[0][0]
 
 # Move cursor to a symbol with a known filename
-def goto_symbol_in_file(view,sname,fname):
+def goto_symbol_in_file(view,sname,fname, min_pos):
     w = view.window()
     filelist = w.lookup_symbol_in_index(sname)
-    flist_norm = [normalize_fname(f[0]) for f in filelist]
-    if fname in flist_norm:
-        _,_,rowcol = filelist[flist_norm.index(fname)]
+    idx = [i for i,f in enumerate(filelist) if normalize_fname(f[0])==fname]
+    if idx:
+        j = 0
+        for i in idx :
+            if i>min_pos :
+                break
+            j = i
+        _,_,rowcol = filelist[i]
         w.focus_view(view)
         if fname == view.file_name():
             move_cursor(view,view.text_point(rowcol[0]-1,rowcol[1]-1))

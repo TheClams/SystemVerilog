@@ -943,53 +943,33 @@ PHANTOM_TEMPLATE = """
 """
 
 
-def getObjName(view):
+def getObjList(view):
     r = view.sel()[0]
     p = r'(?s)^[ \t]*(?:virtual\s+)?(class|module|interface)\s+(\w+\b)'
     nameList = []
-    rList = view.find_all(p,0,r'\1 \2',nameList)
-    t = ''
-    name = ''
-    if rList:
-        t,_,name = nameList[0].partition(' ')
-        # Handle case where there is multiple class in a file
-        # and select the one closest to the cursor
-        for (rf,n) in zip(rList,nameList):
-            if rf.a < r.a:
-                t,_,name = n.partition(' ')
-            else:
-                break
-    return t,name
+    view.find_all(p,0,r'\1 \2',nameList)
+    # print(nameList)
+    return nameList
 
 class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
 
     def run(self,edit):
-        t,name = getObjName(self.view)
-        if not name:
+        objects = getObjList(self.view)
+        if not objects:
             # print('[SV:NavBar] Not inside a module/interface/class !')
             return
         enable = self.view.settings().get('sv.navbar_update',15)
-        txt = self.view.substr(sublime.Region(0, self.view.size()))
-        if t == 'class' :
-            if (enable & 1) == 0:
-                return
-            mi = verilogutil.parse_class(txt,name)
-        elif t== 'module':
-            if (enable & 2) == 0:
-                return
-            mi = verilogutil.parse_module(txt,name)
-        else:
-            if (enable & 4) == 0:
-                return
-            mi = verilogutil.parse_module(txt,name)
-        if not mi:
-            print('[SV:NavBar] Unable to parse {}!'.format(name))
+        if objects[0][0] == 'class' and (enable & 1) == 0:
             return
-        sublime.set_timeout_async(lambda mi=mi, w=self.view.window(): self.showHierarchy(mi,w))
+        elif objects[0][0]== 'module' and (enable & 1) == 0:
+            return
+        elif (enable & 4) == 0:
+            return
+        sublime.set_timeout_async(lambda objects=objects: self.showHierarchy(objects))
 
-    def showHierarchy(self,mi,w):
+    def showHierarchy(self,objects):
         # Save info in global for later access
-        info = {'dict':{}, 'view':None,'fname':''}
+        info = {'view':None,'fname':''}
         info['view'] = self.view
         info['fname'] = self.view.file_name()
 
@@ -1046,22 +1026,41 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             navBar[wid]['view'].set_syntax_file('Packages/SystemVerilog/navbar.sublime-syntax')
         w.settings().set('navbar-hdl-shared', navbar_flag | 1)
 
-        navBar[wid]['childless'] = ['logic','bit','int','event', 'string','real', 'semaphore', 'process', 'time']
+        navBar[wid]['childless'] = ['logic','bit','byte','int','event', 'string','real', 'semaphore', 'process', 'time']
 
-        # Create content
-        top_level = mi['name']
-        if mi['type'] == 'class' :
-            txt = re.sub(r'class\s+','',mi['decl'])
-            txt = re.sub(r'\s+extends\b.+','',txt)
-            txt = re.sub(r'\n','',txt)
-            txt = re.sub(r'(parameter|localparam)\s+','',txt)
-            txt += '\n'
-            if mi['extend']:
-                txt += '  {}\n'.format(mi['extend'])
-        else :
-            txt = '{}\n'.format(top_level)
-        txt += '-'*len(top_level) + '\n'
-        txt += self.printContent(1,mi,navBar[wid])
+
+        ftxt = self.view.substr(sublime.Region(0, self.view.size()))
+        txt = ''
+        for i,o in enumerate(objects) :
+            t,_,name = o.partition(' ')
+            # print('[SV:NavBar] Extracting info for {} {} ({})'.format(t,name,o))
+            if t == 'class' :
+                mi = verilogutil.parse_class(ftxt,name)
+            elif t== 'module':
+                mi = verilogutil.parse_module(ftxt,name)
+            else:
+                mi = verilogutil.parse_module(ftxt,name)
+            if not mi:
+                print('[SV:NavBar] Unable to parse "{}" !'.format(name))
+                return
+
+            # Create content
+            top_level = mi['name']
+            if mi['type'] == 'class' :
+                txt_ = re.sub(r'class\s+','',mi['decl'])
+                txt_ = re.sub(r'\s+extends\b.+','',txt_)
+                txt_ = re.sub(r'\n','',txt_)
+                txt += re.sub(r'(parameter|localparam)\s+','',txt_)
+                txt += '\n'
+                if mi['extend']:
+                    txt += '  {}\n'.format(mi['extend'])
+            else :
+                txt += '{}\n'.format(top_level)
+            txt += '-'*len(top_level) + '\n'
+            txt += self.printContent(1,mi,navBar[wid])
+
+            if i< len(objects) - 1:
+                txt += '\n{}\n\n'.format('='*len(top_level))
 
         navBar[wid]['view'].set_name(top_level + ' Hierarchy')
         navBar[wid]['view'].run_command('insert_snippet',{'contents': '$x', 'x':txt})
@@ -1154,20 +1153,20 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
         regions = view.find_by_selector('storage.name.base-type.hierarchy-systemverilog')
         phantoms = []
         pid = 0
-        if len(regions)>0 :
-            name = view.substr(regions[0])
-            ilc = view.indentation_level(regions[0].a)
-            pnl = view.line(regions[0]).b+1
+        for r in regions :
+            name = view.substr(r)
+            ilc = view.indentation_level(r.a)
+            pnl = view.line(r).b+1
             iln = view.indentation_level(pnl)
             # print('indent level for basetype {} = {} {}'.format(name,ilc,iln))
             if ilc>=iln :
-                content = '<a href="extend:{}:{}">+</a>'.format(name,regions[0].a)
+                content = '<a href="extend:{}:{}">+</a>'.format(name,r.a)
             elif view.is_folded(sublime.Region(pnl)) :
-                content = '<a href="unfold:{}:0">+</a>'.format(regions[0].a)
+                content = '<a href="unfold:{}:0">+</a>'.format(r.a)
             else :
-                content = '<a href="fold:{}:0">-</a>'.format(regions[0].a)
+                content = '<a href="fold:{}:0">-</a>'.format(r.a)
             phantoms.append(sublime.Phantom(
-                region=regions[0],
+                region=r,
                 content=PHANTOM_TEMPLATE.format(content,colors['operator']),
                 layout=sublime.LAYOUT_INLINE,
                 on_navigate=self.on_navigate)
@@ -1477,9 +1476,10 @@ class VerilogHandleNavbarCommand(sublime_plugin.ViewEventListener):
             if cname :
                 filelist = w.lookup_symbol_in_index(cname)
                 if filelist :
-                    sublimeutil.goto_symbol_in_file(v,name,sublimeutil.normalize_fname(filelist[0][0]))
+                    sublimeutil.goto_symbol_in_file(v,name,sublimeutil.normalize_fname(filelist[0][0]),0)
             else :
-                sublimeutil.goto_symbol_in_file(v,name,v.file_name())
+                r,n = navbar_get_top(self.view,s.a)
+                sublimeutil.goto_symbol_in_file(v,name,v.file_name(),r.b)
         elif 'entity.name.hierarchy-systemverilog' or 'source.name.hierarchy-systemverilog' in scope:
             cname = navbar_get_class(self.view,s)
             if cname :
@@ -1514,6 +1514,19 @@ def navbar_get_class(view,r):
     else :
         cname = ''
     return cname
+
+def navbar_get_top(view,pt):
+    name = ''
+    regions = view.find_by_selector('keyword.top-level.hierarchy-systemverilog')
+    if not regions:
+        return ''
+    rs = regions[0]
+    for r in regions:
+        if pt < r.a :
+            break
+        name = view.substr(r)
+        rs = r
+    return rs,name
 
 
 ###########################################################
