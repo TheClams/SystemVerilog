@@ -1,0 +1,7 @@
+SystemVerilog 2.23.3 Changelog:
+
+## Bug fixes ###
+  - Highlight : Fix issue with wire signed
+  - Snippets: add space after if keyword to be coherent with for snippets
+  - Alignment: Fix issue where import is part of a module name
+

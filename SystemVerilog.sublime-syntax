@@ -301,12 +301,14 @@ contexts:
         3: support.type.scope.systemverilog
         4: keyword.operator.scope.systemverilog
         5: storage.type.userdefined.systemverilog
-    - match: '^\s*(var|wire)\s+{{id}}'
+    - match: '^\s*(var|wire)\s+(?:(signed|unsigned)\s+)?(?=\[)'
       captures:
         1: storage.type.net.systemverilog
-    - match: '^\s*(var|wire)\s+(?=\[)'
+        2: storage.modifier.systemverilog
+    - match: '^\s*(var|wire)\s+(?:(signed|unsigned)\s+)?{{id}}'
       captures:
         1: storage.type.net.systemverilog
+        2: storage.modifier.systemverilog
   process:
     - match: \s*\b(initial|always|always_comb|always_ff|always_latch|assign)\b
       captures:

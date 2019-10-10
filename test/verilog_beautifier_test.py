@@ -89,6 +89,10 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"module_decl.sv", self.path_test+"module_decl_expected.sv", cfg)
 
+    def test_beautifyModuleImpl(self):
+        cfg = BeautifyConfig(nbSpace=3)
+        self.runBeautifyTest(self.path_test+"module_import.sv", self.path_test+"module_import_exp.sv", cfg)
+
     def test_beautifyText9(self):
         cfg = BeautifyConfig()
         self.runBeautifyTest(self.path_test+"test9.sv", self.path_test+"test9_expected.sv", cfg)

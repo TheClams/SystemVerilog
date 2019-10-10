@@ -159,7 +159,7 @@ def type_info_on_hier(view,varname,txt=None,region=None):
             elif ti['type']!='class':
                 # print ('[type_info_on_hier] Looking for type {}'.format(ti))
                 ti = lookup_type(view,ti['type'])
-                if ti['type']:
+                if ti and ti['type']:
                     if ti['tag']=='typedef':
                         bti = lookup_type(view,ti['type'])
                         if bti:

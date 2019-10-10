@@ -253,7 +253,8 @@ class VerilogBeautifier():
             if self.block_state=='module' and w==';':
                 tmp = verilogutil.clean_comment(block+line).strip()
                 m = re.search(r';\s*\(',tmp,flags=re.MULTILINE)
-                mod_import = 'import' in tmp and not m
+                m2 = re.search(r'\bimport\b',tmp,flags=re.MULTILINE)
+                mod_import = m2 and not m
             else :
                 mod_import = False
             # Handle the self.block_state and call appropriate alignement function
