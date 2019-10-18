@@ -1,0 +1,14 @@
+SystemVerilog 2.23.4 Changelog:
+
+## Bug fixes ###
+  - Highlight : 
+  	* Support interface class
+  	* Support implements
+    * Support multiple extends statements  	
+    * Support `pragma directive
+    * Support pure virtual task
+  - Snippets: 
+  	* Function: last cursor is in the function body
+  	* Task: now consistent with the function snippet
+  - Alignment: Fix issue where import is part of a module name
+

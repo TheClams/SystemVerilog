@@ -86,25 +86,30 @@ contexts:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
+    - match: '\s*\b(?:(virtual|interface)\s+)?(class)\s+\b({{id}})\b'
+      scope: meta.definition.class.systemverilog
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
+        3: entity.name.type.class.systemverilog
+    - match: \b(extends|implements)\b
+      scope: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.implements.systemverilog
+        - match: ;
+          pop: true
+        - match: (?:({{id}})(::))?({{id}})
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: entity.other.inherited-class.systemverilog
+        - include: module-param
     - match: '\s*(primitive|package|interface|checker)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
         1: keyword.other.systemverilog
         2: keyword.other.systemverilog
         3: entity.name.type.class.systemverilog
-    - match: '\s*\b(virtual\s+)?(class)\s+\b({{id}})\b'
-      scope: meta.definition.class.systemverilog
-      captures:
-        1: keyword.control.systemverilog
-        2: keyword.control.systemverilog
-        3: entity.name.type.class.systemverilog
-    - match: '\b(extends)\s+(?:({{id}})(::))?({{id}})\b'
-      scope: meta.definition.systemverilog
-      captures:
-        1: keyword.control.systemverilog
-        2: support.type.scope.systemverilog
-        3: keyword.operator.scope.systemverilog
-        4: entity.other.inherited-class.systemverilog
     - include: all-types
     - include: struct-assign
     - include: operators
@@ -349,6 +354,10 @@ contexts:
     - match: '\b([A-Z][A-Z0-9_]*)\b'
       scope: constant.other.net.systemverilog
     - match: (`ifdef|`elsif|`ifndef|`default_nettype)\s+(\w+)
+      captures:
+        1: constant.other.preprocessor.systemverilog
+        2: support.variable.systemverilog
+    - match: ^\s*(`pragma)\s+(\w+)\b.*$
       captures:
         1: constant.other.preprocessor.systemverilog
         2: support.variable.systemverilog
@@ -927,6 +936,10 @@ contexts:
         5: keyword.control.systemverilog
       push:
         - meta_scope: meta.task.systemverilog
+        # Check endtask to handle badly construct task (e.g. while writing one )
+        - match: \bendtask\b
+          scope: keyword.other.systemverilog
+          pop: true
         - match: '\b(?:({{id}})(::))?({{id}})\b'
           captures:
             1: support.type.scope.systemverilog
@@ -934,7 +947,7 @@ contexts:
             3: entity.name.function.systemverilog
           set: [task-body, task-port]
         # - include: base-grammar
-    - match: \s*\b(?:(extern))\s+(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(task)\b(?:\s+(automatic))?
+    - match: \s*\b(?:(extern|pure))\s+(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(task)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog

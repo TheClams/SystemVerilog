@@ -57,6 +57,12 @@ endinterface /* my_interface1 */
 
     endinterface
 
+  interface class ihello;
+
+    pure virtual function void hello();
+    pure virtual function void world();
+  endclass : ihello
+
 /*------------------------------------------------------------------------------
 --  Typedef
 ------------------------------------------------------------------------------*/
@@ -259,6 +265,34 @@ typedef struct {logic a; int b; bit [3:0] c;} mystruct;
 protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0, e: mytype'(50)};
 //                                 ^ support.function.field
 //                                                   ^^^^^^^ meta.struct.assign keyword.control
+
+/*------------------------------------------------------------------------------
+--  Class
+------------------------------------------------------------------------------*/
+
+class Foo implements Bar, Blah; extends Bar;
+//    ^^^ entity.name.type.class.systemverilog
+//        ^^^^^^^^^^ keyword.control.systemverilog
+//                   ^^^ entity.other.inherited-class.systemverilog
+//                        ^^^^ entity.other.inherited-class.systemverilog
+//                              ^^^^^^^ keyword.control.systemverilog
+//                                      ^^^ entity.other.inherited-class.systemverilog
+endclass
+// <- keyword.control.systemverilog
+
+interface class base_ic;
+// <- keyword.control.systemverilog
+//        ^^^^^ keyword.control.systemverilog
+//              ^^^^^^^ entity.name.type.class.systemverilog
+  pure virtual task pure_task1;
+//             ^^^^ keyword.control.systemverilog   
+//                  ^^^^^^^^^^ entity.name.function.systemverilog
+  pure virtual task pure_task2(arg_type arg);
+//             ^^^^ keyword.control.systemverilog
+//                  ^^^^^^^^^^ entity.name.function.systemverilog
+//                             ^^^^^^^^ meta.task.port.systemverilog storage.type.systemverilog
+
+endclass
 
 /*------------------------------------------------------------------------------
 --  Task & functions
