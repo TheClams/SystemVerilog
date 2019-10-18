@@ -1,8 +1,8 @@
 <snippet>
    <name>Task SystemVerilog</name>
-   <content><![CDATA[task ${0}();
-
-endtask : ${0}]]></content>
+   <content><![CDATA[task ${1}($2);
+   	$0
+endtask : ${1}]]></content>
     <tabTrigger>task</tabTrigger>
     <scope>source.systemverilog</scope>
 </snippet>
