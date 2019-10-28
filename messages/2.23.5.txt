@@ -1,0 +1,9 @@
+SystemVerilog 2.23.5 Changelog:
+
+## Bug fixes ###
+  - Highlight :
+  	* Fix issues with extern function/task
+    * Support type keyword in parameter declaration
+  - Snippets:
+  	* Remove extra spaces in function/task snippets
+

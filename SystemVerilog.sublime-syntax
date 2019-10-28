@@ -8,6 +8,7 @@ variables:
   id: '[A-Za-z_][A-Za-z_0-9]*'
 contexts:
   main:
+    - include: extern-decl
     - include: function-def
     - include: task-def
     - match: '\s*\b(nettype)\s+({{id}})\s+({{id}})(\s+(with)\s+({{id}}))?'
@@ -86,24 +87,7 @@ contexts:
         1: constant.other.preprocessor.systemverilog
         2: entity.name.type.define.systemverilog
     - include: comments
-    - match: '\s*\b(?:(virtual|interface)\s+)?(class)\s+\b({{id}})\b'
-      scope: meta.definition.class.systemverilog
-      captures:
-        1: keyword.control.systemverilog
-        2: keyword.control.systemverilog
-        3: entity.name.type.class.systemverilog
-    - match: \b(extends|implements)\b
-      scope: keyword.control.systemverilog
-      push:
-        - meta_scope: meta.implements.systemverilog
-        - match: ;
-          pop: true
-        - match: (?:({{id}})(::))?({{id}})
-          captures:
-            1: support.type.scope.systemverilog
-            2: keyword.operator.scope.systemverilog
-            3: entity.other.inherited-class.systemverilog
-        - include: module-param
+    - include: class-def
     - match: '\s*(primitive|package|interface|checker)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       scope: meta.definition.systemverilog
       captures:
@@ -190,6 +174,8 @@ contexts:
         1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
   storage-type-systemverilog:
+    - match: \btype\b
+      scope: keyword.other.systemverilog
     - match: ^\s*(typedef)\s+(class|enum|struct|union|interface\s+class)\s+({{id}})\s*;
       scope: meta.typedef_forward.systemverilog
       captures:
@@ -503,6 +489,26 @@ contexts:
         - include: operators
         - include: constants
 
+  class-def:
+    - match: '\s*\b(?:(virtual|interface)\s+)?(class)\s+\b({{id}})\b'
+      scope: meta.definition.class.systemverilog
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
+        3: entity.name.type.class.systemverilog
+    - match: \b(extends|implements)\b
+      scope: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.implements.systemverilog
+        - match: ;
+          pop: true
+        - match: (?:({{id}})(::))?({{id}})
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: entity.other.inherited-class.systemverilog
+        - include: module-param
+
   program-def:
     - match: '\b(program)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
@@ -789,7 +795,7 @@ contexts:
 
 # Constraint
   constraint :
-    - match: '\s*(?:(extern|pure)\s+)?(?:(static)\s+)?(constraint)\s+({{id}})\s*(;)'
+    - match: '\s*(?:(pure)\s+)?(?:(static|protected|local)\s+)?(constraint)\s+({{id}})\s*(;)'
       captures:
         1 : keyword.other.systemverilog
         2 : keyword.other.systemverilog
@@ -832,7 +838,56 @@ contexts:
         - include: function-call
         - include: strings
 
-
+# Extern declaration
+  extern-decl:
+    - match: \s*\b(extern)\b
+      captures:
+        1: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.extern.systemverilog
+        - match: \b(static|local|protected|virtual|pure)\b
+          scope: keyword.control.systemverilog
+        - match: \bfunction\b
+          scope: keyword.control.systemverilog
+          set :
+            - meta_scope: meta.function.prototype.systemverilog
+            - match: \bautomatic\b
+              scope: keyword.control.systemverilog
+            - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)({{id}})\b'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+                3: storage.type.systemverilog
+                4: entity.name.function.systemverilog
+              set: function-port
+            - match: '\b(?:({{id}})(::))?({{id}}\s+)?({{id}})\s*(?=\(|;)'
+              captures:
+                1: support.type.scope.systemverilog
+                2: keyword.operator.scope.systemverilog
+                3: storage.type.systemverilog
+                4: entity.name.function.systemverilog
+              set: function-port
+            - include: base-grammar
+            - include: system-task
+            - match: '({{id}})\s*(?=\[)'
+              captures:
+                1: storage.type.userdefined.systemverilog
+        - match: \btask\b
+          scope: keyword.control.systemverilog
+          set:
+            - match: \bautomatic\b
+              scope: keyword.control.systemverilog
+            - match: '\b({{id}})\b'
+              captures:
+                1: entity.name.function.systemverilog
+              set: task-port
+        - match: \bconstraint\b
+          scope: keyword.control.systemverilog
+          set :
+            - match: \b{{id}}\b
+              scope: entity.name.section.systemverilog
+              pop: true
+        - include: else-pop
 # Function
   function-def:
     - match: \s*(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
@@ -857,19 +912,18 @@ contexts:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.userdefined.systemverilog
-    - match: \s*\b(?:(extern|pure)\s+|(import|export)\s+((")[^"]+("))\s+(?:(pure)\s+)?)(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
+    - match: \s*(?:\b(import|export)\s+((")[^"]+(")\s+))?(?:(pure)\s+)?(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
       captures:
         1: keyword.control.systemverilog
-        2: keyword.control.systemverilog
-        3: string.quoted.double.systemverilog
-        4: punctuation.definition.string.begin.systemverilog
-        5: punctuation.definition.string.end.systemverilog
+        2: string.quoted.double.systemverilog
+        3: punctuation.definition.string.begin.systemverilog
+        4: punctuation.definition.string.end.systemverilog
+        5: keyword.control.systemverilog
         6: keyword.control.systemverilog
         7: keyword.control.systemverilog
         8: keyword.control.systemverilog
         9: keyword.control.systemverilog
         10: keyword.control.systemverilog
-        11: keyword.control.systemverilog
       push:
         - meta_scope: meta.function.prototype.systemverilog
         - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)({{id}})\b'

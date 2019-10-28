@@ -285,7 +285,7 @@ interface class base_ic;
 //        ^^^^^ keyword.control.systemverilog
 //              ^^^^^^^ entity.name.type.class.systemverilog
   pure virtual task pure_task1;
-//             ^^^^ keyword.control.systemverilog   
+//             ^^^^ keyword.control.systemverilog
 //                  ^^^^^^^^^^ entity.name.function.systemverilog
   pure virtual task pure_task2(arg_type arg);
 //             ^^^^ keyword.control.systemverilog
@@ -483,6 +483,9 @@ constraint constraint_c {
 //            ^^^^^^^^^^ meta.block.constraint.systemverilog support.function.generic.systemverilog
 }
 
+extern constraint proto1;
+//                ^^^^^^ entity.name.section.systemverilog
+
 constraint C::proto1 { x inside {-4, 5, [y:2*y]}; }
 //         ^ meta.block.constraint.systemverilog storage.type.userdefined.systemverilog
 //          ^^ keyword.operator.scope.systemverilog
@@ -654,9 +657,17 @@ function void randseq2();
 
 endfunction : randseq2 ;
 
+/*------------------------------------------------------------------------------
+--  Extern
+------------------------------------------------------------------------------*/
+extern protected static function bit check_data_width(int unsigned width);
+
+extern module a #(parameter size= 8, parameter type TP = logic [7:0])
+ (input [size:0] a, output TP b);
+
    extern virtual function bit Xcheck_accessX
-// ^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
-//        ^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
+// ^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
+//        ^^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
 //                ^^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
 //                         ^^^ meta.function.prototype.systemverilog storage.type.systemverilog
                                 (input uvm_reg_item rw,
@@ -665,7 +676,7 @@ endfunction : randseq2 ;
 
 
     extern virtual task do_write(uvm_reg_item rw);
-//  ^^^^^^ meta.task.prototype.systemverilog keyword.control.systemverilog
+//  ^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
 //         ^^^^^^^ keyword.control.systemverilog
 //                 ^^^^ keyword.control.systemverilog
 //                      ^^^^^^^^ entity.name.function.systemverilog
