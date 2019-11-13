@@ -362,19 +362,25 @@ contexts:
     - match: \b(\w+)(?=\s*\()
       scope: support.function.generic.systemverilog
   ifmodport:
-    - match: '\b({{id}})\.({{id}})\s+({{id}})\b'
+    - match: '\b({{id}})(\.)({{id}})\s+({{id}})\b'
       captures:
         1: storage.type.interface.systemverilog
-        2: support.modport.systemverilog
+        2: punctuation.accessor.dot.systemverilog
+        3: support.modport.systemverilog
   module-binding:
-    - match: '\.({{id}})\s*\('
+    - match: '(\.)({{id}})\s*\('
       captures:
-        1: support.function.port.systemverilog
+        1: punctuation.accessor.dot.systemverilog
+        2: support.function.port.systemverilog
       push: module-binding-signal
-    - match: \w\.({{id}})
+    - match: \w(\.)({{id}})
+      captures:
+        1: punctuation.accessor.dot.systemverilog
       # catch field => normal text
-    - match: \.({{id}})\s*
-      scope: support.function.port.implicit.systemverilog
+    - match: (\.)({{id}})\s*
+      captures:
+        1: punctuation.accessor.dot.systemverilog
+        2: support.function.port.implicit.systemverilog
   module-binding-signal:
     - match: \(
       push: module-binding-signal
@@ -563,6 +569,8 @@ contexts:
         2: keyword.other.systemverilog
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
+    - match: \.
+      scope: punctuation.accessor.dot.systemverilog
   port-dir:
     - match: '\s*\b(output|input|inout|ref)\s+(?:(var|wire)\s+)?(?:({{id}})(::))?({{id}})?\s+(?=\[[\w\*\(\)\/><\:\-\+`\$\s]*\]\s+[a-zA-Z_][a-zA-Z0-9_\s]*)'
       captures:
@@ -776,10 +784,11 @@ contexts:
             - include: port-dir
             - match : \b(posedge|negedge|iff|bins|binsof|illegal_bins|ignore_bins|wildcard|default|sequence|matches|intersect|with\s+function\s+sample|with)\b
               scope: keyword.other.systemverilog
-            - match: \s*\b((?:type_)?option)\.({{id}})
+            - match: \s*\b((?:type_)?option)(\.)({{id}})
               captures:
                 1: keyword.cover.systemverilog
-                2: variable.other.systemverilog
+                2: punctuation.accessor.dot.systemverilog
+                3: variable.other.systemverilog
             - match: '(({{id}})\s*(:))?\s*(coverpoint|cross)\b'
               captures:
                 2: entity.name.type.coverpoint.systemverilog

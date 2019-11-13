@@ -319,14 +319,13 @@ class SchemeColors(
         [
             'fg', 'fg_simulated', 'bg', "bg_simulated", "style", "color_gradient",
             "fg_selector", "bg_selector", "style_selectors", "color_gradient_selector"
-        ],
-        verbose=False
+        ]
     )
 ):
     """SchemeColors."""
 
 
-class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'], verbose=False)):
+class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'])):
     """SchemeSelectors."""
 
 

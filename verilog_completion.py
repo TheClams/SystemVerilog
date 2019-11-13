@@ -123,7 +123,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 completion = self.enum_assign_completion(view,m.group('name'))
         elif 'meta.struct.assign' in scope:
             completion = self.struct_assign_completion(view,r)
-        elif 'meta.block.cover.systemverilog' in scope:
+        elif 'meta.block.cover.systemverilog' in scope and 'string' not in scope:
             completion = self.cover_completion()
         elif 'meta.block.constraint.systemverilog' in scope:
             completion = self.constraint_completion()
@@ -157,13 +157,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Provide simple keywords completion
             else:
                 completion = [
-                    ["forkj\tfork..join","fork\n\t$0\njoin"            ],
-                    ["forkn\tfork..none","fork\n\t$0\njoin_none"       ],
-                    ["forka\tfork..any" ,"fork\n\t$0\njoin_any"        ],
-                    ["generate\tkeyword","generate\n\t$0\nendgenerate" ],
-                    ["foreach\tkeyword" ,"foreach($1) begin\n\t$0\nend"],
-                    ["posedge\tkeyword" ,"posedge"],
-                    ["negedge\tkeyword" ,"negedge"]
+                    sublime.CompletionItem("forkj","fork..join","fork\n\t$0\njoin"            ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                    sublime.CompletionItem("forkn","fork..none","fork\n\t$0\njoin_none"       ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                    sublime.CompletionItem("forka","fork..any" ,"fork\n\t$0\njoin_any"        ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                    sublime.CompletionItem("generate","keyword","generate\n\t$0\nendgenerate" ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                    sublime.CompletionItem("foreach","keyword" ,"foreach($1) begin\n\t$0\nend",kind=sublime.KIND_SNIPPET, completion_format=1),
+                    sublime.CompletionItem("posedge","keyword" ,"posedge",kind=sublime.KIND_KEYWORD),
+                    sublime.CompletionItem("negedge","keyword" ,"negedge",kind=sublime.KIND_KEYWORD)
                 ]
         return (completion, flag)
 
@@ -181,20 +181,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         else:
             is_sv = False
         if is_sv :
-            c.append(['always_ff\talways_ff Async','always_ff '+a_l])
-            c.append(['always_ffh\talways_ff Async high','always_ff '+a_h])
-            c.append(['always_c\talways_comb','always_comb '+ begin_end])
-            c.append(['always_l\talways_latch','always_latch '+ begin_end])
-            c.append(['always_ff_nr\talways_ff No reset','always_ff '+a_nr])
-            c.append(['always_ffs\talways_ff Sync','always_ff '+re.sub(r' or negedge \w+','',a_l)])
-            c.append(['always_ffsh\talways_ff Sync high','always_ff '+re.sub(r' or posedge \w+','',a_h)])
+            c.append(sublime.CompletionItem('always_ff','always_ff Async','always_ff '+a_l,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_ffh','always_ff Async high','always_ff '+a_h,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_c','always_comb','always_comb '+ begin_end,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_l','always_latch','always_latch '+ begin_end,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_ff_nr','always_ff No reset','always_ff '+a_nr,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_ffs','always_ff Sync','always_ff '+re.sub(r' or negedge \w+','',a_l),kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_ffsh','always_ff Sync high','always_ff '+re.sub(r' or posedge \w+','',a_h),kind=sublime.KIND_SNIPPET, completion_format=1))
         if not is_sv or not self.settings.get('sv.always_sv_only') :
-            c.append(['always\talways Async','always '+a_l])
-            c.append(['alwaysh\talways Async high','always '+a_h])
-            c.append(['alwaysc\talways *','always @(*) '+ begin_end])
-            c.append(['always_nr\talways NoReset','always_ff '+a_nr])
-            c.append(['alwayss\talways sync','always '+re.sub(r' or negedge \w+','',a_l)])
-            c.append(['alwayssh\talways sync high','always '+re.sub(r' or posedge \w+','',a_h)])
+            c.append(sublime.CompletionItem('always','always Async','always '+a_l,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('alwaysh','always Async high','always '+a_h,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('alwaysc','always *','always @(*) '+ begin_end,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('always_nr','always NoReset','always_ff '+a_nr,kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('alwayss','always sync','always '+re.sub(r' or negedge \w+','',a_l),kind=sublime.KIND_SNIPPET, completion_format=1))
+            c.append(sublime.CompletionItem('alwayssh','always sync high','always '+re.sub(r' or posedge \w+','',a_h),kind=sublime.KIND_SNIPPET, completion_format=1))
         return c
 
     def modport_completion(self):
@@ -248,21 +248,21 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         return self.class_completion(ci['fname'][0],cname,'',False)
         # Cover option completion
         elif w in ['option','type_option'] and 'meta.block.cover' in scope:
-            completion.append(['weight\toption','weight = $0;'])
-            completion.append(['goal\toption','goal = $0;'])
-            completion.append(['comment\toption','comment = "$0";'])
+            completion.append(sublime.CompletionItem('weight','option','weight = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+            completion.append(sublime.CompletionItem('goal','option','goal = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+            completion.append(sublime.CompletionItem('comment','option','comment = "$0";',kind=sublime.KIND_VARIABLE, completion_format=1))
             if w=='option' :
-                completion.append(['name\toption','name = "$0";'])
-                completion.append(['at_least\toption','at_least = $0;'])
-                completion.append(['detect_overlap\toption','detect_overlap = $0;'])
-                completion.append(['auto_bin_max\toption','auto_bin_max = $0;'])
-                completion.append(['cross_num_print_missing\toption','cross_num_print_missing = $0;'])
-                completion.append(['per_instance\toption','per_instance = $0;'])
-                completion.append(['get_inst_coverage\toption','get_inst_coverage = $0;'])
+                completion.append(sublime.CompletionItem('name','option','name = "$0";',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('at_least','option','at_least = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('detect_overlap','option','detect_overlap = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('auto_bin_max','option','auto_bin_max = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('cross_num_print_missing','option','cross_num_print_missing = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('per_instance','option','per_instance = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('get_inst_coverage','option','get_inst_coverage = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
             else :
-                completion.append(['strobe\toption','strobe = $0;'])
-                completion.append(['merge_instances\toption','merge_instances = $0;'])
-                completion.append(['distribute_first\toption','distribute_first = $0;'])
+                completion.append(sublime.CompletionItem('strobe','option','strobe = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('merge_instances','option','merge_instances = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
+                completion.append(sublime.CompletionItem('distribute_first','option','distribute_first = $0;',kind=sublime.KIND_VARIABLE, completion_format=1))
             return completion
         #
         elif w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
@@ -333,7 +333,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             elif ti['type']=='process':
                 completion = self.process_completion()
             elif ti['type']=='event':
-                completion.append(['triggered\tevent','triggered'])
+                completion.append(sublime.CompletionItem('triggered','event','triggered',kind=sublime.KIND_KEYWORD))
             # Non standard type => try to find the type in the lookup list and get the type
             else:
                 # Force the type to the word itself if we are in a module declaration : typical of modport
@@ -344,7 +344,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     t = w
                 elif ti['type']=='clocking':
                     for x in ti['port']:
-                        completion.append([x['name']+'\t'+x['type'], x['name']])
+                        completion.append(sublime.CompletionItem(x['name'],x['type'], x['name'],kind=sublime.KIND_VARIABLE))
                     return completion
                 else:
                     t = ti['type']
@@ -383,142 +383,142 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             #Add randomize function for rand variable
             if ti['decl']:
                 if ti['decl'].startswith('rand ') or ' rand ' in ti['decl']:
-                    completion.append(['randomize\trandomize()','randomize()'])
+                    completion.append(sublime.CompletionItem('randomize','randomize()','randomize()',kind=sublime.KIND_FUNCTION))
         return completion
 
     def array_completion(self,array_type):
         c = []
         if array_type == 'queue':
-            c.append(['size\tsize()'            ,'size()'      ])
-            c.append(['insert\tinsert()'        ,'insert()'    ])
-            c.append(['delete\tdelete()'        ,'delete()'    ])
-            c.append(['pop_front\tpop_front()'  ,'pop_front()' ])
-            c.append(['pop_back\tpop_back()'    ,'pop_back()'  ])
-            c.append(['push_front\tpush_front()','push_front()'])
-            c.append(['push_back\tpush_back()'  ,'push_back()' ])
+            c.append(sublime.CompletionItem('size','size()'            ,'size()'      ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('insert','insert()'        ,'insert()'    ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('delete','delete()'        ,'delete()'    ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('pop_front','pop_front()'  ,'pop_front()' ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('pop_back','pop_back()'    ,'pop_back()'  ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('push_front','push_front()','push_front()',kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('push_back','push_back()'  ,'push_back()' ,kind=sublime.KIND_FUNCTION))
         elif array_type == 'associative':
-            c.append(['num\tnum()'      ,'num()'   ])
-            c.append(['size\tsize()'    ,'size()'  ])
-            c.append(['delete\tdelete()','delete()'])
-            c.append(['exists\texists()','exists()'])
-            c.append(['first\tfirst()'  ,'first()' ])
-            c.append(['last\tlast()'    ,'last()'  ])
-            c.append(['next\tnext()'    ,'next()'  ])
-            c.append(['prev\tprev()'    ,'prev()'  ])
+            c.append(sublime.CompletionItem('num','num()'      ,'num()'   ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('size','size()'    ,'size()'  ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('delete','delete()','delete()',kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('exists','exists()','exists()',kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('first','first()'  ,'first()' ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('last','last()'    ,'last()'  ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('next','next()'    ,'next()'  ,kind=sublime.KIND_FUNCTION))
+            c.append(sublime.CompletionItem('prev','prev()'    ,'prev()'  ,kind=sublime.KIND_FUNCTION))
         else : # Fixed or dynamic have the same completion
-           c.append(['size\tsize()'                 ,'size()'                  ])
-           c.append(['find\tfind() ...'             ,'find(x) with(x$1)'       ])
-           c.append(['find_index\tfind_index() ...' ,'find_index(x) with (x$1)'])
-           c.append(['find_first\tfind_first() ...' ,'find_first(x) with (x$1)'])
-           c.append(['find_last\tfind_last()'       ,'find_last(x) with (x$1)' ])
-           c.append(['unique\tunique()'             ,'unique()'                ])
-           c.append(['uniques\tuniques() ...'       ,'uniques(x) with(x$1)'    ])
-           c.append(['reverse\treverse()'           ,'reverse()'               ])
-           c.append(['sort\tsort()'                 ,'sort()'                  ])
-           c.append(['rsort\trsort()'               ,'rsort()'                 ])
-           c.append(['shuffle\tshuffle()'           ,'shuffle()'               ])
+           c.append(sublime.CompletionItem('size','size()'                 ,'size()'                  ,kind=sublime.KIND_FUNCTION))
+           c.append(sublime.CompletionItem('find','find() ...'             ,'find($1) with($0)'       ,kind=sublime.KIND_FUNCTION, completion_format=1))
+           c.append(sublime.CompletionItem('find_index','find_index() ...' ,'find_index($1) with ($0)',kind=sublime.KIND_FUNCTION, completion_format=1))
+           c.append(sublime.CompletionItem('find_first','find_first() ...' ,'find_first($1) with ($0)',kind=sublime.KIND_FUNCTION, completion_format=1))
+           c.append(sublime.CompletionItem('find_last','find_last()'       ,'find_last($1) with ($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+           c.append(sublime.CompletionItem('unique','unique()'             ,'unique()'                ,kind=sublime.KIND_FUNCTION))
+           c.append(sublime.CompletionItem('uniques','unique() with ...'   ,'unique($1) with($0)'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+           c.append(sublime.CompletionItem('reverse','reverse()'           ,'reverse()'               ,kind=sublime.KIND_FUNCTION))
+           c.append(sublime.CompletionItem('sort','sort()'                 ,'sort()'                  ,kind=sublime.KIND_FUNCTION))
+           c.append(sublime.CompletionItem('rsort','rsort()'               ,'rsort()'                 ,kind=sublime.KIND_FUNCTION))
+           c.append(sublime.CompletionItem('shuffle','shuffle()'           ,'shuffle()'               ,kind=sublime.KIND_FUNCTION))
         # Method available to all types of array
-        c.append(['min\tmin()'        ,'min()'    ])
-        c.append(['max\tmax()'        ,'max()'    ])
-        c.append(['sum\tsum()'        ,'sum()'    ])
-        c.append(['product\tproduct()','product()'])
-        c.append(['and\tand()'        ,'and()'    ])
-        c.append(['or\tor()'          ,'or()'     ])
-        c.append(['xor\txor()'        ,'xor()'    ])
+        c.append(sublime.CompletionItem('min','min()'        ,'min()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('max','max()'        ,'max()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('sum','sum()'        ,'sum()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('product','product()','product()',kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('and','and()'        ,'and()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('or','or()'          ,'or()'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('xor','xor()'        ,'xor()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def string_completion(self):
         c = []
-        c.append(['len\tlen()'          , 'len()'        ])
-        c.append(['substr\tsubstr()'    , 'substr($1,$2)'])
-        c.append(['putc\tputc()'        , 'putc($0)'     ])
-        c.append(['getc\tgetc()'        , 'getc($0)'     ])
-        c.append(['toupper\ttoupper()'  , 'toupper()'    ])
-        c.append(['tolower\ttolower()'  , 'tolower()'    ])
-        c.append(['compare\tcompare()'  , 'compare($0)'  ])
-        c.append(['icompare\ticompare()', 'icompare($0)' ])
-        c.append(['atoi\tatoi()'        , 'atoi()'       ])
-        c.append(['atohex\tatohex()'    , 'atohex()'     ])
-        c.append(['atobin\tatobin()'    , 'atobin()'     ])
-        c.append(['atoreal\tatoreal()'  , 'atoreal()'    ])
-        c.append(['itoa\titoa()'        , 'itoa($0)'     ])
-        c.append(['hextoa\thextoa()'    , 'hextoa($0)'   ])
-        c.append(['octoa\toctoa()'      , 'octoa($0)'    ])
-        c.append(['bintoa\tbintoa()'    , 'bintoa($0)'   ])
-        c.append(['realtoa\trealtoa()'  , 'realtoa($0)'  ])
+        c.append(sublime.CompletionItem('len','len()'          , 'len()'        ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('substr','substr()'    , 'substr($1,$0)',kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('putc','putc()'        , 'putc($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('getc','getc()'        , 'getc($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('toupper','toupper()'  , 'toupper()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('tolower','tolower()'  , 'tolower()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('compare','compare()'  , 'compare($0)'  ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('icompare','icompare()', 'icompare($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('atoi','atoi()'        , 'atoi()'       ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('atohex','atohex()'    , 'atohex()'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('atobin','atobin()'    , 'atobin()'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('atoreal','atoreal()'  , 'atoreal()'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('itoa','itoa()'        , 'itoa($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('hextoa','hextoa()'    , 'hextoa($0)'   ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('octoa','octoa()'      , 'octoa($0)'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('bintoa','bintoa()'    , 'bintoa($0)'   ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('realtoa','realtoa()'  , 'realtoa($0)'  ,kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def mailbox_completion(self):
         c = []
-        c.append(['num\tnum()'          , 'num()'       ])
-        c.append(['get\tget()'          , 'get($0)'     ])
-        c.append(['try_get\ttry_get()'  , 'try_get($0)' ])
-        c.append(['peek\tpeek()'        , 'peek($0)'    ])
-        c.append(['try_peek\ttry_peek()', 'try_peek($0)'])
-        c.append(['put\tput()'          , 'put($0)'     ])
-        c.append(['try_put\ttry_put()'  , 'try_put($0)' ])
+        c.append(sublime.CompletionItem('num','num()'          , 'num()'       ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('get','get()'          , 'get($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('try_get','try_get()'  , 'try_get($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('peek','peek()'        , 'peek($0)'    ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('try_peek','try_peek()', 'try_peek($0)',kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('put','put()'          , 'put($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('try_put','try_put()'  , 'try_put($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def semaphore_completion(self):
         c = []
-        c.append(['get\tget()'        , 'get($0)'     ])
-        c.append(['try_get\ttry_get()', 'try_get($0)' ])
-        c.append(['put\tput()'        , 'put($0)'     ])
+        c.append(sublime.CompletionItem('get','get()'        , 'get($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('try_get','try_get()', 'try_get($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('put','put()'        , 'put($0)'     ,kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def process_completion(self):
         c = []
-        c.append(['status\tstatus()'   , 'status($0)' ])
-        c.append(['kill\tkill()'       , 'kill($0)'   ])
-        c.append(['resume\tresume()'   , 'resume($0)' ])
-        c.append(['await\tawait()'     , 'await($0)'  ])
-        c.append(['suspend\tsuspend()' , 'suspend($0)'])
+        c.append(sublime.CompletionItem('status','status()'   , 'status($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('kill','kill()'       , 'kill($0)'   ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('resume','resume()'   , 'resume($0)' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('await','await()'     , 'await($0)'  ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('suspend','suspend()' , 'suspend($0)',kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def enum_completion(self):
         c = []
-        c.append(['first\tfirst()', 'first()'])
-        c.append(['last\tlast()' , 'last()' ])
-        c.append(['next\tnext()' , 'next()' ])
-        c.append(['prev\tprev()' , 'prev()' ])
-        c.append(['num\tnum()'  , 'num()'  ])
-        c.append(['name\tname()' , 'name()' ])
+        c.append(sublime.CompletionItem('first','first()', 'first()',kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('last','last()' , 'last()' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('next','next()' , 'next()' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('prev','prev()' , 'prev()' ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('num','num()'  , 'num()'  ,kind=sublime.KIND_FUNCTION, completion_format=1))
+        c.append(sublime.CompletionItem('name','name()' , 'name()' ,kind=sublime.KIND_FUNCTION, completion_format=1))
         return c
 
     def cover_completion(self):
         c = [
-            ["bins\tcover"                ,"bins"                ],
-            ["binsof\tcover"              ,"binsof"              ],
-            ["coverpoint\tcover"          ,"coverpoint"          ],
-            ["cross\tcover"               ,"cross"               ],
-            ["default\tcover"             ,"default"             ],
-            ["iff\tcover"                 ,"iff"                 ],
-            ["illegal_bins\tcover"        ,"illegal_bins"        ],
-            ["ignore_bins\tcover"         ,"ignore_bins"         ],
-            ["intersect\tcover"           ,"intersect"           ],
-            ["matches\tcover"             ,"matches"             ],
-            ["negedge\tcover"             ,"negedge"             ],
-            ["option\tcover"              ,"option"              ],
-            ["posedge\tcover"             ,"posedge"             ],
-            ["type_option\tcover"         ,"type_option"         ],
-            ["sequence\tcover"            ,"sequence"            ],
-            ["wildcard\tcover"            ,"wildcard"            ],
-            ["with_function_sample\tcover","with function sample"],
-            ["with\tcover"                ,"with"                ]]
+            sublime.CompletionItem("bins",                 "cover" , "bins"                , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("binsof",               "cover" , "binsof"              , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("coverpoint",           "cover" , "coverpoint"          , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("cross",                "cover" , "cross"               , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("default",              "cover" , "default"             , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("iff",                  "cover" , "iff"                 , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("illegal_bins",         "cover" , "illegal_bins"        , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("ignore_bins",          "cover" , "ignore_bins"         , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("intersect",            "cover" , "intersect"           , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("matches",              "cover" , "matches"             , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("negedge",              "cover" , "negedge"             , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("option",               "cover" , "option"              , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("posedge",              "cover" , "posedge"             , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("type_option",          "cover" , "type_option"         , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("sequence",             "cover" , "sequence"            , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("wildcard",             "cover" , "wildcard"            , kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("with_function_sample", "cover" , "with function sample", kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("with",                 "cover" , "with"                , kind=sublime.KIND_KEYWORD)]
         return c
 
     def constraint_completion(self):
         c = [
-            ["solve\tconstraint"   ,"solve"       ],
-            ["before\tconstraint"  ,"before"      ],
-            ["soft\tconstraint"    ,"soft"        ],
-            ["if\tconstraint"      ,"if"          ],
-            ["else\tconstraint"    ,"else"        ],
-            ["foreach\tconstraint" ,"foreach"     ],
-            ["disable\tconstraint" ,"disable"     ],
-            ["dist\tconstraint"    ,"dist {$0};"  ],
-            ["inside\tconstraint"  ,"inside {$0};"],
-            ["unique\tconstraint"  ,"unique {$0};"]]
+            sublime.CompletionItem("solve",   "constraint" ,"solve"       ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("before",  "constraint" ,"before"      ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("soft",    "constraint" ,"soft"        ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("if",      "constraint" ,"if"          ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("else",    "constraint" ,"else"        ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("foreach", "constraint" ,"foreach"     ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("disable", "constraint" ,"disable"     ,kind=sublime.KIND_KEYWORD),
+            sublime.CompletionItem("dist",    "constraint" ,"dist {$0};"  ,kind=sublime.KIND_SNIPPET, completion_format=1),
+            sublime.CompletionItem("inside",  "constraint" ,"inside {$0};",kind=sublime.KIND_SNIPPET, completion_format=1),
+            sublime.CompletionItem("unique",  "constraint" ,"unique {$0};",kind=sublime.KIND_SNIPPET, completion_format=1)]
         return c
 
     def listbased_completion(self, name):
@@ -535,6 +535,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if not l:
             print('[listbased_completion] No completion found for {}'.format(name))
             return []
+        k = sublime.KIND_SNIPPET if name=='tick' else sublime.KIND_FUNCTION
+        return [sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) for x in l]
         return [['{0}\t{1}'.format(x[0],x[1]),x[2]] for x in l]
 
     def struct_completion(self,decl, isAssign=False, fe=[]):
@@ -543,7 +545,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if m is not None:
             fti = verilogutil.get_all_type_info(m.groups()[0])
             if isAssign and not fe:
-                c.append(['all_fields\tAll fields',', '.join(['{0}:${1}'.format(f['name'],i+1) for i,f in enumerate(fti)])])
+                c.append(sublime.CompletionItem('all_fields','All fields',', '.join(['{0}:${1}'.format(f['name'],i+1) for i,f in enumerate(fti)]),kind=sublime.KIND_VARIABLE, completion_format=1))
             for f in fti:
                 if f['name'] not in fe:
                     f_type = f['type']
@@ -553,8 +555,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     f_name = f['name']
                     if isAssign:
                         f_name += ':'
-                    c.append([f['name']+'\t'+f_type,f_name])
-            c.append(['default\tdefault','default:'])
+                    c.append(sublime.CompletionItem(f['name'],f_type,f_name,kind=sublime.KIND_VARIABLE, completion_format=1))
+            c.append(sublime.CompletionItem('default','default','default:',kind=sublime.KIND_KEYWORD))
         return c
 
 
@@ -634,7 +636,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             for x in ci['member']:
                 # filter out local and protected variable
                 if 'access' not in x:
-                    c.append([x['name']+'\t'+x['type'], x['name']])
+                    c.append(sublime.CompletionItem(x['name'],x['type'], x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
             for x in ci['function']:
                 # filter out local and protected function, and constructor (cannot be called with a .)
                 snippet = x['name']+'('
@@ -644,7 +646,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         snippet+=', '
                 snippet+= ')${0}'
                 if ('access' not in x or not publicOnly) and x['name'] != 'new':
-                    c.append(['{0}\t{1}'.format(x['name'],x['type']), snippet])
+                    c.append(sublime.CompletionItem(x['name'],x['type'], snippet,kind=sublime.KIND_VARIABLE, completion_format=1))
         return c
 
     def module_completion(self, fname, mname):
@@ -653,11 +655,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # Add instances and signals/IO
         # print('[SV:module_completion] mi = {0}'.format(mi))
         for x in mi['inst']:
-            c.append([x['name']+'\t'+x['type'], x['name']])
+            c.append(sublime.CompletionItem(x['name'],x['type'], x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         for x in mi['port']:
-            c.append([x['name']+'\t'+x['type'], x['name']])
+            c.append(sublime.CompletionItem(x['name'],x['type'], x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         for x in mi['signal']:
-            c.append([x['name']+'\t'+x['type'], x['name']])
+            c.append(sublime.CompletionItem(x['name'],x['type'], x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         return c
 
     # Interface completion: all signal declaration can be used as completion
@@ -667,18 +669,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         if not modport_only:
             for x in ii['port']:
-                c.append([x['name']+'\tI/O', x['name']])
+                c.append(sublime.CompletionItem(x['name'],'I/O', x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
             for x in ii['signal']:
-                c.append([x['name']+'\tField', x['name']])
+                c.append(sublime.CompletionItem(x['name'],'Field', x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
             if 'clocking' in ii:
                 for x in ii['clocking']:
-                    c.append([x['name']+'\tClocking', x['name']])
+                    c.append(sublime.CompletionItem(x['name'],'Clocking', x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         if 'modport' in ii:
             for x in ii['modport']:
-                c.append([x['name']+'\tModport', x['name']])
+                c.append(sublime.CompletionItem(x['name'],'Modport', x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         if not modport_only:
             for x in ii['param']:
-                c.append([x['name']+'\tParam', x['name']])
+                c.append(sublime.CompletionItem(x['name'],'Param', x['name'],kind=sublime.KIND_VARIABLE, completion_format=1))
         return c
 
     # Provide completion for module binding:
@@ -716,17 +718,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         for x in l:
             if x['name'] not in b:
                 if is_param:
-                    tips = '\t' + str(x['value'])
+                    tips = str(x['value'])
                     def_val = str(x['value'])
                 else:
-                    tips = '\t' + str(x['type'])
+                    tips = str(x['type'])
                     def_val = x['name']
                 s = x['name']
                 if not has_binding:
                     s = s.ljust(len_port)+'(${0:' + def_val + '})'
                     if not is_last:
                         s = s+','
-                c.append([x['name']+tips,s])
+                c.append(sublime.CompletionItem(x['name'],tips,s,kind=sublime.KIND_VARIABLE, completion_format=1))
         return c
 
     # Complete case for an enum with all possible value
@@ -734,7 +736,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         (s,el) = VerilogHelper.get_case_template(self.view, sig)
         if s:
-            c.append(['case\tcase Template',s])
+            c.append(sublime.CompletionItem('case','case Template',s,kind=sublime.KIND_SNIPPET, completion_format=1))
         return c
 
     # Complete enum assign/comparison with all possible value
@@ -772,7 +774,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     s = x['name']
                     if x['type'] in ['function','task']:
                         s = self.function_snippet(x)
-                    c.append([x['name']+'\t'+x['type'],s])
+                    c.append(sublime.CompletionItem(x['name'],x['type'],s,kind=sublime.KIND_VARIABLE, completion_format=1))
         elif ti['type'] == 'class':
             sublime.status_message('Autocompletion for class scope unsupported for the moment')
         return c
