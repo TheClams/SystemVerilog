@@ -1,0 +1,5 @@
+SystemVerilog 2.23.6 Changelog:
+
+## Bug fixes ###
+  - Alignment : Fix issues with real parameters
+
