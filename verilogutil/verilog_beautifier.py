@@ -517,30 +517,38 @@ class VerilogBeautifier():
             re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$\.]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\.\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
-            if not decl:
-                print('[Beautifier: ERROR] alignModulePort unable to parse parameters in "{0}"'.format(param_txt))
-                return ''
-            # print(decl)
-            len_kw = max([len(x[0]) for x in decl])
-            len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
-            len_sign  = max([len(x[2]) for x in decl])
-            len_param = max([len(x[4]) for x in decl])
-            len_value = max([len(verilogutil.clean_comment(x[5]).strip()) for x in decl])
-            len_comment = max([len(x[-1]) for x in decl])
-            has_param_list = [x[0] for x in decl if x[0] != '']
-            has_param_all = len(has_param_list)==len(decl)
-            has_param = len(has_param_list)>0
-            last_param = 'parameter' if len(has_param_list)==0 else has_param_list[0]
-            # Get bitwidth length, if any
-            port_bw_l  = [re.findall(r'\[(.+?)\]',re.sub(r'\s*','',x[3])) for x in decl]
             len_bw_a = []
-            if len(port_bw_l)>0:
-                for x in port_bw_l:
-                    for i,y in enumerate(x):
-                        if i>=len(len_bw_a):
-                            len_bw_a.append(len(y))
-                        elif len_bw_a[i]<len(y):
-                            len_bw_a[i] = len(y)
+            if not decl:
+                # No recognisable parameter: will simply indent line
+                len_kw = 0
+                len_type = 0
+                len_sign = 0
+                len_param = 0
+                len_value = 0
+                len_comment = 0
+                has_param = False
+                last_param = 'parameter'
+            else :
+                # print(decl)
+                len_kw = max([len(x[0]) for x in decl])
+                len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
+                len_sign  = max([len(x[2]) for x in decl])
+                len_param = max([len(x[4]) for x in decl])
+                len_value = max([len(verilogutil.clean_comment(x[5]).strip()) for x in decl])
+                len_comment = max([len(x[-1]) for x in decl])
+                has_param_list = [x[0] for x in decl if x[0] != '']
+                has_param_all = len(has_param_list)==len(decl)
+                has_param = len(has_param_list)>0
+                last_param = 'parameter' if len(has_param_list)==0 else has_param_list[0]
+                # Get bitwidth length, if any
+                port_bw_l  = [re.findall(r'\[(.+?)\]',re.sub(r'\s*','',x[3])) for x in decl]
+                if len(port_bw_l)>0:
+                    for x in port_bw_l:
+                        for i,y in enumerate(x):
+                            if i>=len(len_bw_a):
+                                len_bw_a.append(len(y))
+                            elif len_bw_a[i]<len(y):
+                                len_bw_a[i] = len(y)
             # get total length of bitwidth, adding all internal length and adding 2 for each dimmension for the brackets
             len_bw = sum(len_bw_a) + 2*len(len_bw_a)
 
