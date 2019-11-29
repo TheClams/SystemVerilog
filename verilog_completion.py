@@ -99,9 +99,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
         # Select completion function
         if prev_symb=='$' or prefix.startswith('$'):
+            # print('[SV:completion] ListBased - systemtask')
             flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
             completion = self.listbased_completion('systemtask')
         elif prev_symb=='`':
+            # print('[SV:completion] Macro / Directive')
             pl = ''
             if prefix:
                 _,pl = verilog_module.lookup_macro(self.view,prefix)
@@ -118,38 +120,47 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             else:
                 completion =  self.listbased_completion('tick')
         elif prev_symb=='.':
+            # print('[SV:completion] Dot')
             completion =  self.dot_completion(view,r)
         elif prev_symb=='::':
+            # print('[SV:completion] Scope')
             completion =  self.scope_completion(view,prev_word)
         elif prev_symb.endswith(')'):
+            # print('[SV:completion] Case ?')
             m = re.search(r'^\s*case\s*\((.+?)\)$',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
         # elif (prev_symb in ['?',':'] or '=' or prev_symb) and not prefix:
         # elif prev_symb in ['=','?',':'] and not prefix:
-        elif (prev_symb in ['?',':'] or '=' or prev_symb):
+        elif (prev_symb in ['?',':'] or '=' in prev_symb):
+            # print('[SV:completion] Enum Assign ?')
             if len(prefix)>0 and len(l)>len(prefix):
                 flag = 0
                 l = l[:-len(prefix)]
-            m = re.search(r'(?P<name>\w+)\s*(?:<=|=|!=|==)=?(\s*|[^;]+?(\?|:)\s*)$',l)
+            m = re.search(r'(?P<name>[\w\.]+)\s*(?:<=|=|!=|==)=?(\s*|[^;]+?(\?|:)\s*)$',l)
             # print(f'[SV:completion] line = {l}')
             if m:
                 completion = self.enum_assign_completion(view,m.group('name'))
         elif 'meta.struct.assign' in scope:
+            # print('[SV:completion] Struct Assign')
             completion = self.struct_assign_completion(view,r)
         elif 'meta.block.cover.systemverilog' in scope and 'string' not in scope:
+            # print('[SV:completion] Cover')
             completion = self.cover_completion()
         elif 'meta.block.constraint.systemverilog' in scope:
+            # print('[SV:completion] Constraint')
             completion = self.constraint_completion()
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
             l = ''
             if 'meta.function.prototype' in scope_tmp:
+                # print('[SV:completion] Function Prototype -> no completion')
                 return ([], 0)
             if prefix in symbols:
                 tmp_r = view.line(symbols[prefix])
                 l = view.substr(tmp_r)
             if 'function' in l:
+                # print('[SV:completion] Function Snippet')
                 flines = verilogutil.clean_comment(view.substr(sublime.Region(tmp_r.a,self.view.size())))
                 fi = verilogutil.parse_function(flines,prefix)
                 if fi :
@@ -158,18 +169,23 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     flag = 0
             # Provide completion for most used uvm function
             elif(prefix.startswith('u')):
+                # print('[SV:completion] Function Snippet')
                 completion =  self.listbased_completion('uvm')
             # Provide completion for most always block
             elif(prefix.startswith('a')):
+                # print('[SV:completion] Always')
                 completion = self.always_completion()
             # Provide completion for modport
             elif(prefix.startswith('m')):
+                # print('[SV:completion] Modport')
                 completion = self.modport_completion()
             # Provide completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface
             elif(prefix.startswith('end')):
+                # print('[SV:completion] End')
                 completion = self.end_completion(view,r,prefix)
             # Provide simple keywords completion
             else:
+                # print('[SV:completion] Keyword')
                 completion = [
                     sublime.CompletionItem("forkj","fork..join","fork\n\t$0\njoin"            ,kind=sublime.KIND_SNIPPET, completion_format=1),
                     sublime.CompletionItem("forkn","fork..none","fork\n\t$0\njoin_none"       ,kind=sublime.KIND_SNIPPET, completion_format=1),
@@ -412,14 +428,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             c.append(sublime.CompletionItem('push_front','push_front()','push_front()',kind=MYKIND_FUNCTION))
             c.append(sublime.CompletionItem('push_back','push_back()'  ,'push_back()' ,kind=MYKIND_FUNCTION))
         elif array_type == 'associative':
-            c.append(sublime.CompletionItem('num','num()'      ,'num()'   ,kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('size','size()'    ,'size()'  ,kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('delete','delete()','delete()',kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('exists','exists()','exists()',kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('first','first()'  ,'first()' ,kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('last','last()'    ,'last()'  ,kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('next','next()'    ,'next()'  ,kind=MYKIND_FUNCTION))
-            c.append(sublime.CompletionItem('prev','prev()'    ,'prev()'  ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('num','num()'      ,'num()'     ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('size','size()'    ,'size()'    ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('delete','delete()','delete()'  ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('exists','exists()','exists($0)',kind=MYKIND_FUNCTION, completion_format=1))
+            c.append(sublime.CompletionItem('first','first()'  ,'first()'   ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('last','last()'    ,'last()'    ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('next','next()'    ,'next()'    ,kind=MYKIND_FUNCTION))
+            c.append(sublime.CompletionItem('prev','prev()'    ,'prev()'    ,kind=MYKIND_FUNCTION))
         else : # Fixed or dynamic have the same completion
            c.append(sublime.CompletionItem('size','size()'                 ,'size()'                  ,kind=MYKIND_FUNCTION))
            c.append(sublime.CompletionItem('find','find() ...'             ,'find($1) with($0)'       ,kind=MYKIND_FUNCTION, completion_format=1))
@@ -618,7 +634,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         t = ti['type']
         tti = None
-        if t == 'struct':
+        if t in ['struct','enum','logic','bit','reg','wire','input','output','inout']:
             tti = ti
         else :
             t = re.sub(r'\w+\:\:','',t)
@@ -635,9 +651,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # print('[struct_assign_completion] tti = %s' % (tti))
         if not tti:
             return []
-        c = []
-        fe = re.findall(r'(\w+)\s*:',content)
-        return self.struct_completion(tti['decl'],True,fe)
+        if tti['type'] == 'struct' :
+            fe = re.findall(r'(\w+)\s*:',content)
+            return self.struct_completion(tti['decl'],True,fe)
+        elif tti['type'] == 'enum' :
+            c = []
+            el = verilogutil.get_enum_values(tti['decl'])
+            for x in el :
+                c.append(sublime.CompletionItem(x,f'Type {t}',x,kind=(sublime.KIND_ID_VARIABLE,'e','Enum'), completion_format=1))
+            return c
+        else :
+            return []
 
     def class_completion(self, fname,cname, txt=None, publicOnly=True):
         if fname:
@@ -757,18 +781,21 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     # Complete enum assign/comparison with all possible value
     def enum_assign_completion(self, view, sname):
         c = []
-        ti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),sname)
-        # print(f'[enum_assign_completion] : {ti}')
+        r = sublime.Region(0, view.size())
+        if '.' in sname :
+            ti = verilog_module.type_info_on_hier(view,sname,region=r)
+        else :
+            ti = verilog_module.type_info(view,view.substr(r),sname)
+        # print(f'[enum_assign_completion] {sname}: {ti}')
         if ti['type']:
             typename = ti['type']
-            if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout']:
-                ti = verilog_module.lookup_type(view,ti['type'])
-            # print(f'[enum_assign_completion] : {typename} expands to {ti}')
+            if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout','struct']:
+                ti = verilog_module.lookup_type(view,ti['type'])                
+                # print(f'[enum_assign_completion] : {typename} expands to {ti}')
             if ti and ti['type']=='enum':
                 el = verilogutil.get_enum_values(ti['decl'])
                 for x in el :
                     c.append(sublime.CompletionItem(x,f'Type {typename}',x,kind=(sublime.KIND_ID_VARIABLE,'e','Enum'), completion_format=1))
-                # print(c)
         return c
 
     # Completion for ::

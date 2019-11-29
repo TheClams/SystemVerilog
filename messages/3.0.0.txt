@@ -1,0 +1,11 @@
+SystemVerilog 3.0.0 Changelog:
+
+This updates addresses the new API available with ST builds 4050+, mainly the new auto-completion.
+
+## Improvement ##
+ - Auto-Completion:
+  * Makes full use of the new Auto-completion API by providing kind and more details info
+  * Enum Auto-completion is now available in more cases
+ - Highlight :
+  * Add scope to punctuation separator/terminator
+
