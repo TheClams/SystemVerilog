@@ -1,0 +1,6 @@
+SystemVerilog 2.23.8 Changelog:
+
+## Bug fixes ###
+  - Highlight : Support `const` in task/function port
+  - Alignment : Fix issue with parameters using function with more than one argument
+

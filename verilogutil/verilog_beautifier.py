@@ -3,6 +3,27 @@ import re
 import string
 import verilogutil
 
+# Helper function
+def split_on_comma(txt) :
+    l = []
+    s = ''
+    lvl = 0
+    for c in txt :
+        if c==',' and lvl==0:
+            l.append(s)
+            s = ''
+        else :
+            s += c
+            if c=='(' :
+                lvl += 1
+            elif c==')' and lvl > 0 :
+                lvl -= 1
+    s = s.strip()
+    if len(s) > 0:
+        l.append(s)
+    return l
+
+#
 class VerilogBeautifier():
 
     def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True):
@@ -494,6 +515,7 @@ class VerilogBeautifier():
         # print('Test "{0}" => {1}.{2}.{3}'.format((txt).strip(),self.states,self.block_state,self.always_state))
         return ""
 
+
     # Align ANSI style port declaration of a module
     def alignModulePort(self,txt, ilvl):
         # Extract parameter and ports
@@ -514,9 +536,11 @@ class VerilogBeautifier():
         if m.group('params'):
             param_txt = m.group('params').strip()
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
-            re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$\.]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\.\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
+            # re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$\.]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\.\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
+            re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[^\n]*?)(?P<comment>$|//.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
+            # print('Decl : {}'.format(decl))
             len_bw_a = []
             if not decl:
                 # No recognisable parameter: will simply indent line
@@ -529,12 +553,14 @@ class VerilogBeautifier():
                 has_param = False
                 last_param = 'parameter'
             else :
-                # print(decl)
+                values = [verilogutil.clean_comment(split_on_comma(x[5])[0]).strip() for x in decl]
+                # print(values)
                 len_kw = max([len(x[0]) for x in decl])
                 len_type  = max([len(x[1]) for x in decl if x not in ['signed','unsigned']])
                 len_sign  = max([len(x[2]) for x in decl])
                 len_param = max([len(x[4]) for x in decl])
-                len_value = max([len(verilogutil.clean_comment(x[5]).strip()) for x in decl])
+                len_value = max([len(x) for x in values])
+                # len_value = max([len(verilogutil.clean_comment(x[5]).strip()) for x in decl])
                 len_comment = max([len(x[-1]) for x in decl])
                 has_param_list = [x[0] for x in decl if x[0] != '']
                 has_param_all = len(has_param_list)==len(decl)
@@ -603,28 +629,39 @@ class VerilogBeautifier():
                                     s += '[' + bw.rjust(len_bw_a[i]) + ']'
                             l_new += s.ljust(len_bw+1)
                         l_new += m_param.group('param').ljust(len_param)
-                        vp = m_param.group('value').strip()
-                        v = verilogutil.clean_comment(vp).strip()
-                        c = '' if len(vp)<=len(v) else vp[len(v):].strip() + ' '
-                        l_new += ' = ' + v.ljust(len_value)
+
+                        values = [verilogutil.clean_comment(x).strip() for x in split_on_comma(m_param.group('value'))]
+                        v = verilogutil.clean_comment(m_param.group('value')).strip()
+                        has_sep = v.endswith(',')
+                        # vp = m_param.group('value').strip()
+                        # v = verilogutil.clean_comment(vp).strip()
+                        # c = '' if len(vp)<=len(v) else vp[len(v):].strip() + ' '
+                        l_new += ' = ' + values[0].ljust(len_value)
                         if self.settings['alignComma']:
-                            if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
-                                l_new += m_param.group('sep')
+                            if (has_sep and i!=(len(lines)-1)) or len(values)>1:
+                                l_new += ','
                             else :
                                 l_new += ' '
                         else :
                             l_tmp = l_new.rstrip()
                             nb_pad = len(l_new) - len(l_tmp)
-                            if m_param.group('sep') and (i!=(len(lines)-1) or m_param.group('list')):
-                                sep = m_param.group('sep')
+                            if i!=(len(lines)-1) or len(values)>1:
+                                sep = ','
                             else :
                                 sep = ' '
                             l_new = l_tmp + sep + ' ' * nb_pad
                         #TODO: in case of list try to do something: option to split line by line? align in column if multiple list present ?
-                        if m_param.group('list'):
-                            l_new += ' ' + m_param.group('list')
-                        if m_param.group('comment') or c:
-                            l_new += ' ' + c + m_param.group('comment')
+                        if len(values)>1:
+                            for j,x in enumerate(values[1:]) :
+                                l_new += ' ' + x
+                                if has_sep and (i!=(len(lines)-1) or j!=(len(values)-2)):
+                                    sep = ','
+                                else :
+                                    sep = ' '
+                        if m_param.group('comment'):
+                            l_new += ' ' + m_param.group('comment')
+                        # if m_param.group('comment') or c:
+                        #     l_new += ' ' + c + m_param.group('comment')
                     if not self.settings['stripEmptyLine'] or l_new.strip() !='':
                         txt_new += l_new.rstrip() + '\n'# + self.indent*(ilvl)
             else :
