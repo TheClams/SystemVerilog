@@ -1002,6 +1002,8 @@ contexts:
             1 : punctuation.section.group.end.systemverilog
             2: punctuation.terminator.systemverilog
           pop: true
+        - match: const
+          scope: keyword.other.const.systemverilog
         - include: port-dir
         - match: '\s*\b(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
           captures:
@@ -1077,6 +1079,8 @@ contexts:
             1 : punctuation.section.group.end.systemverilog
             2: punctuation.terminator.systemverilog
           pop: true
+        - match: const
+          scope: keyword.other.const.systemverilog
         - include: port-dir
         - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
           captures:
