@@ -52,6 +52,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         r = view.sel()[0]
         scope = view.scope_name(r.a)
+        if('string' in scope) :
+            return []
         # If there is a prefix, allow sublime to provide completion ?
         flag = 0
         if(prefix==''):
@@ -790,7 +792,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if ti['type']:
             typename = ti['type']
             if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout','struct']:
-                ti = verilog_module.lookup_type(view,ti['type'])                
+                ti = verilog_module.lookup_type(view,ti['type'])
                 # print(f'[enum_assign_completion] : {typename} expands to {ti}')
             if ti and ti['type']=='enum':
                 el = verilogutil.get_enum_values(ti['decl'])
@@ -898,6 +900,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 else:
                     break
         # Process keyword if not properly defined yet
+        sep  = '//' if self.settings.get("sv.end_label_comment") else ':'
         if kw == 'endc?' :
             m = re.match(re_str[1:].strip(),name,flags=re.MULTILINE)
             if m:
@@ -926,6 +929,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     kw = 'end'
                     name = m.groups()[4]
                     if not name:
+                        sep = '//'
                         name = m.groups()[1]
                 elif m.groups()[5] == 'function':
                     kw = 'endfunction'
@@ -956,10 +960,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     name = m.groups()[21]
         # Provide completion with optional label
         if name:
-            if kw in self.settings.get("sv.end_label_comment"):
-                c_str = kw + ' // ' + name.strip()
-            else:
-                c_str = kw + ' : ' + name.strip()
+            c_str = f'{kw} {sep} {name.strip()}'
         else:
             c_str = kw
         return [[kw+'\t'+c_str,c_str]]
