@@ -156,3 +156,7 @@ class Tests(unittest.TestCase):
     def test_beautifyGenerate(self):
         cfg = BeautifyConfig(nbSpace=3)
         self.runBeautifyTest(self.path_test+"generate.sv", self.path_test+"generate_exp.sv", cfg)
+
+    def test_beautifyModuleParam(self):
+        cfg = BeautifyConfig(nbSpace=4)
+        self.runBeautifyTest(self.path_test+"module_param.sv", self.path_test+"module_param_exp.sv", cfg)
