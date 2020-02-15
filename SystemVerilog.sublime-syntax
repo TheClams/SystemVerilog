@@ -891,43 +891,11 @@ contexts:
       captures:
         1: keyword.control.systemverilog
       push:
-        - meta_scope: meta.extern.systemverilog
+        - meta_scope: meta.declaration.extern.systemverilog
         - match: \b(static|local|protected|virtual|pure)\b
           scope: keyword.control.systemverilog
-        - match: \bfunction\b
-          scope: keyword.control.systemverilog
-          set :
-            - meta_scope: meta.function.prototype.systemverilog
-            - match: \bautomatic\b
-              scope: keyword.control.systemverilog
-            - match: '\s*\b(?:({{id}})(::))?({{id}}\s+)({{id}})\b'
-              captures:
-                1: support.type.scope.systemverilog
-                2: keyword.operator.scope.systemverilog
-                3: storage.type.systemverilog
-                4: entity.name.function.systemverilog
-              set: function-port
-            - match: '\b(?:({{id}})(::))?({{id}}\s+)?({{id}})\s*(?=\(|;)'
-              captures:
-                1: support.type.scope.systemverilog
-                2: keyword.operator.scope.systemverilog
-                3: storage.type.systemverilog
-                4: entity.name.function.systemverilog
-              set: function-port
-            - include: base-grammar
-            - include: system-task
-            - match: '({{id}})\s*(?=\[)'
-              captures:
-                1: storage.type.userdefined.systemverilog
-        - match: \btask\b
-          scope: keyword.control.systemverilog
-          set:
-            - match: \bautomatic\b
-              scope: keyword.control.systemverilog
-            - match: '\b({{id}})\b'
-              captures:
-                1: entity.name.function.systemverilog
-              set: task-port
+        - include: function-decl
+        - include: task-decl
         - match: \bconstraint\b
           scope: keyword.control.systemverilog
           set :
@@ -935,6 +903,51 @@ contexts:
               scope: entity.name.section.systemverilog
               pop: true
         - include: else-pop
+    - match: ^\s*(pure)\s+(virtual)\b
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.declaration.pure.systemverilog
+        - include: function-decl
+        - include: task-decl
+  function-decl:
+    - match: \bfunction\b
+      scope: keyword.control.systemverilog
+      set :
+        - meta_scope: meta.function.prototype.systemverilog
+        - match: \bautomatic\b
+          scope: keyword.control.systemverilog
+        - match: '\s*\b(?:({{id}})(::))?(({{id}})\s+(?:(signed|unsigned)\s+)?)({{id}})\b'
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            4: storage.type.systemverilog
+            5: storage.modifier.systemverilog
+            6: entity.name.function.systemverilog
+          set: function-port
+        - match: '\b(?:({{id}})(::))?({{id}}\s+)?({{id}})\s*(?=\(|;)'
+          captures:
+            1: support.type.scope.systemverilog
+            2: keyword.operator.scope.systemverilog
+            3: storage.type.systemverilog
+            4: entity.name.function.systemverilog
+          set: function-port
+        - include: base-grammar
+        - include: system-task
+        - match: '({{id}})\s*(?=\[)'
+          captures:
+            1: storage.type.userdefined.systemverilog
+  task-decl:
+    - match: \btask\b
+      scope: keyword.control.systemverilog
+      set:
+        - match: \bautomatic\b
+          scope: keyword.control.systemverilog
+        - match: '\b({{id}})\b'
+          captures:
+            1: entity.name.function.systemverilog
+          set: task-port
 # Function
   function-def:
     - match: \s*(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic))?
