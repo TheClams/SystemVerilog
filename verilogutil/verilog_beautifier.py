@@ -1107,7 +1107,7 @@ class VerilogBeautifier():
                         #
                         elif k == 'type' :
                             len_full = len(w)
-                            if w not in ['logic', 'wire', 'reg', 'bit'] :
+                            if w not in ['logic', 'wire', 'reg', 'bit', 'int', 'integer'] :
                                 t = 'type_user_pa' if m.group('bw') else 'type_user'
                             else:
                                 t = 'type'
@@ -1151,7 +1151,7 @@ class VerilogBeautifier():
             if m:
                 # print('[sv.beautifier.decl] Line = {} -> {}'.format(line,m.groups()))
                 l = self.indent*ilvl
-                is_usertype = m.group('type') not in ['logic', 'wire', 'reg', 'bit']
+                is_usertype = m.group('type') not in ['logic', 'wire', 'reg', 'bit', 'int', 'integer']
                 len_type_full = len_max[ilvl]['type_full']+1
                 len_type = len_max[ilvl]['type']+1
                 t = ''
