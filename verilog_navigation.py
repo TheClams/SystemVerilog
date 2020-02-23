@@ -947,9 +947,12 @@ def getObjList(view):
     r = view.sel()[0]
     p = r'(?s)^[ \t]*(?:virtual\s+)?(class|module|interface)\s+(\w+\b)'
     nameList = []
-    view.find_all(p,0,r'\1 \2',nameList)
-    # print(nameList)
-    return nameList
+    r = view.find_all(p,0,r'\1 \2',nameList)
+    nl = []
+    for (r,n) in zip(r,nameList):
+        if 'comment' not in view.scope_name(r.a):
+            nl.append(n)
+    return nl
 
 class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
 
