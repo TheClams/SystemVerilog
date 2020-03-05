@@ -636,6 +636,12 @@ task randseq1;
 
 endtask : randseq1
 
+task mytask();
+   repeat(5) randsequence(main)
+      main:{};
+//    ^^^^ meta.randsequence.systemverilog entity.name.tag.systemverilog
+   endsequence
+endtask:mytask
 
 function void randseq2();
 
@@ -666,8 +672,8 @@ extern module a #(parameter size= 8, parameter type TP = logic [7:0])
  (input [size:0] a, output TP b);
 
    extern virtual function bit Xcheck_accessX
-// ^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
-//        ^^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
+// ^^^^^^ meta.declaration.extern.systemverilog keyword.control.systemverilog
+//        ^^^^^^^ meta.declaration.extern.systemverilog keyword.control.systemverilog
 //                ^^^^^^^^ meta.function.prototype.systemverilog keyword.control.systemverilog
 //                         ^^^ meta.function.prototype.systemverilog storage.type.systemverilog
                                 (input uvm_reg_item rw,
@@ -676,7 +682,7 @@ extern module a #(parameter size= 8, parameter type TP = logic [7:0])
 
 
     extern virtual task do_write(uvm_reg_item rw);
-//  ^^^^^^ meta.extern.systemverilog keyword.control.systemverilog
+//  ^^^^^^ meta.declaration.extern.systemverilog keyword.control.systemverilog
 //         ^^^^^^^ keyword.control.systemverilog
 //                 ^^^^ keyword.control.systemverilog
 //                      ^^^^^^^^ entity.name.function.systemverilog
