@@ -1093,6 +1093,7 @@ class VerilogBeautifier():
                 if ilvl not in len_max:
                     len_max[ilvl] = {'param':0,'scope':0,'type':0,'type_full':0,'type_user':0,'type_user_pa':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
                 len_full = 0
+                len_ba = {'bw':0,'array':0};
                 for k,g in m.groupdict().items():
                     if g:
                         w = g.strip()
@@ -1100,6 +1101,7 @@ class VerilogBeautifier():
                         if k in ['array','bw']:
                             port_bw_l  = re.findall(r'\[(.+?)\]',re.sub(r'\s*','',w))
                             for i,y in enumerate(port_bw_l):
+                                len_ba[k] += len(y)+2
                                 if i>=len(len_max[ilvl][k]):
                                     len_max[ilvl][k].append(len(y))
                                 elif len_max[ilvl][k][i]<len(y):
@@ -1124,8 +1126,10 @@ class VerilogBeautifier():
                 if len_full > 0 :
                     if m.group('sign') :
                         len_full += 1 + len(m.group('sign').strip())
-                    if m.group('bw') :
-                        len_full += 1 + len(m.group('bw').strip())
+                    if len_ba['bw'] != 0 :
+                        len_full += 1 + len_ba['bw']
+                    # if m.group('bw') :
+                    #     len_full += 1 + len(m.group('bw').strip())
                     if t!='type' and m.group('scope'):
                         len_full +=  len(m.group('scope').strip())
                     if len_full > len_max[ilvl]['type_full'] :
