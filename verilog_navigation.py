@@ -1105,7 +1105,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                     continue
                 # print(c)
                 t = c['type']
-                if c['bw']:
+                if 'bw' in c and c['bw']:
                     t += ' ' + c['bw']
                 if ' ' in t or t in nb['childless']:
                     symb = u'\u180E'
