@@ -32,6 +32,8 @@ def plugin_loaded():
 MYKIND_KEYWORD  = (sublime.KIND_ID_KEYWORD , "k", "Keyword")
 MYKIND_FUNCTION = (sublime.KIND_ID_FUNCTION, "f", "Function")
 MYKIND_FIELD    = (sublime.KIND_ID_VARIABLE, "v", "Field")
+MYKIND_MODPORT  = (sublime.KIND_ID_TYPE, "m", "Modport")
+MYKIND_CLOCKING = (sublime.KIND_ID_NAMESPACE, "c", "Clocking")
 
 ############################################################################
 class VerilogAutoComplete(sublime_plugin.EventListener):
@@ -194,8 +196,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     sublime.CompletionItem("forka","fork..any" ,"fork\n\t$0\njoin_any"        ,kind=sublime.KIND_SNIPPET, completion_format=1),
                     sublime.CompletionItem("generate","keyword","generate\n\t$0\nendgenerate" ,kind=sublime.KIND_SNIPPET, completion_format=1),
                     sublime.CompletionItem("foreach","keyword" ,"foreach($1) begin\n\t$0\nend",kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("posedge","keyword" ,"posedge",kind=MYKIND_KEYWORD),
-                    sublime.CompletionItem("negedge","keyword" ,"negedge",kind=MYKIND_KEYWORD)
+                    sublime.CompletionItem("posedge","keyword" ,"posedge ",kind=MYKIND_KEYWORD),
+                    sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
                 ]
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
         return (completion, flag)
@@ -589,7 +591,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if isAssign:
                         f_name += ':'
                     c.append(sublime.CompletionItem(f['name'],f_type,f_name,kind=MYKIND_FIELD, completion_format=1))
-            c.append(sublime.CompletionItem('default','default','default:',kind=MYKIND_KEYWORD))
+            if isAssign:
+                c.append(sublime.CompletionItem('default','default','default:',kind=MYKIND_KEYWORD))
         return c
 
 
@@ -710,18 +713,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         if not modport_only:
             for x in ii['port']:
-                c.append(sublime.CompletionItem(x['name'],'I/O', x['name'],kind=MYKIND_FIELD, completion_format=1))
+                c.append(sublime.CompletionItem(x['name'],x['decl'], x['name'],kind=(sublime.KIND_ID_VARIABLE, "p", "I/O"), completion_format=1))
             for x in ii['signal']:
-                c.append(sublime.CompletionItem(x['name'],'Field', x['name'],kind=MYKIND_FIELD, completion_format=1))
+                c.append(sublime.CompletionItem(x['name'],x['decl'], x['name'],kind=(sublime.KIND_ID_VARIABLE, "v", "Field"), completion_format=1))
             if 'clocking' in ii:
                 for x in ii['clocking']:
-                    c.append(sublime.CompletionItem(x['name'],'Clocking', x['name'],kind=MYKIND_FIELD, completion_format=1))
+                    c.append(sublime.CompletionItem(x['name'],'Clocking', x['name'],kind=MYKIND_CLOCKING, completion_format=1))
         if 'modport' in ii:
             for x in ii['modport']:
-                c.append(sublime.CompletionItem(x['name'],'Modport', x['name'],kind=MYKIND_FIELD, completion_format=1))
+                c.append(sublime.CompletionItem(x['name'],'Modport', x['name'],kind=MYKIND_MODPORT, completion_format=1))
         if not modport_only:
             for x in ii['param']:
-                c.append(sublime.CompletionItem(x['name'],'Param', x['name'],kind=MYKIND_FIELD, completion_format=1))
+                c.append(sublime.CompletionItem(x['name'],'Param', x['name'],kind=(sublime.KIND_ID_VARIABLE, "P", "Param"), completion_format=1))
         return c
 
     # Provide completion for module binding:

@@ -2,8 +2,8 @@
 	"word_wrap": false,
 	"extensions": ["v", "vh", "sv", "svh"],
 	// Allow a dot to trigger autocomplete, except in string, comment or constant
-	"auto_complete_triggers": [ 
-		{"selector": "source.systemverilog - string - comment - constant", "characters": ".$`:{,"} 
+	"auto_complete_triggers": [
+		{"selector": "source.systemverilog - string - comment - constant", "characters": ".$`:{,"}
 	],
 	// Extension for verilog/SystemVerilog file used to enable/disable autocompletion and select file for parsing
 	// Header files are excluded from files to parse for module definition
@@ -86,10 +86,17 @@
 		["$valueplusargs" ,"$value$plusargs()", "\\$value\\$plusargs(\"$1\",$2)" ],
 		["$finish"        ,"$finish",           "\\$finish;"                     ],
 		// variable
-		["$time"          ,"$time",             "\\$time()"                      ],
-		["$realtime"      ,"$realtime()",       "\\$realtime()"                  ],
-		["$random"        ,"$random()",         "\\$random()"                    ],
-		["$urandom_range" ,"$urandom_range()",  "\\$urandom_range($1,$2)"        ],
+		["$time"            , "$time"              , "\\$time()"                   ],
+		["$realtime"        , "$realtime()"        , "\\$realtime()"               ],
+		["$random"          , "$random()"          , "\\$random()"                 ],
+		["$urandom_range"   , "$urandom_range()"   , "\\$urandom_range($1,$2)"     ],
+		["$dist_uniform"    , "$dist_uniform()"    , "\\$dist_uniform($1,$2,$3)$0" ],
+		["$dist_normal"     , "$dist_normal()"     , "\\$dist_normal($1,$2,$3)$0"  ],
+		["$dist_exponential", "$dist_exponential()", "\\$dist_exponential($1,$2)$0"],
+		["$dist_poisson"    , "$dist_poisson()"    , "\\$dist_poisson($1,$2)$0"    ],
+		["$dist_chi_square" , "$dist_chi_square()" , "\\$dist_chi_square($1,$2)$0" ],
+		["$dist_t"          , "$dist_t()"          , "\\$dist_t($1,$2)$0"          ],
+		["$dist_erlang"     , "$dist_erlang()"     , "\\$dist_erlang($1,$2,$3)$0"  ],
 		// cast
 		["$cast"          ,"$cast()",           "\\$cast($0)"                    ],
 		["$unsigned"      ,"$unsigned()",       "\\$unsigned($0)"                ],
@@ -144,7 +151,7 @@
 		["$fflush"        ,"$fflush()",         "\\$fflush;"                     ],
 		["$fgetc"         ,"$fgetc()",          "\\$fgetc($0,)"                  ],
 		["$fgets"         ,"$fgets()",          "\\$fgets($0,)"                  ],
-		["$fwrite"        ,"$fwrite()",         "\\$fwrite($0,\"\")"                 ],
+		["$fwrite"        ,"$fwrite()",         "\\$fwrite($0,\"\")"             ],
 		["$readmemb"      ,"$readmemb()",       "\\$readmemb(\"$1\",$2)"         ],
 		["$readmemh"      ,"$readmemh()",       "\\$readmemh(\"$1\",$2)"         ],
 		["$sscanf"        ,"$sscanf()",         "\\$sscanf($1,\"$2\",$3)"        ]
