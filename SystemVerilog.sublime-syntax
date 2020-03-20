@@ -70,7 +70,7 @@ contexts:
               captures:
                 1: storage.type.userdefined.systemverilog
         - include: base-grammar
-    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|genvar|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
+    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|scalared|showcancelled|specify|specparam|table|use|vectored)\b
       captures:
         1: keyword.other.systemverilog
     - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endclass|endpackage|endsequence|endprogram|endclocking|endproperty|endinterface|endchecker)\b(\s*(:)\s*(\w+))?
@@ -186,7 +186,7 @@ contexts:
       captures:
         1: keyword.control.systemverilog
       set: [typedef_symbol, typedef_decl]
-    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped)\b'
+    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped|genvar)\b'
       scope: storage.type.systemverilog
     - match: \s*\b(uvm_transaction|uvm_component|uvm_monitor|uvm_driver|uvm_test|uvm_env|uvm_object|uvm_agent|uvm_sequence_base|uvm_sequence|uvm_sequence_item|uvm_sequence_state|uvm_sequencer|uvm_sequencer_base|uvm_component_registry|uvm_analysis_imp|uvm_analysis_port|uvm_analysis_export|uvm_config_db|uvm_active_passive_enum|uvm_phase|uvm_verbosity|uvm_tlm_analysis_fifo|uvm_tlm_fifo|uvm_report_server|uvm_objection|uvm_recorder|uvm_domain|uvm_reg_field|uvm_reg|uvm_reg_block|uvm_bitstream_t|uvm_radix_enum|uvm_printer|uvm_port_base|uvm_tlm_if_base|uvm_packer|uvm_comparer|uvm_scope_stack)\b
       scope: storage.type.uvm.systemverilog
@@ -949,7 +949,10 @@ contexts:
     - match: \(
       set:
         - meta_scope: meta.function.port.systemverilog
-        - match: \)\s*;
+        - match: (\))\s*(;)
+          captures:
+            1: punctuation.section.group.end.systemverilog
+            2: punctuation.terminator.systemverilog
           pop: true
         - include: port-dir
         - match: '\s*\b(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
@@ -1020,7 +1023,10 @@ contexts:
     - match: \(
       set:
         - meta_scope: meta.task.port.systemverilog
-        - match: \)\s*;
+        - match: (\))\s*(;)
+          captures:
+            1: punctuation.section.group.end.systemverilog
+            2: punctuation.terminator.systemverilog
           pop: true
         - include: port-dir
         - match: '\s*\b(?:\b(virtual)\s+)?(?:({{id}})(::))?({{id}})\s+(?:(signed|unsigned)\s+)?({{id}})'
@@ -1035,7 +1041,7 @@ contexts:
     - include: else-pop
   task-body:
     - meta_scope: meta.task.body.systemverilog
-    - match: (endtask)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
+    - match: \b(endtask)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
       captures:
         1: keyword.control.systemverilog
         2: keyword.operator.systemverilog
@@ -1071,7 +1077,7 @@ contexts:
     - include: else-pop
 
   randseq:
-    - match: ^\s*(randsequence)\s*\(\s*({{id}})?\s*\)
+    - match: \s*(randsequence)\s*\(\s*({{id}})?\s*\)
       captures:
         1: keyword.control.systemverilog
       push:

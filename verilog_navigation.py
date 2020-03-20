@@ -671,7 +671,7 @@ def goto_driver(view,signal):
     # look for an input or an interface of the current module, and for an assignement
     sl = [r'input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + signal + r'\b']
     sl.append(r'^\s*\w+\.\w+\s+' + signal + r'\b')
-    sl.append(r'\b' + signal + r'\b\s*<?\=[^\=]')
+    sl.append(r'\b' + signal + r'\b(\[[^\]]*\])*\s*<?\=[^\=]')
     for s in sl:
         r = view.find(s,0)
         # print('searching ' + s + ' => ' + str(r))
@@ -947,9 +947,12 @@ def getObjList(view):
     r = view.sel()[0]
     p = r'(?s)^[ \t]*(?:virtual\s+)?(class|module|interface)\s+(\w+\b)'
     nameList = []
-    view.find_all(p,0,r'\1 \2',nameList)
-    # print(nameList)
-    return nameList
+    r = view.find_all(p,0,r'\1 \2',nameList)
+    nl = []
+    for (r,n) in zip(r,nameList):
+        if 'comment' not in view.scope_name(r.a):
+            nl.append(n)
+    return nl
 
 class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
 
@@ -1102,7 +1105,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                     continue
                 # print(c)
                 t = c['type']
-                if c['bw']:
+                if 'bw' in c and c['bw']:
                     t += ' ' + c['bw']
                 if ' ' in t or t in nb['childless']:
                     symb = u'\u180E'
