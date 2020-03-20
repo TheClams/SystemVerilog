@@ -1012,7 +1012,7 @@ contexts:
         - meta_scope: meta.function.port.systemverilog
         - match: (\))\s*(;)
           captures:
-            1 : punctuation.section.group.end.systemverilog
+            1: punctuation.section.group.end.systemverilog
             2: punctuation.terminator.systemverilog
           pop: true
         - match: const
@@ -1087,9 +1087,9 @@ contexts:
       scope: punctuation.section.group.begin.systemverilog
       set:
         - meta_scope: meta.task.port.systemverilog
-        - match: \)\s*(;)
+        - match: (\))\s*(;)
           captures:
-            1 : punctuation.section.group.end.systemverilog
+            1: punctuation.section.group.end.systemverilog
             2: punctuation.terminator.systemverilog
           pop: true
         - match: const
