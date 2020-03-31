@@ -1,0 +1,6 @@
+SystemVerilog 2.23.10 Changelog:
+
+## Bug fixes ###
+
+ - Highlight casting operator properly
+ - Beautifier: support attribute

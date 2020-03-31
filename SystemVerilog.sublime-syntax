@@ -140,7 +140,7 @@ contexts:
       scope: invalid.illegal.stray-bracket-end
 
   casting:
-    - match: '\b({{id}})('')(?=\()'
+    - match: '\s*\b({{id}})('')(?=\()'
       scope: meta.cast.systemverilog
       captures:
         1: storage.type.systemverilog
