@@ -146,7 +146,7 @@ contexts:
     - include: constants
 
   casting:
-    - match: '\b({{id}})('')(?=\()'
+    - match: '\s*\b({{id}})('')(?=\()'
       scope: meta.cast.systemverilog
       captures:
         1: storage.type.systemverilog

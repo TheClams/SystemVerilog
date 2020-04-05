@@ -314,8 +314,7 @@ def lookup_macro(view, name):
         fname = view.file_name()
         # Check if symbol is defined in current file first
         if fname in [sublimeutil.normalize_fname(f[0]) for f in filelist]:
-            with open(fname,'r') as f:
-                flines = str(f.read())
+            flines_ = view.substr(sublime.Region(0,view.size()))
             txt,params = verilogutil.get_macro(flines,name)
         else:
             for fi in filelist:

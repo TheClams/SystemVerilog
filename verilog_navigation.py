@@ -421,7 +421,7 @@ class VerilogTypePopup :
                 'local', 'protected', 'public', 'static', 'const', 'virtual', 'function', 'task', 'var', 'modport', 'clocking', 'default', 'extends']
 
     def color_str(self,s, addLink=False, ti_var=None, last_word=True):
-        ss = re.sub(r'<(?!br>)','&lt;',s).split()
+        ss = re.split(r'(\s+)',re.sub(r'<(?!br>)','&lt;',s))
         sh = ''
         ti = None
         pos_var = len(ss)-1
@@ -430,7 +430,7 @@ class VerilogTypePopup :
         for i,w in enumerate(ss):
             m = re.match(r'^[A-Za-z_]\w+$',w)
             if '"' in w :
-                sh+=re.sub(r'(".*?")',r'<span class="string">\1</span> ',w)
+                sh+=re.sub(r'(".*?")',r'<span class="string">\1</span>',w)
             elif i == len(ss)-1 and last_word:
                 if m:
                     if addLink and ti_var and 'fname' in ti_var:
@@ -442,11 +442,11 @@ class VerilogTypePopup :
                     w = re.sub(r'(\#|\:|\')',r'<span class="operator">\1</span>',w)
                 sh+=w
             elif w in ['input', 'output', 'inout', 'ref']:
-                sh+='<span class="support">{0}</span> '.format(w)
+                sh+='<span class="support">{0}</span>'.format(w)
             elif w in self.keywords:
-                sh+='<span class="keyword">{0}</span> '.format(w)
+                sh+='<span class="keyword">{0}</span>'.format(w)
             elif w in ['wire', 'reg', 'logic', 'int', 'signed', 'unsigned', 'real', 'bit', 'rand', 'void', 'string']:
-                sh+='<span class="storage">{0}</span> '.format(w)
+                sh+='<span class="storage">{0}</span>'.format(w)
             elif '::' in w:
                 ws = w.split('::')
                 sh+='<span class="support">{0}</span><span class="operator">::</span>'.format(ws[0])
@@ -455,9 +455,9 @@ class VerilogTypePopup :
                     if debug: print('[SV:color_str] user-defined type: word={}::{} => ti={}'.format(ws[0],ws[1],ti));
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
-                    sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,ws[1])
+                    sh+='<a href="LINK@{0}" class="storage">{1}</a>'.format(fname,ws[1])
                 else:
-                    sh+='<span class="storage">{0}</span> '.format(ws[1])
+                    sh+='<span class="storage">{0}</span>'.format(ws[1])
             elif '.' in w:
                 ws = w.split('.')
                 if ws[0] and re.match(r'^[A-Za-z_]\w+$',ws[0]):
@@ -468,12 +468,12 @@ class VerilogTypePopup :
                         sh+='<a href="LINK@{0}" class="storage">{1}</a>'.format(fname,ws[0])
                     else:
                         sh+='<span class="storage">{0}</span>'.format(ws[0])
-                    sh+='.<span class="support">{0}</span> '.format(ws[1])
+                    sh+='.<span class="support">{0}</span>'.format(ws[1])
                 else :
                     if '#' in ws[0]:
-                        sh += re.sub(r'(#)',r'<span class="operator">\1</span> ',ws[0])
+                        sh += re.sub(r'(#)',r'<span class="operator">\1</span>',ws[0])
                     sh+='.'
-                    sh+= re.sub(r'\b(\w+)\b',r'<span class="function">\1</span> ',ws[1],count=1)
+                    sh+= re.sub(r'\b(\w+)\b',r'<span class="function">\1</span>',ws[1],count=1)
             elif '[' in w or '(' in w:
                 w = re.sub(r'\b(\d+)\b',r'<span class="numeric">\1</span>',w)
                 sh += re.sub(r'(\#|\:)',r'<span class="operator">\1</span>',w) + ' '
@@ -486,13 +486,15 @@ class VerilogTypePopup :
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
                     sh+='<a href="LINK@{0}" class="storage">{1}</a> '.format(fname,w)
                 else:
-                    sh+='<span class="storage">{0}</span> '.format(w)
+                    sh+='<span class="storage">{0}</span>'.format(w)
             elif re.match(r'(\d+\'(b|d|o|h))?\d+',w) :
-                sh += re.sub(r'\b((\d+\'(b|d|o|h))?\d+)\b',r'<span class="numeric">\1</span> ',w)
+                sh += re.sub(r'\b((\d+\'(b|d|o|h))?\d+)\b',r'<span class="numeric">\1</span>',w)
             elif w in ['=','#'] :
-                sh += re.sub(r'(=|#)',r'<span class="operator">\1</span> ',w)
+                sh += re.sub(r'(=|#)',r'<span class="operator">\1</span>',w)
+            elif len(w.strip())==0:
+                sh += w.replace('\n','<br>').replace(' ','&nbsp;')
             else:
-                sh += w + ' '
+                sh += w
         return sh,ti
 
     def on_navigate(self, href):
