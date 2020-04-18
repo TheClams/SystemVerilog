@@ -438,6 +438,9 @@ class VerilogDoModuleParseCommand(sublime_plugin.TextCommand):
                 self.cnt = 0
                 self.show_prompt()
             else:
+                if self.param_explicit :
+                    for x in self.pm['param'] :
+                        self.param_value.append({'name':x['name'] , 'value': x['value']});
                 self.view.run_command("verilog_do_module_inst", {"args":{'pm':self.pm, 'pv':self.param_value, 'text':self.fname}})
 
     def on_prompt_done(self, content):

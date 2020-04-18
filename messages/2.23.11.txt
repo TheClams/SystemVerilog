@@ -1,0 +1,6 @@
+SystemVerilog 2.23.11 Changelog:
+
+## Bug fixes ###
+
+ - Module instance: Respect explicit_param true even when fill_param is false
+ - Beautifier: fix issue with sign-ness of parameters
