@@ -633,7 +633,7 @@ class VerilogBeautifier():
                                 l_new += ''.ljust(len_type+1)
                         if len_sign>0:
                             if m_param.group('sign'):
-                                l_new += m_param.group('sign').ljust(len_sign)
+                                l_new += m_param.group('sign').ljust(len_sign+1)
                             else:
                                 l_new += ''.ljust(len_sign+1)
                         if len_bw>0:

@@ -1,0 +1,11 @@
+SystemVerilog 2.23.9 Changelog:
+
+## Bug fixes ###
+
+ - Highlight Scope properly closing parenthesis in function/task
+ - Navigation:
+  * Support find driver with slices
+  * Sidebar: fix issue with comment and some missing bit-width field
+ - Beautifier:
+  * Fix some alignment issue with int/integer
+  * Fix some alignment issue with bit-width extra-spaces
