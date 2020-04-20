@@ -325,6 +325,12 @@ function void my_pkg::my_func(ref logic d, input int din,
        default : 0
 //     ^^^^^^^ keyword.control.systemverilog
     };
+    case (state)
+        S_IDLE:// comment
+//                ^^^^^^^^ comment
+            d = 1;
+        default : /* default */ d=0;
+    endcase
     return null;
 //  ^^^^^^ keyword.control.systemverilog
 //         ^^^^ support.constant.systemverilog
