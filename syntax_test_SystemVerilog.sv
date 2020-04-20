@@ -218,7 +218,8 @@ my_module i_my_module
 //        ^^^^^^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
   (
     .if1(if1),
-    .if2(if2),
+    .if2,
+//  ^ meta.module.inst.systemverilog punctuation.accessor.dot.systemverilog
     .clk(`MYMACRO(5).clk),
 //   ^ support.function.port
 //        ^ constant.other.define
