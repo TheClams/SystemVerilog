@@ -1111,7 +1111,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
                     symb = u'\u180E'
                 else :
                     symb = ''
-                dim = '' if not c['array'] else ' {}'.format(c['array_dim'])
+                dim = '' if 'array' not in c or not c['array'] else ' {}'.format(c['array_dim'])
                 txt += '{}{}{name}{dim} ({type})\n'.format('  '*lvl,symb,name=c['name'],type=t, dim=dim)
         if 'function' in ti and ti['function'] :
             txt += '{}Methods:\n'.format( '  '*(lvl-1))

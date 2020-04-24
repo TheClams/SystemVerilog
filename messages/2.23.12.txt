@@ -1,4 +1,4 @@
-SystemVerilog 2.23.11 Changelog:
+SystemVerilog 2.23.12 Changelog:
 
 ## Bug fixes ###
 
