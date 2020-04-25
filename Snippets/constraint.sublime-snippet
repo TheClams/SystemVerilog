@@ -1,8 +1,0 @@
-<snippet>
-	<description>Constraint declaration</description>
-	<content><![CDATA[constraint ${1:c} {
-	${0}
-}]]></content>
-	<tabTrigger>constraint</tabTrigger>
-	<scope>source.systemverilog</scope>
-</snippet>

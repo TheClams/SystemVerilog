@@ -6,6 +6,8 @@ This updates addresses the new API available with ST builds 4050+, mainly the ne
  - Auto-Completion:
   * Makes full use of the new Auto-completion API by providing kind and more details info
   * Enum Auto-completion is now available in more cases
+  * All snippets have been move to settings part (sv.completion.core) to allow easy customization by user.
+    Those snippets have additional filter to prevent them to appear in unwanted places (e.g. class snippet only appears when there is no top scope)
  - Highlight :
   * Add scope to punctuation separator/terminator
 

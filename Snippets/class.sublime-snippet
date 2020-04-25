@@ -1,8 +1,0 @@
-<snippet>
-	<name>Class</name>
-	<content><![CDATA[class ${1:${TM_FILENAME/(.+)\..+|.*/$1/:name}} extends ${2: /* base class*/};
-
-endclass : ${1}]]></content>
-	<tabTrigger>class</tabTrigger>
-	<scope>source.systemverilog</scope>
-</snippet>

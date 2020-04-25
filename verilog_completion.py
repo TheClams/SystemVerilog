@@ -151,7 +151,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif 'meta.block.cover.systemverilog' in scope and 'string' not in scope:
             # print('[SV:completion] Cover')
             completion = self.cover_completion()
-        elif 'meta.block.constraint.systemverilog' in scope:
+        elif 'meta.block.constraint.systemverilog' in scope and 'meta.brackets' not in scope:
             # print('[SV:completion] Constraint')
             completion = self.constraint_completion()
         elif prefix:
@@ -179,26 +179,24 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             elif(prefix.startswith('a')):
                 # print('[SV:completion] Always')
                 completion = self.always_completion()
-            # Provide completion for modport
-            elif(prefix.startswith('m')):
-                # print('[SV:completion] Modport')
-                completion = self.modport_completion()
             # Provide completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface
             elif(prefix.startswith('end')):
                 # print('[SV:completion] End')
                 completion = self.end_completion(view,r,prefix)
             # Provide simple keywords completion
             else:
-                # print('[SV:completion] Keyword')
-                completion = [
-                    sublime.CompletionItem("forkj","fork..join","fork\n\t$0\njoin"            ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("forkn","fork..none","fork\n\t$0\njoin_none"       ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("forka","fork..any" ,"fork\n\t$0\njoin_any"        ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("generate","keyword","generate\n\t$0\nendgenerate" ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("foreach","keyword" ,"foreach($1) begin\n\t$0\nend",kind=sublime.KIND_SNIPPET, completion_format=1),
-                    sublime.CompletionItem("posedge","keyword" ,"posedge ",kind=MYKIND_KEYWORD),
-                    sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
-                ]
+                completion =  self.listbased_completion('core')
+                if prefix.startswith('m') :
+                    completion += self.modport_completion()
+                # completion = [
+                #     sublime.CompletionItem("forkj","fork..join","fork\n\t$0\njoin"            ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                #     sublime.CompletionItem("forkn","fork..none","fork\n\t$0\njoin_none"       ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                #     sublime.CompletionItem("forka","fork..any" ,"fork\n\t$0\njoin_any"        ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                #     sublime.CompletionItem("generate","keyword","generate\n\t$0\nendgenerate" ,kind=sublime.KIND_SNIPPET, completion_format=1),
+                #     sublime.CompletionItem("foreach","keyword" ,"foreach($1) begin\n\t$0\nend",kind=sublime.KIND_SNIPPET, completion_format=1),
+                #     sublime.CompletionItem("posedge","keyword" ,"posedge ",kind=MYKIND_KEYWORD),
+                #     sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
+                # ]
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
         return (completion, flag)
 
@@ -233,17 +231,20 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         return c
 
     def modport_completion(self):
-        c = []
-        txt = self.view.substr(sublime.Region(0,self.view.size()))
+        _,_,r = sublimeutil.find_closest(self.view,self.view.sel()[0],r'\binterface\b()')
+        if not r:
+            return []
+        txt = self.view.substr(sublime.Region(r[-1].a,self.view.size()))
         ti = verilogutil.parse_module(txt,r'\w+')
-        if not ti:
-            return c
-        modport = 'modport $0 ('
+        if not ti or ti['type'] != 'interface':
+            return []
+        modport = 'modport ${1:mp} ($0'
         for i,s in enumerate(ti['signal']):
             modport += s['name']
             if i!= len(ti['signal'])-1:
                 modport += ', '
         modport += ');'
+        # return [sublime.CompletionItem("modport","declaration","fork\n\t$0\njoin",kind=sublime.KIND_SNIPPET, completion_format=1)]
         return [['modport\tModport template',modport]]
 
     def dot_completion(self,view,r):
@@ -556,7 +557,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             sublime.CompletionItem("unique",  "constraint" ,"unique {$0};",kind=sublime.KIND_SNIPPET, completion_format=1)]
         return c
 
-    def listbased_completion(self, name):
+    def get_listbased_info(self,name):
         lname = 'sv.completion.' + name
         l = self.settings.get(lname)
         l_user = self.settings.get(lname+'.user',None)
@@ -567,12 +568,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     l[d[x[0]]] = x
                 else :
                     l.append(x)
+        # print ([['{0}\t{1}'.format(x[0],x[1]),x[2]] for x in l])
+        # print (l)
+        return l
+
+    def listbased_completion(self, name):
+        l = self.get_listbased_info(name)
         if not l:
             print('[listbased_completion] No completion found for {}'.format(name))
             return []
         k = sublime.KIND_SNIPPET if name=='tick' else MYKIND_FUNCTION
         return [sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) for x in l]
-        return [['{0}\t{1}'.format(x[0],x[1]),x[2]] for x in l]
 
     def struct_completion(self,decl, isAssign=False, fe=[]):
         c = []
