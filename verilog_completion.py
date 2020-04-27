@@ -125,7 +125,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             completion = self.struct_assign_completion(view,r)
         elif 'meta.block.cover.systemverilog' in scope:
             completion = self.cover_completion()
-        elif 'meta.block.constraint.systemverilog' in scope and 'meta.brackets' not in scope::
+        elif 'meta.block.constraint.systemverilog' in scope and 'meta.brackets' not in scope:
             completion = self.constraint_completion()
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
