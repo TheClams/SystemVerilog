@@ -631,7 +631,7 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
         #default signal type to logic, except verilog file use wire (if type is implicit)
         fname = view.file_name()
         sig_type = 'logic'
-        if fname: # handle case where view is a scracth buffer and has no filename
+        if fname: # handle case where view is a scratch buffer and has no filename
             if fname.endswith('.v'):
                 sig_type = 'wire'
         # read file to be able to check existing declaration
@@ -677,10 +677,17 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
             if p['decl'] :
                 p['declSig'] = re.sub(r'input |output |inout ','',p['decl']) # remove I/O indication
                 p['declSig'] = re.sub(r'var ','',p['declSig']) # remove var indication
+                p['declSig'] = re.sub(r'\b'+p['name']+r'\b',pname,p['declSig']) # Remove prefix/suffix
                 if p['type'].startswith(('input','output','inout')) :
                     p['declSig'] = sig_type + ' ' + p['declSig']
                 elif '.' in p['declSig']: # For interface remove modport and add instantiation. (No support for autoconnection of interface)
                     p['declSig'] = re.sub(r'(\w+)\.\w+\s+(.*)',r'\1 \2()',p['declSig'])
+                # Replace reg by sigtype for output port
+                if p['decl'].startswith('output') and re.search(r'\breg\b',p['decl']):
+                    if re.search(r'\b'+sig_type+r'\b',p['decl']):
+                        p['declSig'] = re.sub(r'\breg\s+','',p['declSig'])
+                    else:
+                        p['declSig'] = re.sub(r'\breg\b',sig_type,p['declSig'])
                 for (k,v) in param_dict.items():
                     if k in p['declSig']:
                         p['declSig'] = re.sub(r'\b'+k+r'\b',v,p['declSig'])

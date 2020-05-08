@@ -1,0 +1,7 @@
+SystemVerilog 2.23.15 Changelog:
+
+## Bug fixes ###
+
+ - Module instantiation:
+    * fix prefix/suffix not removed in signal declaration
+    * Replace reg by logic or wire for output signal
