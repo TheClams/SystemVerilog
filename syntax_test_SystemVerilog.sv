@@ -12,7 +12,7 @@ logic x;
 
 interface my_interface1;
 // <- keyword.other
-//        ^ entity.name.type.class
+//        ^ entity.name.type.interface
     logic   one;
 //  ^ storage.type
     logic   two;
@@ -32,7 +32,7 @@ endinterface /* my_interface1 */
     // Interface with indentation
     interface my_interface2;
 //  ^ keyword.other
-//            ^ entity.name.type.class
+//            ^ entity.name.type.interface
         logic   one;
         logic   two;
 
@@ -55,7 +55,8 @@ endinterface /* my_interface1 */
 //                                           ^^^^^^^^ storage.type.systemverilog
         );
 
-    endinterface
+    endinterface : my_interface2
+//                 ^^^^^^^^^^^^^ meta.interface.body.systemverilog entity.label.systemverilog
 
   interface class ihello;
 
@@ -266,6 +267,8 @@ protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0, e: mytype'(50)};
 //                                 ^ support.function.field
 //                                                   ^^^^^^^ meta.struct.assign keyword.control
 
+endmodule : my_module
+
 /*------------------------------------------------------------------------------
 --  Class
 ------------------------------------------------------------------------------*/
@@ -277,7 +280,7 @@ class Foo implements Bar, Blah; extends Bar;
 //                        ^^^^ entity.other.inherited-class.systemverilog
 //                              ^^^^^^^ keyword.control.systemverilog
 //                                      ^^^ entity.other.inherited-class.systemverilog
-endclass
+endclass : Foo
 // <- keyword.control.systemverilog
 
 interface class base_ic;
@@ -292,8 +295,8 @@ interface class base_ic;
 //                  ^^^^^^^^^^ entity.name.function.systemverilog
 //                             ^^^^^^^^ meta.task.port.systemverilog storage.type.systemverilog
 
-endclass
-
+endclass : baseic
+//         ^^^^^^ meta.class.body.systemverilog invalid.illegal.systemverilog
 /*------------------------------------------------------------------------------
 --  Task & functions
 ------------------------------------------------------------------------------*/
@@ -524,7 +527,7 @@ assert(a.randomize(ack) with {}; );
 
 fork
 join_any
-
+// <- meta.section.fork.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
 fork : f_label
     begin : b_label
 
@@ -532,6 +535,7 @@ fork : f_label
     disable fork;
 //  ^^^^^^^ keyword.control.systemverilog
 join : f_label
+//     ^^^^^^^ entity.label
 
 
 always_ff @(posedge clk or negedge rst_n) begin : proc_
@@ -574,7 +578,7 @@ program automatic test (
 //      ^^^^^^^^^ keyword.other.systemverilog
 //                ^^^^ entity.name.type.program.systemverilog
     dut_interface.test_ports axi_dut
-//  ^^^^^^^^^^^^^ meta.program.systemverilog storage.type.interface.systemverilog
+//  ^^^^^^^^^^^^^ meta.program.port.systemverilog storage.type.interface.systemverilog
 //                ^^^^^^^^^^ support.modport.systemverilog
 );
 endprogram: test
@@ -582,8 +586,8 @@ endprogram: test
 
 
 package automatic example_pkg;
-//      ^^^^^^^^^ meta.definition.systemverilog keyword.other.systemverilog
-//                ^^^^^^^^^^^ meta.definition.systemverilog entity.name.type.class.systemverilog
+//      ^^^^^^^^^ meta.definition.package.systemverilog keyword.other.systemverilog
+//                ^^^^^^^^^^^ meta.definition.package entity.name.type.package.systemverilog
 endpackage : example_pkg
 
 
