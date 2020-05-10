@@ -1,0 +1,6 @@
+SystemVerilog 2.23.12 Changelog:
+
+## Bug fixes ###
+
+ - Module instance: recognize implicit connection
+ - Highlight: fix issue with comment following a colon

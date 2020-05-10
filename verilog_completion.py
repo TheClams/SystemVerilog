@@ -152,7 +152,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # print('[SV:completion] Cover')
             completion = self.cover_completion()
         elif 'meta.block.constraint.systemverilog' in scope and 'meta.brackets' not in scope:
-            # print('[SV:completion] Constraint')
             completion = self.constraint_completion()
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
@@ -754,14 +753,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # Extract all existing binding
         if m:
             txt = m.group('bind')
-        b = re.findall(r'\.(\w+)\s*\(',txt,flags=re.MULTILINE)
+        b = re.findall(r'\.(\w+)\b',txt,flags=re.MULTILINE)
         if '\n' in txt:
             len_port = max([len(p['name']) for p in l])
         else:
             len_port = 0
         # Check current line to see if the connection is already done and if we are on the last binding
         eot = verilogutil.clean_comment(txt_raw[pos:])
-        has_binding = re.match(r'^\.\w*\s*\(',eot) is not None
+        has_binding = re.match(r'^\.\w*\b',eot) is not None
         if not has_binding:
             is_last = re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*(;|\w+)',eot,flags=re.MULTILINE) is not None
         # print('End text = \n{0}\nHas_binding={1}, is_last={2}'.format(eot,has_binding,is_last))

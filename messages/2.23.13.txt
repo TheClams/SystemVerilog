@@ -1,0 +1,6 @@
+SystemVerilog 2.23.13 Changelog:
+
+## Bug fixes ###
+
+ - NavBar: fix crash
+ - Completion: prevent some contraint completion to show up while inside brackets

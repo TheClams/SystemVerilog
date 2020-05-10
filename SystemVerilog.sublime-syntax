@@ -731,7 +731,7 @@ contexts:
       scope: keyword.operator.comparison.systemverilog
     - match: (=)
       scope: keyword.operator.assignment.systemverilog
-    - match: (:=|:/)
+    - match: (:=|:/)(?!/)
       scope: keyword.operator.constraint.systemverilog
     - match: (\-|\+|\*|\/|<<|>>|%)
       scope: keyword.operator.arithmetic.systemverilog

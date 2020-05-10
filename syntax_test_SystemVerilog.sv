@@ -219,7 +219,8 @@ my_module i_my_module
 //        ^^^^^^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
   (
     .if1(if1),
-    .if2(if2),
+    .if2,
+//  ^ meta.module.inst.systemverilog punctuation.accessor.dot.systemverilog
     .clk(`MYMACRO(5).clk),
 //   ^ support.function.port
 //        ^ constant.other.define
@@ -328,6 +329,12 @@ function void my_pkg::my_func(ref logic d, input int din,
        default : 0
 //     ^^^^^^^ keyword.control.systemverilog
     };
+    case (state)
+        S_IDLE:// comment
+//                ^^^^^^^^ comment
+            d = 1;
+        default : /* default */ d=0;
+    endcase
     return null;
 //  ^^^^^^ keyword.control.systemverilog
 //         ^^^^ support.constant.systemverilog
