@@ -122,6 +122,23 @@ typedef enum {M[2], N, O, P} b__t;
   typedef enum logic {TRUE=0, FASLE=0} z_t;
 //                        ^ meta.typedef_symbol keyword.operator.assignment.systemverilog
 //                                     ^^^ meta.typedef_symbol entity.name.type.systemverilog
+
+typedef union tagged packed {
+//      ^^^^^  meta.typedef_symbol keyword.control
+//            ^^^^^^ keyword.control
+//                   ^^^^^^ keyword.control
+    struct {
+//  ^^^^^^ keyword.control.struct
+        bit [3:0] val1, val2;
+    } a;
+//    ^ entity.name.type.struct.systemverilog
+    struct {
+//  ^^^^^^ keyword.control
+        bit [7:0] val1, val2 ;
+    } b;
+//    ^ entity.name.type.struct.systemverilog
+} u ;
+//^ entity.name.type
 /*------------------------------------------------------------------------------
 --  Module declaration
 ------------------------------------------------------------------------------*/
@@ -261,9 +278,15 @@ bind i_dut dut_tb_bind#(
 /*------------------------------------------------------------------------------
 --  Structure / Typedef
 ------------------------------------------------------------------------------*/
-typedef struct {logic a; int b; bit [3:0] c;} mystruct;
+typedef struct {
 //             ^ keyword.operator.other.systemverilog
-//                                          ^ meta.typedef_symbol meta.struct.anonymous.systemverilog keyword.operator.other.systemverilog
+    logic a;
+    randc int b;
+//  ^^^^^ storage.type.rand.systemverilog
+//        ^^^ storage.type.systemverilog
+    bit [3:0] c;
+    } mystruct;
+//  ^ meta.typedef_symbol meta.struct.anonymous.systemverilog keyword.operator.other.systemverilog
 protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0, e: mytype'(50)};
 //                                 ^ support.function.field
 //                                                   ^^^^^^^ meta.struct.assign keyword.control

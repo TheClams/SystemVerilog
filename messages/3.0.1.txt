@@ -1,0 +1,9 @@
+SystemVerilog 3.0.1 Changelog:
+
+## Improvement ##
+ - Highlight :
+   * Provides meta-scope for module, interface, modport, ...
+   * rand/randc now scoped as storage modifier instead of type
+   * Improve highlight of var/wire declaration
+   * Improve struct support: union tagged, struct inside struct, ...
+   * support static function/task definition
