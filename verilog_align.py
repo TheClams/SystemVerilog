@@ -64,8 +64,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
             # print('[VerilogAlign] Scope inst : expanding to {}'.format(region))
             ilvl = beautifier.getIndentLevel(txt)
             txt = beautifier.alignInstance(txt,ilvl)
-        elif 'meta.module.systemverilog' in scope:
-            region = sublimeutil.expand_to_scope(self.view,'meta.module.systemverilog',region)
+        elif 'meta.module.port.systemverilog' in scope:
+            region = sublimeutil.expand_to_scope(self.view,'meta.module.port.systemverilog',region)
             # print('[VerilogAlign] Scope Module: expanding to {}'.format(region))
             txt = beautifier.alignModulePort(self.view.substr(region),0)
         else :

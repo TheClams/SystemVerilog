@@ -352,7 +352,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # get type information on the variable
             txt = view.substr(sublime.Region(0, view.size()))
             ti = verilog_module.type_info_on_hier(view,w,txt,r)
-            if not ti or (ti['type'] is None and 'meta.module.systemverilog' not in scope):
+            if not ti or (ti['type'] is None and 'meta.module.port.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
             if ti['array']!='' and array_depth==0:
@@ -372,7 +372,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # Non standard type => try to find the type in the lookup list and get the type
             else:
                 # Force the type to the word itself if we are in a module declaration : typical of modport
-                if ti['type'] is None and 'meta.module.systemverilog' in scope:
+                if ti['type'] is None and 'meta.module.port.systemverilog' in scope:
                     t = w
                     modport_only = True
                 elif ti['type']=='module':

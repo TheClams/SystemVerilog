@@ -425,9 +425,12 @@ def parse_module(flines,mname=r'\w+',inst_only=False,no_inst=False):
     # Extract all type information inside the module : signal/port declaration, interface/module instantiation
     if m.group('param'):
         txt = txt.replace(m.group('param'),'')
-    ati = get_all_type_info(txt,no_inst)
-    # print('[SV.parse_module] ati = ')
-    # pprint.pprint(ati,width=200)
+    # ati = get_all_type_info(txt,no_inst)
+    ati = []
+    if m.group('port'):
+        ati += get_all_type_info(m.group('port')+';')
+    if m.group('content'):
+        ati += get_all_type_info(m.group('content'))
     # Extract port name
     ports = []
     ports_name = []
