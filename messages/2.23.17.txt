@@ -1,0 +1,5 @@
+SystemVerilog 2.23.17 Changelog:
+
+## Bug fixes ###
+
+ - Parsing: fix regexp for signal declaration which could lock the UI
