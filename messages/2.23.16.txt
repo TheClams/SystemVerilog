@@ -1,0 +1,5 @@
+SystemVerilog 2.23.16 Changelog:
+
+## Bug fixes ###
+
+ - Parsing: fix issue with first port having user-type on the same line as opening parenthesis
