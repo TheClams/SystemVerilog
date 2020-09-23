@@ -189,91 +189,55 @@ def type_info_on_hier(view,varname,txt=None,region=None):
 ########################################
 def lookup_module(view,mname):
     mi = None
-    filelist = view.window().lookup_symbol_in_index(mname)
-    if filelist:
-        # Check if module is defined in current file first
-        fname = view.file_name()
-        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-        if fname in flist_norm:
-            _,_,rowcol = filelist[flist_norm.index(fname)]
-            mi = verilogutil.parse_module_file(fname,mname)
+    sl = [s for s in view.window().symbol_locations(mname) if s.syntax == 'SystemVerilog' and s.kind[2]=='Type']
+    for s in sl:
+        fname = sublimeutil.normalize_fname(s.path)
+        mi = verilogutil.parse_module_file(fname,mname)
         if mi:
-            mi['fname'] = (fname,rowcol[0],rowcol[1])
-        # Consider first file with a valid module definition to be the correct one
-        else:
-            for f in filelist:
-                fname, display_fname, rowcol = f
-                fname = sublimeutil.normalize_fname(fname)
-                mi = verilogutil.parse_module_file(fname,mname)
-                if mi:
-                    mi['fname'] = (fname,rowcol[0],rowcol[1])
-                    break
+            mi['fname'] = (fname,s.row,s.col)
+            break
     # print('[SV:lookup_module] {0}'.format(mi))
     return mi
 
 def lookup_package(view,pkgname):
     pi = None
     mi = None
-    filelist = view.window().lookup_symbol_in_index(pkgname)
-    if filelist:
-        # Check if module is defined in current file first
-        fname = view.file_name()
-        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-        if fname in flist_norm:
-            _,_,rowcol = filelist[flist_norm.index(fname)]
-            mi = verilogutil.parse_package_file(fname,pkgname)
-        # Consider first file with a valid module definition to be the correct one
+    # t0 = time.time()
+    sl = [s for s in view.window().symbol_locations(pkgname) if s.syntax == 'SystemVerilog' and s.kind[2]=='Type']
+    for s in sl:
+        fname = sublimeutil.normalize_fname(s.path)
+        mi = verilogutil.parse_package_file(fname,pkgname)
         if mi:
-            pi = {'type': 'package', 'member': mi, 'fname':(fname,rowcol[0],rowcol[1])}
-        else:
-            for f in filelist:
-                fname, display_fname, rowcol = f
-                fname = sublimeutil.normalize_fname(fname)
-                mi = verilogutil.parse_package_file(fname,pkgname)
-                if mi:
-                    pi = {'type': 'package', 'member': mi, 'fname':(fname,rowcol[0],rowcol[1])}
-                    break
+            pi = {'type': 'package', 'member': mi, 'fname':(fname,s.row,s.col)}
+            break
+    # print('[SV:lookup_package] Found {} in {}'.format(pkgname, time.time()-t0))
     # print('[SV:lookup_package] {0}'.format(pi))
     return pi
 
 def lookup_function(view,funcname):
     fi = None
-    filelist = view.window().lookup_symbol_in_index(funcname)
-    # print('Files for {0} = {1}'.format(funcname,filelist))
-    if filelist:
-        # Check if function is defined in current file first
-        fname = view.file_name()
-        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-        if fname in flist_norm:
-            _,_,rowcol = filelist[flist_norm.index(fname)]
-            with open(fname,'r') as f:
-                flines = str(f.read())
-            flines = verilogutil.clean_comment(flines)
-            fi = verilogutil.parse_function(flines,funcname)
+    # t0 = time.time()
+    sl = [s for s in view.window().symbol_locations(funcname) if s.syntax == 'SystemVerilog' and s.kind[2]=='Function']
+    for s in sl:
+        fname = sublimeutil.normalize_fname(s.path)
+        with open(fname,'r') as f:
+            flines = str(f.read())
+        flines = verilogutil.clean_comment(flines)
+        fi = verilogutil.parse_function(flines,funcname)
         if fi:
-            fi['fname'] = (fname,rowcol[0],rowcol[1])
-        # Consider first file with a valid function definition to be the correct one
-        else:
-            for f in filelist:
-                fname, display_fname, rowcol = f
-                fname_ = sublimeutil.normalize_fname(fname)
-                with open(fname_,'r') as f:
-                    flines = str(f.read())
-                flines = verilogutil.clean_comment(flines)
-                fi = verilogutil.parse_function(flines,funcname)
-                if fi:
-                    # rowcols = [x for fn,_,x in filelist if fn==fname_]
-                    fi['fname'] = (fname_,rowcol[0],rowcol[1])
-                    break
+            fi['fname'] = (fname,s.row,s.col)
+            break
+    # print('[SV:lookup_function] Found {} in {}'.format(funcname, time.time()-t0))
     return fi
 
 def lookup_type(view, t):
     ti = None
+    t0 = time.time()
     pkg_fl = []
     if '::' in t:
         ts = t.split('::')
         pkg_fl = view.window().lookup_symbol_in_index(ts[0])
-        #print('[lookup_type] Package {} defined in {}'.format(ts[0],pkg_fl))
+        # print('[lookup_type] Package {} defined in {}'.format(ts[0],pkg_fl))
         # Try to retrieve package filename
         t = ts[-1]
     filelist = view.window().lookup_symbol_in_index(t)
@@ -303,6 +267,7 @@ def lookup_type(view, t):
                     if ti['type'] and ti['tag']!='typedef' :
                         ti['fname'] = (fname,rowcol[0],rowcol[1])
                         break
+    # print('[SV:lookup_type] Found {} in {}'.format(t, time.time()-t0))
     # print('[SV:lookup_type] {0}'.format(ti))
     return ti
 

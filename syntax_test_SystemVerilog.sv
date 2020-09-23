@@ -197,7 +197,8 @@ timeprecision 1fs;
 // <- keyword.control
 //            ^ constant.numeric.time
 
-sequence e3(sequence a, untyped b);
+sequence e3 ( sequence a, untyped b);
+//                        ^^^^^^^ storage.type.systemverilog
 @(posedge sysclk) a.triggered ##1 b;
 endsequence
 
@@ -215,9 +216,12 @@ local t_byte b2 = 8'hFF;
 
 mytype [3:0][4][`MACRO*4] myvar3[PARAM-1:`TEST/4]; // userdefined type with packed/unpacked
 // <- storage.type.userdefined
+//                        ^ -storage.type
+//                               ^^^^^ constant.other.net.systemverilog
+//                                       ^^^^^ constant.other.define.systemverilog
 
-logic [3:0]  sig_logic = 4'shC;
-
+logic [3:0]  sig_logic = 4'shC + toto[4];
+//                               ^ -storage.type
 interconnect [0:1] iBus;
 // <- storage.type.systemverilog
 /*------------------------------------------------------------------------------
@@ -230,7 +234,17 @@ interconnect [0:1] iBus;
 --  Instantiation of interface, module
 ------------------------------------------------------------------------------*/
 my_interface1#(1) if1(clk,rst_n);
+// <- meta.module.inst.systemverilog storage.type.module.systemverilog
+//           ^ keyword.operator.other.param.systemverilog
+//             ^ constant.numeric.decimal.systemverilog
+//                ^^^ entity.name.type.module.systemverilog
+//                             ^ meta.module.bind.port.systemverilog punctuation.section.group.end.systemverilog
     virtual my_interface1#(3,4) if2;
+//  ^^^^^^^ keyword.other.systemverilog
+//          ^^^^^^^^^^^^^ storage.type.userdefined.systemverilog
+//                       ^ keyword.operator.other.param.systemverilog
+//                         ^ constant.numeric.decimal.systemverilog
+//                              ^^^ -entity
 
 my_module i_my_module
 //        ^^^^^^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
@@ -245,6 +259,9 @@ my_module i_my_module
     .my_out(my_out),
   );
 
+// Instance array
+mysubmodule [N-1:0] sub_inst (.Z(dout),.D(din),.C(cntl));
+
 parameter
     my_module.test_param = 23'h44;
 
@@ -253,10 +270,11 @@ localparam myvar1 = MY_INIT1;
 localparam logic [1:0] myvar2 = MY_INIT2;
 
 
-bind bind_assertion   assertion_ip      i_assert_ip (
+bind  bind_assertion.test   assertion_ip i_assert_ip (
 // <- keyword.control.systemverilog
-//                    ^^^^^^^^^^^^ storage.type.module.systemverilog
-//                                      ^^^^^^^^^^^ entity.name.type.module.systemverilog
+//                  ^ punctuation.accessor.dot.systemverilog
+//                          ^^^^^^^^^^^^ storage.type.module.systemverilog
+//                                       ^^^^^^^^^^^ entity.name.type.module.systemverilog
    .clk_ip   (clk),
 //  ^^^^^^ support.function.port.systemverilog
 //            ^^^^^^ meta.module.inst.systemverilog
@@ -265,11 +283,11 @@ bind bind_assertion   assertion_ip      i_assert_ip (
  .gnt_ip   (gnt)
 );
 
-bind i_dut dut_tb_bind#(
+bind i_dut dut_tb_bind #(
 // <- meta.module.inst.systemverilog keyword.control.systemverilog
 //         ^^^^^^^^^^^ storage.type.module.systemverilog
     .DATA_W   (DATA_W   ),
-//   ^^^^^^ meta.bind.param.systemverilog support.function.port.systemverilog
+//   ^^^^^^ meta.block.bind.param.systemverilog support.function.port.systemverilog
     .MODE(1'b1),
     .STRING("config")
  ) i_bind(.*);

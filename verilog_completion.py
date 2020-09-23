@@ -188,11 +188,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 if prefix.startswith('m') :
                     completion += self.modport_completion()
                 # completion = [
-                #     sublime.CompletionItem("forkj","fork..join","fork\n\t$0\njoin"            ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                #     sublime.CompletionItem("forkn","fork..none","fork\n\t$0\njoin_none"       ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                #     sublime.CompletionItem("forka","fork..any" ,"fork\n\t$0\njoin_any"        ,kind=sublime.KIND_SNIPPET, completion_format=1),
                 #     sublime.CompletionItem("generate","keyword","generate\n\t$0\nendgenerate" ,kind=sublime.KIND_SNIPPET, completion_format=1),
-                #     sublime.CompletionItem("foreach","keyword" ,"foreach($1) begin\n\t$0\nend",kind=sublime.KIND_SNIPPET, completion_format=1),
                 #     sublime.CompletionItem("posedge","keyword" ,"posedge ",kind=MYKIND_KEYWORD),
                 #     sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
                 # ]
@@ -320,7 +316,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         mi = verilogutil.parse_module_file(fname,mname)
                         if mi:
                             break
-                    is_param = 'meta.bind.param' in scope
+                    is_param = 'meta.block.bind.param' in scope
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
             else :
                 return completion
@@ -576,7 +572,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         if not l:
             print('[listbased_completion] No completion found for {}'.format(name))
             return []
-        k = sublime.KIND_SNIPPET if name=='tick' else MYKIND_FUNCTION
+        k = sublime.KIND_SNIPPET if name in ['tick','core'] else MYKIND_FUNCTION
         return [sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) for x in l]
 
     def struct_completion(self,decl, isAssign=False, fe=[]):
@@ -797,7 +793,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         else :
             ti = verilog_module.type_info(view,view.substr(r),sname)
         # print(f'[enum_assign_completion] {sname}: {ti}')
-        if ti['type']:
+        if ti and ti['type']:
             typename = ti['type']
             if ti['type'] not in ['enum','logic','bit','reg','wire','input','output','inout','struct']:
                 ti = verilog_module.lookup_type(view,ti['type'])
