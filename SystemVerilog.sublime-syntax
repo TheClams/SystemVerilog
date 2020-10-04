@@ -650,18 +650,29 @@ contexts:
     - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
       branch_point: bp-module
       branch:
-        - check-kw
+        - test-var-name
         - module-inst-type
         - obj-inst-type
         - obj-inst-name
 
   check-kw:
     - match: '{{id}}'
-      push:
+      set:
         - match: (intersect|and|or|throughout|within)\b
           scope: keyword.operator.logical.systemverilog
           pop: true
-        - include: else-pop
+        - match: (?=\S)
+          fail: bp-module
+    - match: (?=\S)
+      fail: bp-module
+
+  test-var-name:
+    - match: '{{id}}'
+      set: test-var-kw
+
+  test-var-kw:
+    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|intersect|and|or|throughout|within)\b)
+      pop: true
     - match: (?=\S)
       fail: bp-module
 
@@ -677,11 +688,12 @@ contexts:
     - meta_scope: meta.obj.inst.systemverilog
     - match: '{{id}}'
       scope : storage.type.userdefined.systemverilog
-      push : [obj-inst-name, opt-packed-dim, opt-param-bind]
+      set : [obj-inst-name, opt-packed-dim, opt-param-bind]
     - include: comments
-    - include: else-pop
+    - match: (?=\S)
+      fail: bp-module
 
-  opt-packed-dim:
+  packed-dim:
     - match: \[
       scope: punctuation.section.brackets.begin.systemverilog
       push:
@@ -694,6 +706,9 @@ contexts:
         - include: macro-call
         - include: operators
         - include: system-task
+
+  opt-packed-dim:
+    - include: packed-dim
     - include: comments
     - include: else-pop
 
@@ -725,12 +740,13 @@ contexts:
     - include: comments
 
   obj-inst-name:
+    - match: '\b([A-Z][A-Z0-9_]*)\b'
+      scope: constant.other.net.systemverilog
     - match: '{{id}}'
       pop: true
     - include: comments
     - match: (?=\S)
       fail: bp-module
-    - include: else-pop
 
   terminator:
     - include: comments
