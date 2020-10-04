@@ -179,8 +179,13 @@ class VerilogTypePopup :
                         x = '{} {}'.format(p['type'],p['name'])
                         s += '<br><span class="extra-info">{}{}</span>'.format('&nbsp;'*4,self.color_str(x)[0])
                 elif ti and 'tag' in ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
-                    m = re.search(r'(?s)^(.*)\{(.*)\}', ti['decl'])
-                    s,tti = self.color_str(s=m.groups()[0] + ' ' + v, addLink=True)
+                    m = re.search(r'(?s)^(.*)\{(.*)\}\s*(\w+)?', ti['decl'])
+                    s = m.groups()[0].strip() + ' '
+                    if m.groups()[2]:
+                        s += m.groups()[2]
+                    else:
+                        s += v
+                    s,tti = self.color_str(s=s, addLink=True)
                     if ti['tag'] == 'enum':
                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
                     else :
@@ -345,6 +350,24 @@ class VerilogTypePopup :
                             txt,_ = self.color_str(s='  parameter {0} {1} = {2}'.format(p['decl'],p['name'],p['value']))
                 if sv_settings.get('sv.tooltip_show_module_on_port',False):
                     txt = '<a href="LINK@{0}" class="storage">{1}</a><span class="entity"> {2}</span><br>  {3}'.format(fname,mname,iname,txt)
+        elif 'support.function.field' in scope:
+            region = sublimeutil.expand_to_scope(self.view,'meta.struct.assign',region)
+            # get the variable name
+            start_line = self.view.line(region.a-1).a
+            l = self.view.substr(sublime.Region(start_line,region.a)).strip()
+            m = re.search(r'\b(?P<varname>[\w\[\]\.\(\)\+\-\*]+)\s*(\[.+\]\s*)?(<?=)',l)
+            if m:
+                ti = verilog_module.type_info_on_hier(self.view,m.group('varname'),region=sublime.Region(0, start_line))
+                if ti:
+                    if ti['type'] in ['struct','enum','logic','bit','reg','wire','input','output','inout']:
+                        tti = ti
+                    else :
+                        tti = verilog_module.lookup_type(self.view,ti['type'])
+                    if tti:
+                        m = re.search(r'\{(.*)\}', tti['decl'])
+                        if m is not None:
+                            fti = verilogutil.get_type_info(m.groups()[0],var_name)
+                            txt = fti['decl']
         # Get function I/O
         elif 'support.function.generic' in scope or 'entity.name.function' in scope:
             ti = verilog_module.lookup_function(self.view,var_name)
@@ -410,6 +433,9 @@ class VerilogTypePopup :
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
+            elif ti['type'] and ti['type'] not in ['struct','enum','logic','bit','reg','wire','input','output','inout']:
+                t = ti['type']
+                ti = verilog_module.lookup_type(self.view,t)
             if ti:
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:

@@ -147,7 +147,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 completion = self.enum_assign_completion(view,m.group('name'))
         elif 'meta.struct.assign' in scope:
             # print('[SV:completion] Struct Assign')
-            completion = self.struct_assign_completion(view,r)
+            completion = self.struct_assign_completion(view,r,prev_symb==',')
         elif 'meta.block.cover.systemverilog' in scope and 'string' not in scope:
             # print('[SV:completion] Cover')
             completion = self.cover_completion()
@@ -575,13 +575,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         k = sublime.KIND_SNIPPET if name in ['tick','core'] else MYKIND_FUNCTION
         return [sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) for x in l]
 
-    def struct_completion(self,decl, isAssign=False, fe=[]):
+    def struct_completion(self,decl, isAssign=False, fe=[], prev_is_comma=False):
         c = []
         m = re.search(r'\{(.*)\}', decl)
         if m is not None:
             fti = verilogutil.get_all_type_info(m.groups()[0])
             if isAssign and not fe:
-                c.append(sublime.CompletionItem('all_fields','All fields',', '.join(['{0}:${1}'.format(f['name'],i+1) for i,f in enumerate(fti)]),kind=sublime.KIND_SNIPPET, completion_format=1))
+                c.append(sublime.CompletionItem('all_fields','All fields',', '.join(['{0}: ${1}'.format(f['name'],i+1) for i,f in enumerate(fti)]),kind=sublime.KIND_SNIPPET, completion_format=1))
             for f in fti:
                 if f['name'] not in fe:
                     f_type = f['type']
@@ -589,15 +589,17 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     if m:
                         f_type += m.group(0)
                     f_name = f['name']
+                    if prev_is_comma:
+                        f_name = ' ' + f_name
                     if isAssign:
-                        f_name += ':'
+                        f_name += ': '
                     c.append(sublime.CompletionItem(f['name'],f_type,f_name,kind=MYKIND_FIELD, completion_format=1))
-            if isAssign:
+            if isAssign and 'default' not in fe:
                 c.append(sublime.CompletionItem('default','default','default:',kind=MYKIND_KEYWORD))
         return c
 
 
-    def struct_assign_completion(self,view,r):
+    def struct_assign_completion(self,view,r,prev_is_comma):
         start_pos = r.a # save original position of caret
         r_start = r.a
         r_end = r.a
@@ -659,7 +661,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             return []
         if tti['type'] == 'struct' :
             fe = re.findall(r'(\w+)\s*:',content)
-            return self.struct_completion(tti['decl'],True,fe)
+            return self.struct_completion(tti['decl'],True,fe,prev_is_comma)
         elif tti['type'] == 'enum' :
             c = []
             el = verilogutil.get_enum_values(tti['decl'])
