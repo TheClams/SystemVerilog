@@ -676,8 +676,25 @@ def goto_driver(view,signal):
         r = view.find(s,0)
         # print('searching ' + s + ' => ' + str(r))
         if r:
-            # print("Found input at " + str(r) + ': ' + view.substr(view.line(r)))
-            sublimeutil.move_cursor(view,r.a)
+            # For input check if cursor was already at the declaration
+            if 'input' in view.substr(r) :
+                if r.contains(view.sel()[0]) :
+                    # Already at input declaration : search for module instance to find driver of this input
+                    mname = getModuleName(view)
+                    refs = view.window().lookup_references_in_index(mname)
+
+                    if refs:
+                        if len(refs) > 1 :
+                            view.window().show_quick_panel([x[1] for x in refs],
+                                on_select = lambda x: open_and_goto_port(view,refs[x][0],refs[x][2],signal),
+                                on_highlight = lambda x: view.window().open_file('{}:{}:{}'.format(refs[x][0],refs[x][2][0],refs[x][2][1]),group=view.window().active_group(),flags=sublime.ENCODED_POSITION|sublime.FORCE_GROUP|sublime.TRANSIENT)
+                                )
+                        else :
+                            open_and_goto_port(view,refs[0][0],refs[0][2],signal)
+                        return
+            rs = view.find(signal,r.a)
+            pos = rs.a if r.contains(rs.a) else r.a
+            sublimeutil.move_cursor(view,pos)
             return
     # look for a connection explicit, implicit or by position
     sl = [r'\.(\w+)\s*\(\s*'+signal+r'\b' , r'(\.\*)', r'(\(|,)\s*'+signal+r'\b\s*(,|\)\s*;)']
@@ -733,6 +750,27 @@ def goto_driver(view,signal):
                                 return
     # Everything failed
     sublime.status_message("Could not find driver of " + signal)
+
+def open_and_goto_port(view, fname, rowcol , portname):
+    v = view.window().find_open_file(fname)
+    fname_loc = '{}:{}:{}'.format(fname,rowcol[0],rowcol[1])
+    if v :
+        v = view.window().open_file(fname_loc,sublime.ENCODED_POSITION)
+        goto_port(v,portname)
+    else :
+        v = view.window().open_file(fname_loc,sublime.ENCODED_POSITION)
+        global callbacks_on_load
+        callbacks_on_load[fname] = lambda v=v, portname=portname: goto_port(v,portname)
+
+def goto_port(view,portname):
+    sels = view.sel()
+    if len(sels)==0:
+        return;
+    r = sublimeutil.expand_to_scope(view,'meta.module.inst',sels[0])
+    rp = view.find(r'\.{}(\s*\()?'.format(portname),r.a)
+    # print('[goto_port] Inst = {} - port at {}'.format(r,rp))
+    if r.contains(rp):
+        sublimeutil.move_cursor(view,rp.b)
 
 def goto_signal_ref(view,signal):
     lr = view.find_all(r'\b{}\b'.format(signal))

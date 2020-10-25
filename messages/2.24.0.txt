@@ -1,0 +1,5 @@
+SystemVerilog 2.24.0 Changelog:
+
+## Improvements ###
+
+ - Navigation: goto_driver now follow input ports to instances of the modules
