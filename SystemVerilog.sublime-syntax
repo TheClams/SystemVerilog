@@ -655,23 +655,17 @@ contexts:
         - obj-inst-type
         - obj-inst-name
 
-  check-kw:
-    - match: '{{id}}'
-      set:
-        - match: (intersect|and|or|throughout|within)\b
-          scope: keyword.operator.logical.systemverilog
-          pop: true
-        - match: (?=\S)
-          fail: bp-module
-    - match: (?=\S)
-      fail: bp-module
-
   test-var-name:
+    - match: '\b([A-Z][A-Z0-9_]*)\b'
+      scope: constant.other.net.systemverilog
+      set: test-var-kw
     - match: '{{id}}'
       set: test-var-kw
 
   test-var-kw:
-    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|intersect|and|or|throughout|within)\b)
+    - include: comments
+    - include: packed-dim
+    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int)\b)
       pop: true
     - match: (?=\S)
       fail: bp-module
@@ -742,6 +736,7 @@ contexts:
   obj-inst-name:
     - match: '\b([A-Z][A-Z0-9_]*)\b'
       scope: constant.other.net.systemverilog
+      pop: true
     - match: '{{id}}'
       pop: true
     - include: comments
