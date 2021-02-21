@@ -1,0 +1,6 @@
+SystemVerilog 2.24.1 Changelog:
+
+## Bug Fix ###
+
+ - Highlight: fix parameterized parameter in class instance
+ - Alignement: fix typedef class

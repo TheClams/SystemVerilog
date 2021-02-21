@@ -121,6 +121,9 @@ typedef enum {M[2], N, O, P} b__t;
   typedef enum logic {TRUE=0, FASLE=0} z_t;
 //                        ^ meta.typedef_symbol keyword.operator.assignment.systemverilog
 //                                     ^^^ meta.typedef_symbol entity.name.type.systemverilog
+
+typedef uvm_component_registry #(test1 #(param1), "test1") type_id;
+
 /*------------------------------------------------------------------------------
 --  Module declaration
 ------------------------------------------------------------------------------*/
