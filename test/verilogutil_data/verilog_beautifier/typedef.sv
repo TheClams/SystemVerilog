@@ -60,4 +60,7 @@ my_type2_t var3;
    export "DPI-C" function dpi_report_error;
    export "DPI-C" function dpi_report_warning;
 
+  typedef class c1;
+       typedef class c2;
+
 endpackage
