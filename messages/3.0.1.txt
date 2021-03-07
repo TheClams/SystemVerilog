@@ -1,9 +1,17 @@
 SystemVerilog 3.0.1 Changelog:
 
 ## Improvement ##
- - Highlight :
-   * Provides meta-scope for module, interface, modport, ...
-   * rand/randc now scoped as storage modifier instead of type
-   * Improve highlight of var/wire declaration
-   * Improve struct support: union tagged, struct inside struct, ...
-   * support static function/task definition
+  - Highlight :
+    * Provides meta-scope for module, interface, modport, ...
+    * rand/randc now scoped as storage modifier instead of type
+    * Improve highlight of var/wire declaration
+    * Improve struct support: union tagged, struct inside struct, ...
+    * support static function/task definition
+  - Completion:
+    * Prevent completion to appear after special character when no completion was found
+    * Struct assign completion: no default in the list if already present
+  - Popup:
+    * now works on field in a struct assign
+    * display details of struct fields for struct variable using typedef
+  - Navigation:
+    * Improve goto_driver to follow input port

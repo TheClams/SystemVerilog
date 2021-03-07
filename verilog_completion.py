@@ -193,6 +193,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 #     sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
                 # ]
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
+        if isinstance(completion,list) and len(completion) == 0:
+            completion = None
         return (completion, flag)
 
     def always_completion(self):
@@ -400,7 +402,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                                 break
                 # print(tti)
                 if not tti:
-                    return completion
+                    return None
                 if tti['type']=='interface':
                     return self.interface_completion(fname,tti['name'], modport_only)
                 elif tti['type'] == 'class':

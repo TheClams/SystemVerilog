@@ -6,6 +6,7 @@ file_extensions: [sv, v, svh, vh]
 scope: source.systemverilog
 variables:
   id: '[A-Za-z_][A-Za-z_0-9]*'
+  ID: '[A-Z_][A-Z0-9_]*'
 contexts:
   main:
     - include: module-def
@@ -116,7 +117,7 @@ contexts:
     - match: \b(static|automatic)\b
       scope: keyword.other.lifetime.systemverilog
   nettype:
-    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|wire)\b'
+    - match: '\s*\b(tri|tri[01]|supply[01]|wand|triand|wor|trior|trireg|wire|uwire)\b'
       scope: storage.type.net.systemverilog
       push:
         - include: type-base
@@ -149,8 +150,26 @@ contexts:
         2: keyword.operator.systemverilog
         3: punctuation.section.brackets.end.systemverilog
   type-base:
-    - match: '\s*\b(reg|integer|int|longint|shortint|logic|bit|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped|genvar)\b'
+    - match: '\s*\b(integer|int|longint|shortint|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped|genvar)\b'
       scope: storage.type.systemverilog
+    - match: '\s*\b(reg|logic|bit)\b'
+      scope: storage.type.systemverilog
+      push:
+        - match: '\b(signed|unsigned)\b'
+          scope: storage.modifier.systemverilog
+        - match: '{{ID}}'
+          scope: constant.other.net.systemverilog
+          pop: true
+        - match: '{{id}}'
+          pop: true
+        - include: packed-dim
+        - include: else-pop
+  type-base-novar:
+    - match: '\s*\b(integer|int|longint|shortint|byte|shortreal|chandle|string|time|realtime|real|process|void|event|semaphore|mailbox|interconnect|untyped|genvar)\b'
+      scope: storage.type.systemverilog
+    - match: '\s*\b(reg|logic|bit)\b'
+      scope: storage.type.systemverilog
+
   scoping:
     - match: '\b({{id}})(::)'
       scope: meta.scope.systemverilog
@@ -230,7 +249,7 @@ contexts:
           scope: keyword.control.systemverilog
           pop: true
         - include: general
-    - match: \s*\b(begin|end|fork|disable|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|uwire|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
+    - match: \s*\b(begin|end|fork|disable|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
       captures:
         1: keyword.control.systemverilog
   # Misc keyword with just basic handling (to be improved)
@@ -665,7 +684,7 @@ contexts:
   test-var-kw:
     - include: comments
     - include: packed-dim
-    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int)\b)
+    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int|generate)\b)
       pop: true
     - match: (?=\S)
       fail: bp-module
@@ -876,6 +895,16 @@ contexts:
       captures:
         1: keyword.operator.delay.systemverilog
         2: keyword.other.systemverilog
+    - match: (@)\s*(\()
+      captures:
+        1: keyword.operator.other.systemverilog
+        2: punctuation.section.group.begin.systemverilog
+      push :
+        - meta_scope: meta.sensitivity.systemverilog
+        - match: \)
+          scope: punctuation.section.group.end.systemverilog
+          pop: true
+        - include: event-expression
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
     # Separators
@@ -1041,6 +1070,25 @@ contexts:
         - include: constants
         - include: operators
         - include: strings
+
+  event-expression:
+    - match: \b(iff)\b
+      scope: keyword.control.systemverilog
+    - match: \b(posedge|negedge|edge)\b
+      scope: keyword.other.systemverilog
+    - match: \b(or)\b
+      scope: keyword.operator.logical.systemverilog
+    - match: '\('
+      scope: punctuation.section.group.begin.systemverilog
+      push:
+        - match: '\)'
+          scope: punctuation.section.group.end.systemverilog
+          pop: true
+        - include: event-expression
+    - include: macro-call
+    - include: system-task
+    - include: function-call
+    - include: operators
 
 # Assertions
   assertion :
@@ -1242,6 +1290,7 @@ contexts:
             3: storage.type.systemverilog
             4: entity.name.function.systemverilog
           set: function-port
+        - include: type-base-novar
         - include: base-grammar
         - include: system-task
         - match: '({{id}})\s*(?=\[)'
@@ -1274,6 +1323,7 @@ contexts:
             2: keyword.operator.scope.systemverilog
             3: entity.name.function.systemverilog
           set: [function-body, function-port]
+        - include: type-base-novar
         - include: base-grammar
         - include: system-task
         - match: \b(?:({{id}})(::))?({{id}})\b\s*(?=(\[|\w))
@@ -1309,6 +1359,7 @@ contexts:
             3: storage.type.systemverilog
             4: entity.name.function.systemverilog
           set: function-port
+        - include: type-base-novar
         - include: base-grammar
         - include: system-task
         - match: '({{id}})\s*(?=\[)'

@@ -298,7 +298,8 @@ bind i_dut dut_tb_bind #(
 ------------------------------------------------------------------------------*/
 typedef struct {
 //             ^ keyword.operator.other.systemverilog
-    logic a;
+    logic signed a;
+//        ^^^^^^ storage.modifier.systemverilog
     randc int b;
 //  ^^^^^ storage.type.rand.systemverilog
 //        ^^^ storage.type.systemverilog
