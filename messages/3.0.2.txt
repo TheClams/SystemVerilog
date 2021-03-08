@@ -1,0 +1,6 @@
+SystemVerilog 3.0.2 Changelog:
+
+## Improvement ##
+  - Completion:
+    * Fix basic completion not showing up in some cases
+    * Add scope filtering option for the sv.completion.*

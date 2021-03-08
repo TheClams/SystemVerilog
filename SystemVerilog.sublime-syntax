@@ -666,6 +666,7 @@ contexts:
     - match: bind\b
       scope: keyword.control.systemverilog
       push: [module-inst-type, bind-path]
+    #- match: ^\s*(?={{id}}\s*(\b\w|#[^#]|\[|\n))
     - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
       branch_point: bp-module
       branch:
@@ -914,6 +915,15 @@ contexts:
       scope: punctuation.separator.systemverilog
     - match: \.
       scope: punctuation.accessor.dot.systemverilog
+      push:
+        - include: function-call
+        - match: '{{ID}}'
+          scope: constant.other.net.systemverilog
+          pop: true
+        - match: '{{id}}'
+          pop: true
+        - match: ''
+          pop: true
     - match: \(
       scope: punctuation.section.group.begin.systemverilog
     - match: \)

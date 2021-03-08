@@ -53,8 +53,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 print('[SV:on_query_completions] Autocompletion disabled')
             return []
         r = view.sel()[0]
-        scope = view.scope_name(r.a)
-        if('string' in scope) :
+        self.scope = view.scope_name(r.a)
+        if('string' in self.scope) :
             return []
         # If there is a prefix, allow sublime to provide completion ?
         flag = 0
@@ -70,7 +70,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         r.b -= len(prefix)
         r.a = r.b - 1
         tmp_r = sublime.Region(r.a,r.b)
-        # print('[SV:on_query_completions] tmp_r={0} => "{1}" . Class = {2}'.format(tmp_r,view.substr(tmp_r),view.classify(tmp_r.b)))
+        # print('[SV:on_query_completions] tmp_r={0} => "{1}" . Class = {2}, flag= {3}'.format(tmp_r,view.substr(tmp_r),view.classify(tmp_r.b),flag))
         if not view.substr(tmp_r).strip() :
             tmp_r.b = view.find_by_class(tmp_r.b,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
             tmp_r.a = tmp_r.b
@@ -100,7 +100,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         completion = []
         scope_tmp = view.scope_name(tmp_r.a)
         # if self.debug:
-        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,scope))
+        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,self.scope))
         # Select completion function
         if prev_symb=='$' or prefix.startswith('$'):
             # print('[SV:completion] ListBased - systemtask')
@@ -145,13 +145,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # print(f'[SV:completion] line = {l}')
             if m:
                 completion = self.enum_assign_completion(view,m.group('name'))
-        elif 'meta.struct.assign' in scope:
+        elif 'meta.struct.assign' in self.scope:
             # print('[SV:completion] Struct Assign')
             completion = self.struct_assign_completion(view,r,prev_symb==',')
-        elif 'meta.block.cover.systemverilog' in scope and 'string' not in scope:
+        elif 'meta.block.cover.systemverilog' in self.scope and 'string' not in self.scope:
             # print('[SV:completion] Cover')
             completion = self.cover_completion()
-        elif 'meta.block.constraint.systemverilog' in scope and 'meta.brackets' not in scope:
+        elif 'meta.block.constraint.systemverilog' in self.scope and 'meta.brackets' not in self.scope:
             completion = self.constraint_completion()
         elif prefix:
             symbols = {n:l for l,n in view.symbols()}
@@ -193,8 +193,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 #     sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
                 # ]
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
-        if isinstance(completion,list) and len(completion) == 0:
-            completion = None
+        # if flag!=0 and isinstance(completion,list) and len(completion) == 0:
+        #     completion = None
         return (completion, flag)
 
     def always_completion(self):
@@ -575,7 +575,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             print('[listbased_completion] No completion found for {}'.format(name))
             return []
         k = sublime.KIND_SNIPPET if name in ['tick','core'] else MYKIND_FUNCTION
-        return [sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) for x in l]
+        c = []
+        for x in l:
+            exclude = False
+            if len(x) > 3:
+                for s in x[3]:
+                    if s not in self.scope:
+                        exclude = True
+                        continue
+            if exclude:
+                continue
+            c.append(sublime.CompletionItem(x[0],x[1],x[2],kind=k,completion_format=1) )
+        return c
 
     def struct_completion(self,decl, isAssign=False, fe=[], prev_is_comma=False):
         c = []
