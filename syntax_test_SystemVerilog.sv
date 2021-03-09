@@ -301,7 +301,7 @@ typedef struct {
     logic signed a;
 //        ^^^^^^ storage.modifier.systemverilog
     randc int b;
-//  ^^^^^ storage.type.rand.systemverilog
+//  ^^^^^ storage.modifier.rand.systemverilog
 //        ^^^ storage.type.systemverilog
     bit [3:0] c;
     } mystruct;
@@ -696,7 +696,7 @@ task mytask();
    endsequence
 endtask:mytask
 
-function void randseq2();
+local function void randseq2();
 
   randsequence(m)
     void A : A1 A2;

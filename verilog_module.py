@@ -2,13 +2,9 @@ import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, imp
 import time, json
 
-try:
-    from SystemVerilog.verilogutil import verilogutil
-    from SystemVerilog.verilogutil import sublimeutil
-except ImportError:
-    sys.path.append(os.path.join(os.path.dirname(__file__), "verilogutil"))
-    import verilogutil
-    import sublimeutil
+
+from .verilogutil import verilogutil
+from .verilogutil import sublimeutil
 
 list_module_files = {}
 lmf_update_ongoing = False

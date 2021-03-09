@@ -433,9 +433,11 @@ class VerilogTypePopup :
             # Type not found in current file ? fallback to sublime index
             if not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
-            elif ti['type'] and ti['type'] not in ['struct','enum','logic','bit','reg','wire','input','output','inout']:
+            elif ti['type'] and ti['type'].split()[0] not in ['struct','enum','logic','bit','reg','wire','input','output','inout','int']:
                 t = ti['type']
-                ti = verilog_module.lookup_type(self.view,t)
+                tti = verilog_module.lookup_type(self.view,t)
+                if tti:
+                    ti = tti
             if ti:
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:

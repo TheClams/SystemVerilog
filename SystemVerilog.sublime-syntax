@@ -75,29 +75,27 @@ contexts:
         2: keyword.operator.cast.systemverilog
   # Type Definition
   user-defined-type:
-    - match: '^\s*(localparam|parameter)\s+([A-Z_][A-Z0-9_]*)\b\s*(?=(=))'
+    - match: \s*\b(localparam|parameter)\b
       scope: meta.param.systemverilog
       captures:
         1: keyword.other.systemverilog
-        2: constant.other.systemverilog
-    - match: '^\s*(localparam|parameter)\s+({{id}})\b\s*(?=(=))'
-      scope: meta.param.systemverilog
+      push:
+        - include: comments
+        - include: type-base
+        - include: type-or-name-inst
+        - include: else-pop
+    - match: \s*\b(static|local|const|protected|virtual)\b
       captures:
         1: keyword.other.systemverilog
-    # - match: '^\s*(static\s+)?(local\s+|protected\s+|localparam\s+|parameter\s+)?(const\s+|virtual\s+)?(rand\s+|randc\s+)?(?:(var|wire)\s+)?(({{id}})(::))?({{id}}\b)?\s*(?=(#\s*\([\w,\:#\(\)]+\)\s*)?(\s*\[.*?\]\s*)*{{id}}(\s*\[.*?\]\s*)*\s*(;|,|=|''\{))'
-    #   scope: meta.userdefined.systemverilog
-    #   captures:
-    #     1: keyword.other.systemverilog
-    #     2: keyword.other.systemverilog
-    #     3: keyword.other.systemverilog
-    #     4: storage.modifier.rand.systemverilog
-    #     5: storage.type.net.systemverilog
-    #     7: support.type.scope.systemverilog
-    #     8: keyword.operator.scope.systemverilog
-    #     9: storage.type.userdefined.systemverilog
-    - match: \s*\b(static|local|const|protected|virtual|localparam|parameter)\b
-      captures:
-        1: keyword.other.systemverilog
+      push:
+        - match: \b(?:static|local|const|protected|virtual)\b
+          scope: keyword.other.systemverilog
+        - include: rand-modifier
+        - include: comments
+        - include: type-base
+        - include: type-or-name-inst
+        - include: else-pop
+
   nettype-def:
     - match: '\s*\b(nettype)\s+({{id}})\s+({{id}})(\s+(with)\s+({{id}}))?'
       captures:
@@ -141,6 +139,15 @@ contexts:
       scope: storage.modifier.sign.systemverilog
     - match: '\b(vectored|scalared)\b'
       scope: storage.modifier.vector.systemverilog
+  rand-modifier:
+    - match: \s*\b(rand|randc)\b
+      scope: storage.modifier.rand.systemverilog
+      push:
+        - include: comments
+        - include: data-decl
+        - include: type-base
+        - include: type-or-name-inst
+        - include: else-pop
   storage-modifier-systemverilog:
     - match: '\b(small|medium|large|supply[01]|strong[01]|pull[01]|weak[01]|highz[01])\b'
       scope: storage.modifier.systemverilog
@@ -176,17 +183,15 @@ contexts:
       captures:
         1: support.type.scope.systemverilog
         2: keyword.operator.scope.systemverilog
+
+
   all-types:
     - include: type-base
     - include: nettype
     - include: data-decl
     - include: type-modifier
+    - include: rand-modifier
     - include: struct_decl
-    - match: \s*\b(rand|randc)\b
-      scope: storage.type.rand.systemverilog
-      push:
-        - include: data-decl
-        - include: else-pop
     - match: \btype\b
       scope: keyword.other.systemverilog
     - match: ^\s*(typedef)\s+(class|enum|struct|union|interface\s+class)\s+({{id}})\s*(;)
@@ -666,14 +671,14 @@ contexts:
     - match: bind\b
       scope: keyword.control.systemverilog
       push: [module-inst-type, bind-path]
-    #- match: ^\s*(?={{id}}\s*(\b\w|#[^#]|\[|\n))
-    - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
+    # - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
+    - match: ^\s*(?={{id}}\s*(\b\w|#[^#]|\[|\n))
       branch_point: bp-module
       branch:
         - test-var-name
         - module-inst-type
-        - obj-inst-type
-        - obj-inst-name
+        - obj-inst-type--bpmod
+        - obj-inst-name--bpmod
 
   test-var-name:
     - match: '\b([A-Z][A-Z0-9_]*)\b'
@@ -698,14 +703,50 @@ contexts:
     - include: comments
     - include: else-pop
 
-  obj-inst-type:
+  obj-inst-type--bpmod:
     - meta_scope: meta.obj.inst.systemverilog
     - match: '{{id}}'
       scope : storage.type.userdefined.systemverilog
-      set : [obj-inst-name, opt-packed-dim, opt-param-bind]
+      set : [obj-inst-name--bpmod, opt-packed-dim, opt-param-bind]
     - include: comments
     - match: (?=\S)
       fail: bp-module
+
+  obj-inst-name--bpmod:
+    - match: '\b({{ID}})\b'
+      scope: constant.other.net.systemverilog
+      pop: true
+    - match: '{{id}}'
+      pop: true
+    - include: comments
+    - match: (?=\S)
+      fail: bp-module
+
+  type-or-name-inst:
+    - match: (?={{id}})
+      branch_point: bp-id
+      branch:
+        - obj-inst-type--bpid
+        - obj-inst-name--bpid
+
+  obj-inst-type--bpid:
+    - meta_scope: meta.obj.inst.systemverilog
+    - match: '{{id}}'
+      scope : storage.type.userdefined.systemverilog
+      set : [obj-inst-name--bpid, opt-packed-dim, opt-param-bind]
+    - include: comments
+    - match: (?=\S)
+      fail: bp-id
+
+  obj-inst-name--bpid:
+    - match: '\b({{ID}})\b'
+      scope: constant.other.net.systemverilog
+      pop: 2
+    - match: '{{id}}'
+      pop: 2
+    - include: comments
+    - match: (?=\S)
+      fail: bp-id
 
   packed-dim:
     - match: \[
@@ -752,16 +793,6 @@ contexts:
     - match: (?=\S)
       fail: bp-module
     - include: comments
-
-  obj-inst-name:
-    - match: '\b([A-Z][A-Z0-9_]*)\b'
-      scope: constant.other.net.systemverilog
-      pop: true
-    - match: '{{id}}'
-      pop: true
-    - include: comments
-    - match: (?=\S)
-      fail: bp-module
 
   terminator:
     - include: comments

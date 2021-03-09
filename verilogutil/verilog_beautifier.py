@@ -1254,7 +1254,7 @@ class VerilogBeautifier():
                     l += ' ' + m.group('comment').strip()
             else : # Not a declaration ? don't touch
                 l = line
-            txt_new += l + '\n'
+            txt_new += l.rstrip() + '\n'
         if txt[-1]!='\n':
             txt_new = txt_new[:-1]
         return txt_new

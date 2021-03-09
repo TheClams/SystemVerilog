@@ -1,0 +1,9 @@
+SystemVerilog 3.0.3 Changelog:
+
+## Improvement ##
+  - Navigation:
+    * Fix a few regression on popup (missing type)
+  - Highlight:
+    * Continue improving the user-defined type behavior (less highlight breaking)
+  - Alignement:
+    * Remove trailing spaces when align semicolon is false (close issue #20)

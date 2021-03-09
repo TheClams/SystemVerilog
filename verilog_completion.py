@@ -2,22 +2,10 @@ import sublime, sublime_plugin
 import re, string, os, sys, imp
 import collections
 
-try:
-    from SystemVerilog.verilogutil import verilogutil
-    from SystemVerilog.verilogutil import verilog_beautifier
-    from SystemVerilog.verilogutil import sublimeutil
-except ImportError:
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'verilogutil'))
-    import verilogutil
-    import verilog_beautifier
-    import sublimeutil
-
-try:
-    from SystemVerilog import verilog_module
-    import verilog_module
-except ImportError:
-    sys.path.append(os.path.dirname(__file__))
-    import verilog_module
+from . import verilog_module
+from .verilogutil import verilogutil
+from .verilogutil import verilog_beautifier
+from .verilogutil import sublimeutil
 
 ############################################################################
 
