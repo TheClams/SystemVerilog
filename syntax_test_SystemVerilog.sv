@@ -270,11 +270,11 @@ localparam myvar1 = MY_INIT1;
 localparam logic [1:0] myvar2 = MY_INIT2;
 
 
-bind  bind_assertion.test   assertion_ip i_assert_ip (
-// <- keyword.control.systemverilog
-//                  ^ punctuation.accessor.dot.systemverilog
-//                          ^^^^^^^^^^^^ storage.type.module.systemverilog
-//                                       ^^^^^^^^^^^ entity.name.type.module.systemverilog
+   bind  bind_assertion.test   assertion_ip i_assert_ip (
+// ^ keyword.control.systemverilog
+//                     ^ punctuation.accessor.dot.systemverilog
+//                             ^^^^^^^^^^^^ storage.type.module.systemverilog
+//                                          ^^^^^^^^^^^ entity.name.type.module.systemverilog
    .clk_ip   (clk),
 //  ^^^^^^ support.function.port.systemverilog
 //            ^^^^^^ meta.module.inst.systemverilog

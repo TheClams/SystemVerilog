@@ -1,14 +1,27 @@
 import sublime, sublime_plugin
-import re, string, os, sys, imp
+import re, string, os, sys, imp, time, threading
 
 from .verilogutil import verilogutil
 from .verilogutil import verilog_beautifier
 from .verilogutil import sublimeutil
 
 def plugin_loaded():
-    imp.reload(verilogutil)
-    imp.reload(verilog_beautifier)
-    imp.reload(sublimeutil)
+    r = threading.Thread(target=reload, daemon=True)
+    r.start()
+
+def reload():
+    cnt = 3
+    while cnt > 0:
+        try:
+            from .verilogutil import verilogutil, verilog_beautifier, sublimeutil
+            imp.reload(verilogutil)
+            imp.reload(verilog_beautifier)
+            imp.reload(sublimeutil)
+            print('[SV] Align Loaded')
+            cnt = 0
+        except:
+            cnt -= 1
+            time.sleep(3)
 
 class VerilogAlign(sublime_plugin.TextCommand):
 

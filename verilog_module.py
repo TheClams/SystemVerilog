@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap, imp
-import time, json
+import re, string, os, sys, functools, mmap, imp, time, threading
+import json
 
 
 from .verilogutil import verilogutil
@@ -10,8 +10,8 @@ list_module_files = {}
 lmf_update_ongoing = False
 
 def plugin_loaded():
-    imp.reload(verilogutil)
-    imp.reload(sublimeutil)
+    r = threading.Thread(target=reload, daemon=True)
+    r.start()
     fname = os.path.join(sublime.cache_path(),"systemverilog_lmf.json")
     # print('Cache file = {}'.format(fname))
     if os.path.isfile(fname) :
@@ -19,6 +19,19 @@ def plugin_loaded():
         list_module_files = json.load(open(fname))
         # print('Found list of modules files for projects {}'.format(list(list_module_files.keys())))
 
+
+def reload():
+    cnt = 3
+    while cnt > 0:
+        try:
+            from .verilogutil import verilogutil, sublimeutil
+            imp.reload(verilogutil)
+            imp.reload(sublimeutil)
+            print('[SV] Module Loaded')
+            cnt = 0
+        except:
+            cnt -= 1
+            time.sleep(3)
 
 
 ############################################################################

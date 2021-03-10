@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import re, string, os, sys, imp
+import re, string, os, sys, imp, time, threading
 import collections
 
 from . import verilog_module
@@ -10,10 +10,26 @@ from .verilogutil import sublimeutil
 ############################################################################
 
 def plugin_loaded():
-    imp.reload(verilogutil)
-    imp.reload(verilog_beautifier)
-    imp.reload(sublimeutil)
-    imp.reload(verilog_module)
+    r = threading.Thread(target=reload, daemon=True)
+    r.start()
+
+def reload():
+    cnt = 3
+    while cnt > 0:
+        try:
+            from . import verilog_module
+            from .verilogutil import verilogutil, verilog_beautifier, sublimeutil
+            imp.reload(verilogutil)
+            imp.reload(verilog_beautifier)
+            imp.reload(sublimeutil)
+            imp.reload(verilog_module)
+            print('[SV] Completion Loaded')
+            cnt = 0
+        except:
+            cnt -= 1
+            time.sleep(3)
+
+
 
 ############################################################################
 # Kind definition

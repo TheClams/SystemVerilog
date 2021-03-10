@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import sublime, sublime_plugin
-import re, string, os, sys, functools, mmap, pprint, imp, threading
+import re, string, os, sys, functools, mmap, pprint, imp, time, threading
 from collections import Counter
 from plistlib import readPlistFromBytes
 
@@ -26,10 +26,8 @@ navBar = {}
 colors = {}
 
 def plugin_loaded():
-    imp.reload(verilogutil)
-    imp.reload(sublimeutil)
-    imp.reload(verilog_module)
-    imp.reload(st_color_scheme_matcher)
+    r = threading.Thread(target=reload, daemon=True)
+    r.start()
     global sv_settings
     global pref_settings
     global debug
@@ -43,6 +41,23 @@ def plugin_loaded():
     if debug:
         print('[SV:Popup] Plugin Loaded')
     init_css()
+
+def reload():
+    cnt = 3
+    while cnt > 0:
+        try:
+            from . import verilog_module
+            from .verilogutil import verilogutil, verilog_beautifier, sublimeutil
+            from .color_scheme_util import st_color_scheme_matcher, rgba
+            imp.reload(verilogutil)
+            imp.reload(sublimeutil)
+            imp.reload(verilog_module)
+            imp.reload(st_color_scheme_matcher)
+            print('[SV] Navigation Loaded')
+            cnt = 0
+        except:
+            cnt -= 1
+            time.sleep(3)
 
 def init_css():
     global use_tooltip

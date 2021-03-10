@@ -7,6 +7,7 @@ scope: source.systemverilog
 variables:
   id: '[A-Za-z_][A-Za-z_0-9]*'
   ID: '[A-Z_][A-Z0-9_]*'
+  keyword_base: '(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int|generate)\b'
 contexts:
   main:
     - include: module-def
@@ -164,11 +165,14 @@ contexts:
       push:
         - match: '\b(signed|unsigned)\b'
           scope: storage.modifier.systemverilog
+        - match: (?={{keyword_base}})
+          pop: 1
         - match: '{{ID}}'
           scope: constant.other.net.systemverilog
-          pop: true
+          pop: 1
         - match: '{{id}}'
-          pop: true
+          pop: 1
+        - include: comments
         - include: packed-dim
         - include: else-pop
   type-base-novar:
@@ -668,10 +672,9 @@ contexts:
 #  - First eliminate cases where logical word operator are used : and/or/within/intersect/...
 #  - Then check for parameters, packed array dimension
   module-or-obj-inst:
-    - match: bind\b
+    - match: (?:^\s*|\b)bind\b
       scope: keyword.control.systemverilog
       push: [module-inst-type, bind-path]
-    # - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
     - match: ^\s*(?={{id}}\s*(\b\w|#[^#]|\[|\n))
       branch_point: bp-module
       branch:
@@ -690,7 +693,7 @@ contexts:
   test-var-kw:
     - include: comments
     - include: packed-dim
-    - match: (?=(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int|generate)\b)
+    - match: (?={{keyword_base}})
       pop: true
     - match: (?=\S)
       fail: bp-module
@@ -726,8 +729,15 @@ contexts:
     - match: (?={{id}})
       branch_point: bp-id
       branch:
+        - test-var-kw--bpid
         - obj-inst-type--bpid
         - obj-inst-name--bpid
+
+  test-var-kw--bpid:
+    - match: (?={{keyword_base}})
+      pop: 2
+    - match: (?=\S)
+      fail: bp-id
 
   obj-inst-type--bpid:
     - meta_scope: meta.obj.inst.systemverilog
