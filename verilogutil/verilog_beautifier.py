@@ -1,7 +1,8 @@
 import argparse
 import re
 import string
-import verilogutil
+
+from . import verilogutil
 
 # Helper function
 def split_on_comma(txt) :
