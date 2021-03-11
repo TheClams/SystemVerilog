@@ -17,6 +17,7 @@ def reload():
     cnt = 3
     while cnt > 0:
         try:
+            time.sleep(1)
             from . import verilog_module
             from .verilogutil import verilogutil, verilog_beautifier, sublimeutil
             imp.reload(verilogutil)
@@ -27,7 +28,7 @@ def reload():
             cnt = 0
         except:
             cnt -= 1
-            time.sleep(3)
+            time.sleep(2)
 
 
 

@@ -274,7 +274,7 @@ class VerilogBeautifier():
             # Check that a module block get the whole port declaration
             if self.block_state=='module' and w==';':
                 tmp = verilogutil.clean_comment(block+line).strip()
-                m = re.search(r';\s*\(',tmp,flags=re.MULTILINE)
+                m = re.search(r';\s*(#\s*)?\(',tmp,flags=re.MULTILINE)
                 m2 = re.search(r'\bimport\b',tmp,flags=re.MULTILINE)
                 mod_import = m2 and not m
             else :
