@@ -340,6 +340,14 @@ interface class base_ic;
 
 endclass : baseic
 //         ^^^^^^ meta.class.body.systemverilog invalid.illegal.systemverilog
+
+class class_param #(parameter int A=1, string t_name={"cp_",int_to_string(NB_CLK),"_name"}) extends baseclass#(basetype,"basename");
+//                                                          ^ support.function.generic
+//                                                                                        ^ meta.class.body.systemverilog meta.param.definition.systemverilog punctuation.section.group.end.systemverilog
+//                                                                                          ^ meta.implements.systemverilog keyword.control.systemverilog
+//                                                                                                  ^entity.other.inherited-class.systemverilog
+endclass: class_param
+
 /*------------------------------------------------------------------------------
 --  Task & functions
 ------------------------------------------------------------------------------*/

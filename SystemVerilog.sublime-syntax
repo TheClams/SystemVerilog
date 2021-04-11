@@ -6,7 +6,7 @@ file_extensions: [sv, v, svh, vh]
 scope: source.systemverilog
 variables:
   id: '[A-Za-z_][A-Za-z_0-9]*'
-  ID: '[A-Z_][A-Z0-9_]*'
+  ID: '[A-Z_][A-Z0-9_]*\b'
   keyword_base: '(always|always_ff|always_comb|always_latch|assign|initial|if|else|for|end|endcase|endmodule|endclass|endfunction|endtask|endclocking|iff|intersect|and|or|throughout|within|constraint|default|clocking|function|task|virtual|const|typedef|localparam|parameter|logic|int|generate)\b'
 contexts:
   main:
@@ -539,22 +539,30 @@ contexts:
         - match: \b(virtual)\b
           scope: keyword.control.systemverilog
 
-  block-param-def:
+  block-param-def-start:
     - match: (#)\s*(\()
       captures:
         1: keyword.operator.other.param.systemverilog
         2: punctuation.section.group.begin.systemverilog
       push:
         - meta_scope: meta.param.definition.systemverilog
-        - match: \)
-          scope: punctuation.section.group.end.systemverilog
-          pop: true
-        - match: \s*(parameter|localparam)\b
-          scope: keyword.other.systemverilog
-        - include: block-param-bind
-        - include: base-grammar
-        - match: \b(virtual)\b
-          scope: keyword.control.systemverilog
+        - include: block-param-def-body
+
+  block-param-def-body:
+    - match: \(
+      scope: punctuation.section.group.begin.systemverilog
+      push: block-param-def-body
+    - match: \)
+      scope: punctuation.section.group.end.systemverilog
+      pop: true
+    - match: \s*(parameter|localparam)\b
+      scope: keyword.other.systemverilog
+    - include: block-param-bind
+    - include: base-grammar
+    - include: function-call
+    - match: \b(virtual)\b
+      scope: keyword.control.systemverilog
+
 
   # Block definition
   module-def:
@@ -820,7 +828,7 @@ contexts:
         3: entity.name.type.class.systemverilog
       push: [ class-body, class-base]
   class-base:
-    - include: block-param-def
+    - include: block-param-def-start
     - match: \b(extends|implements)\b
       scope: keyword.control.systemverilog
       push:

@@ -1,0 +1,12 @@
+SystemVerilog 3.0.7 Changelog:
+
+## Improvement ##
+  - Highlight:
+    * Fix issue wih function call inside class parameter definition
+    * Fix issue with mixed casing in signal name
+  - Completion:
+    * Avoid nwanted completion after dot or comma when there is no completion to provide
+  - Alignement:
+    * Fix issue with parameterized module with import statement
+  - Misc:
+    * improve plugin hot-reload

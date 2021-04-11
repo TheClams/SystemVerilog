@@ -131,6 +131,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif prev_symb=='.':
             # print('[SV:completion] Dot')
             completion =  self.dot_completion(view,r)
+            if len(completion) == 0:
+                completion = None
         elif prev_symb=='::':
             # print('[SV:completion] Scope')
             completion =  self.scope_completion(view,prev_word)
@@ -157,8 +159,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # print('[SV:completion] Cover')
             completion = self.cover_completion()
         elif 'meta.block.constraint.systemverilog' in self.scope and 'meta.brackets' not in self.scope:
+            # print('[SV:completion] Constraint')
             completion = self.constraint_completion()
         elif prefix:
+            # print('[SV:completion] Other')
             symbols = {n:l for l,n in view.symbols()}
             l = ''
             if 'meta.function.prototype' in scope_tmp:
@@ -197,6 +201,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 #     sublime.CompletionItem("posedge","keyword" ,"posedge ",kind=MYKIND_KEYWORD),
                 #     sublime.CompletionItem("negedge","keyword" ,"negedge ",kind=MYKIND_KEYWORD)
                 # ]
+        elif prev_symb.endswith(','):
+            completion = None
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
         # if flag!=0 and isinstance(completion,list) and len(completion) == 0:
         #     completion = None
