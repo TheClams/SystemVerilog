@@ -18,7 +18,7 @@ def reload():
             imp.reload(verilogutil)
             imp.reload(verilog_beautifier)
             imp.reload(sublimeutil)
-            print('[SV] Align Loaded')
+            # print('[SV] Align Loaded')
             cnt = 0
         except:
             cnt -= 1

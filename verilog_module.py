@@ -28,7 +28,7 @@ def reload():
             from .verilogutil import verilogutil, sublimeutil
             imp.reload(verilogutil)
             imp.reload(sublimeutil)
-            print('[SV] Module Loaded')
+            # print('[SV] Module Loaded')
             cnt = 0
         except:
             cnt -= 1

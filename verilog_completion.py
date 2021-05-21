@@ -24,7 +24,7 @@ def reload():
             imp.reload(verilog_beautifier)
             imp.reload(sublimeutil)
             imp.reload(verilog_module)
-            print('[SV] Completion Loaded')
+            # print('[SV] Completion Loaded')
             cnt = 0
         except:
             cnt -= 1
@@ -69,6 +69,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # Extract previous character and whole line before prefix
         prev_symb = ''
         prev_word = ''
+        prev_char = view.substr(sublime.Region(r.a-1,r.b))
         lr = sublime.Region(r.a,r.b)
         lr.a = view.find_by_class(lr.b,False,sublime.CLASS_LINE_START)
         l = view.substr(lr).strip()
@@ -105,7 +106,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         completion = []
         scope_tmp = view.scope_name(tmp_r.a)
         # if self.debug:
-        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,self.scope))
+        # print('[SV:on_query_completions] prefix="{0}" previous symbol="{1}" previous word="{2}" char="{5}" line="{3}" scope={4}'.format(prefix,prev_symb,prev_word,l,self.scope,prev_char))
         # Select completion function
         if prev_symb=='$' or prefix.startswith('$'):
             # print('[SV:completion] ListBased - systemtask')
@@ -131,7 +132,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif prev_symb=='.':
             # print('[SV:completion] Dot')
             completion =  self.dot_completion(view,r)
-            if len(completion) == 0:
+            if completion is not None and len(completion) == 0:
                 completion = None
         elif prev_symb=='::':
             # print('[SV:completion] Scope')
@@ -206,6 +207,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
         # if flag!=0 and isinstance(completion,list) and len(completion) == 0:
         #     completion = None
+        # Ensure completion from sublime are available if there was a prefix
+        # print(completion)
+        if completion == None and prefix != '' or prev_char.strip()=='':
+            completion = []
         return (completion, flag)
 
     def always_completion(self):

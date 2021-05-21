@@ -28,19 +28,6 @@ colors = {}
 def plugin_loaded():
     r = threading.Thread(target=reload, daemon=True)
     r.start()
-    global sv_settings
-    global pref_settings
-    global debug
-    pref_settings = sublime.load_settings('Preferences.sublime-settings')
-    pref_settings.clear_on_change('reload')
-    pref_settings.add_on_change('reload',plugin_loaded)
-    sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
-    sv_settings.clear_on_change('reload')
-    sv_settings.add_on_change('reload',plugin_loaded)
-    debug =  sv_settings.get("sv.debug")
-    if debug:
-        print('[SV:Popup] Plugin Loaded')
-    init_css()
 
 def reload():
     cnt = 3
@@ -54,11 +41,24 @@ def reload():
             imp.reload(sublimeutil)
             imp.reload(verilog_module)
             imp.reload(st_color_scheme_matcher)
-            print('[SV] Navigation Loaded')
+            # print('[SV] Navigation Loaded')
             cnt = 0
         except:
             cnt -= 1
             time.sleep(2)
+    global sv_settings
+    global pref_settings
+    global debug
+    pref_settings = sublime.load_settings('Preferences.sublime-settings')
+    pref_settings.clear_on_change('reload')
+    pref_settings.add_on_change('reload',plugin_loaded)
+    sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
+    sv_settings.clear_on_change('reload')
+    sv_settings.add_on_change('reload',plugin_loaded)
+    debug =  sv_settings.get("sv.debug")
+    if debug:
+        print('[SV:Popup] Plugin Loaded')
+    init_css()
 
 def init_css():
     global use_tooltip
