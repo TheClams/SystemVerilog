@@ -70,7 +70,7 @@ def get_type_info(txt,var_name,search_decl=True):
     # Struct
     m = re.search(re_union+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
     if m:
-        # print('[get_type_info] {} type is struct'.format(var_name))
+        # print('[get_type_info] {} type is struct/union'.format(var_name))
         return get_type_info_from_match(var_name,m,1,3,5,-1,'struct')[0]
     # Typedef
     m = re.search(re_tdp+r'('+var_name+r')\b\s*;.*$', txt, flags=re.MULTILINE)
@@ -311,7 +311,7 @@ def get_type_info_from_match(var_name,m,idx_type,idx_bw,idx_max,idx_val,tag):
             tmp = m.groups()[i].strip()
             if tmp:
                 # Cleanup space in enum/struct declaration
-                if i==4 and t in ['enum','struct']:
+                if i==4 and t in ['enum','struct','union']:
                     tmp = re.sub(r'\s+',' ',tmp,flags=re.MULTILINE)
                 #Cleanup spaces in bitwidth
                 if i==idx_bw:

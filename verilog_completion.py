@@ -282,7 +282,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         w = str.rstrip(view.substr(r))
         scope = view.scope_name(r.a)
         completion = []
-        # print ('previous word: ' + w)
+        # print ('[SV:dot_completion] previous word: ' + w)
         if w == 'this':
             cname,_,_ = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
             if cname :
@@ -366,6 +366,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             # get type information on the variable
             txt = view.substr(sublime.Region(0, view.size()))
             ti = verilog_module.type_info_on_hier(view,w,txt,r)
+            # print('[SV:dot_completion] Type = {}'.format(ti))
             if not ti or (ti['type'] is None and 'meta.module.port.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
@@ -410,6 +411,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         if fname.lower().endswith(file_ext):
                             # print(w + ' of type ' + t + ' defined in ' + str(fname))
                             tti = verilog_module.type_info_file(view,fname,t)
+                            # print(tti)
                             if tti['type']:
                                 if tti['tag']=='typedef':
                                     tti = verilog_module.lookup_type(view,tti['type'])
@@ -607,8 +609,10 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def struct_completion(self,decl, isAssign=False, fe=[], prev_is_comma=False):
         c = []
         m = re.search(r'\{(.*)\}', decl)
+        # print("[struct_completion] decl = {} -> {}".format(decl,m))
         if m is not None:
             fti = verilogutil.get_all_type_info(m.groups()[0])
+            # print("[struct_completion] fti = {}".format(fti))
             if isAssign and not fe:
                 c.append(sublime.CompletionItem('all_fields','All fields',', '.join(['{0}: ${1}'.format(f['name'],i+1) for i,f in enumerate(fti)]),kind=sublime.KIND_SNIPPET, completion_format=1))
             for f in fti:
@@ -625,6 +629,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     c.append(sublime.CompletionItem(f['name'],f_type,f_name,kind=MYKIND_FIELD, completion_format=1))
             if isAssign and 'default' not in fe:
                 c.append(sublime.CompletionItem('default','default','default:',kind=MYKIND_KEYWORD))
+        # print("[struct_completion] decl = {}".format(decl))
         return c
 
 

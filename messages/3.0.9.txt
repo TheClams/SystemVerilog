@@ -1,0 +1,4 @@
+SystemVerilog 3.0.9 Changelog:
+
+## Bug Fix ##
+  - Completion: fix union completion not working at all
