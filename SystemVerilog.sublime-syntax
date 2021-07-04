@@ -232,6 +232,10 @@ contexts:
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
+    - match: '\s*\b(wait)\s+(fork)\b'
+      captures:
+        1: keyword.control.systemverilog
+        2: keyword.control.systemverilog
     - match: '\s*\b(fork)\b\s*(?:(:)\s*({{id}}))?'
       scope: meta.definition.systemverilog
       captures:
