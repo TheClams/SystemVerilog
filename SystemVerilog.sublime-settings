@@ -207,6 +207,6 @@
 		["forkn"      , "fork..none"  ,"fork\n\t$0\njoin_none"       , [], []],
 		["forka"      , "fork..any"   ,"fork\n\t$0\njoin_any"        , [], []],
 		["posedge"    , "event"   ,"posedge ${0:clk}"   , ["sensitivity"], []],
-		["negedge"    , "event"   ,"posedge ${0:rst_n}" , ["sensitivity"], []],
+		["negedge"    , "event"   ,"negedge ${0:rst_n}" , ["sensitivity"], []],
 	]
 }

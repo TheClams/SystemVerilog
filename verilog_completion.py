@@ -278,11 +278,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             r.b = r.a
             r.a -=1
             array_depth += 1
+        scope = view.scope_name(r.a)
         r = view.word(r)
         w = str.rstrip(view.substr(r))
-        scope = view.scope_name(r.a)
         completion = []
-        # print ('[SV:dot_completion] previous word: ' + w)
+        # print (f'[SV:dot_completion] previous word: {w}, {scope=}')
         if w == 'this':
             cname,_,_ = sublimeutil.find_closest(view,r,r'\bclass\s+(\w+)\b')
             if cname :
@@ -314,7 +314,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 completion.append(sublime.CompletionItem('distribute_first','option','distribute_first = $0;',kind=MYKIND_FIELD, completion_format=1))
             return completion
         #
-        elif w=='' or not re.match(r'\w+',w) or start_word.startswith('('):
+        elif w=='' or not re.match(r'\w+',w) or start_word.startswith('(') or start_word.startswith('#'):
             #No word before dot => check the scope
             if 'meta.module.inst' in scope:
                 r = sublimeutil.expand_to_scope(view,'meta.module.inst',r)
@@ -335,6 +335,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         if mi:
                             break
                     is_param = 'meta.block.bind.param' in scope
+                    print (f'{scope=}')
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
             else :
                 return completion

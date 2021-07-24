@@ -228,7 +228,7 @@ contexts:
         1: keyword.other.block.systemverilog
         3: keyword.operator.systemverilog
         4: entity.label.systemverilog
-    - match: '\s*\b(disable)\b\s*(?:(fork)|({{id}}))?'
+    - match: '\s*\b(disable)\b\s*(?:(fork|iff)|({{id}}))?'
       captures:
         1: keyword.control.systemverilog
         2: keyword.control.systemverilog
@@ -273,7 +273,7 @@ contexts:
         1: keyword.other.systemverilog
         2: keyword.other.systemverilog
         3: entity.name.type.class.systemverilog
-    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|showcancelled|specify|specparam|table|use)\b
+    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|iff|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|showcancelled|specify|specparam|table|use)\b
       captures:
         1: keyword.other.systemverilog
     - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endsequence|endprogram|endclocking|endproperty|endchecker)\b(\s*(:)\s*(\w+))?
@@ -959,6 +959,7 @@ contexts:
           scope: punctuation.section.group.end.systemverilog
           pop: true
         - include: event-expression
+        - include: constants
     - match: (#|@)
       scope: keyword.operator.other.systemverilog
     # Separators

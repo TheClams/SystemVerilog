@@ -1,0 +1,10 @@
+SystemVerilog 3.0.10 Changelog:
+
+## Bug Fix ##
+  - Completion:
+    * fix module parameter completion missing for first parameter
+    * fix snippets for negedge
+  - Highlight:
+    * missing highlight of iff in assertion
+    * missing highlight of numbers in sensitvity list
+    * Support `wait fork` (was breaking highlighting)
