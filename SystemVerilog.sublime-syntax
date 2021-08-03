@@ -196,8 +196,9 @@ contexts:
     - include: type-modifier
     - include: rand-modifier
     - include: struct_decl
-    - match: \btype\b
-      scope: keyword.other.systemverilog
+    - match: \s*\b(type)\b
+      captures:
+        1: keyword.other.systemverilog
     - match: ^\s*(typedef)\s+(class|enum|struct|union|interface\s+class)\s+({{id}})\s*(;)
       scope: meta.typedef_forward.systemverilog
       captures:
@@ -499,6 +500,20 @@ contexts:
     - match: \.\*
       scope: keyword.operator.assignment.binding.systemverilog
     - include: binding-signal
+    # Handle parameterized type in parameter list
+    - match: '({{id}})\s*(#)'
+      captures:
+        1: storage.type.userdefined.systemverilog
+        2: keyword.operator.other.param.systemverilog
+      push: binding-block
+    # Catch case of module instance in module instance (due to macro for example)
+    - match: '({{id}})\s+({{id}})\s*(\()'
+      scope: meta.fallback.instance.systemverilog
+      captures:
+        1: storage.type.module.systemverilog
+        2: entity.name.type.module.systemverilog
+        3: punctuation.section.group.begin.systemverilog
+
   binding-signal:
     - match: \(
       scope: punctuation.section.group.begin.systemverilog
@@ -566,7 +581,6 @@ contexts:
     - include: function-call
     - match: \b(virtual)\b
       scope: keyword.control.systemverilog
-
 
   # Block definition
   module-def:

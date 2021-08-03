@@ -1,0 +1,7 @@
+SystemVerilog 3.0.10 Changelog:
+
+## Bug Fix ##
+  - Highlight:
+    * fix highlight of type keyword in parameters declaration
+    * fix highlight of parameterized type in parameter list
+    * fix some cases of broken highlighting due to macro in module instance

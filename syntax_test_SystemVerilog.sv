@@ -348,6 +348,15 @@ class class_param #(parameter int A=1, string t_name={"cp_",int_to_string(NB_CLK
 //                                                                                                  ^entity.other.inherited-class.systemverilog
 endclass: class_param
 
+class uvm_push_driver #(type REQ=uvm_sequence_item,
+                        type RSP=REQ) extends uvm_component;
+//                      ^^^^ keyword.other.systemverilog
+
+  uvm_blocking_put_imp #(REQ, uvm_push_driver #(REQ,RSP)) req_export;
+//^ storage.type.userdefined.systemverilog
+//                            ^ storage.type.userdefined.systemverilog
+endclass: uvm_push_driver
+
 /*------------------------------------------------------------------------------
 --  Task & functions
 ------------------------------------------------------------------------------*/
