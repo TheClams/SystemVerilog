@@ -1,4 +1,4 @@
-SystemVerilog 3.0.10 Changelog:
+SystemVerilog 3.0.11 Changelog:
 
 ## Bug Fix ##
   - Highlight:

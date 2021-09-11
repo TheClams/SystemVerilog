@@ -146,7 +146,7 @@ typedef union tagged packed {
 module my_module
 // <- keyword.control
 //     ^ entity.name.type
-    import my_pkg::*;
+    import my_pkg::*, my_pkg2 :: my_type2;
 //  ^ keyword.control
 //         ^ support.type.scope
 //               ^ keyword.operator.scope
@@ -188,6 +188,10 @@ wire my_pkg::my_type data;
 // <- storage.type
 //   ^ support.type.scope
 //           ^ storage.type
+
+my_pkg::my_type data;
+// <- support.type.scope
+//      ^ storage.type
 
 
     timeunit 1ns;
@@ -316,13 +320,16 @@ endmodule : my_module
 --  Class
 ------------------------------------------------------------------------------*/
 
-class Foo implements Bar, Blah; extends Bar;
+class Foo implements Bar, Blah; extends Bar, my_pkg :: Blah;
 //    ^^^ entity.name.type.class.systemverilog
 //        ^^^^^^^^^^ keyword.control.systemverilog
 //                   ^^^ entity.other.inherited-class.systemverilog
 //                        ^^^^ entity.other.inherited-class.systemverilog
 //                              ^^^^^^^ keyword.control.systemverilog
 //                                      ^^^ entity.other.inherited-class.systemverilog
+//                                           ^^^^^^ support.type.scope.systemverilog
+//                                                  ^^ keyword.operator.scope.systemverilog
+//                                                     ^^^^ entity.other.inherited-class.systemverilog
 endclass : Foo
 // <- keyword.control.systemverilog
 

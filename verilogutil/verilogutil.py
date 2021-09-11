@@ -580,7 +580,7 @@ def get_all_function(txt,funcname=r'\w+'):
     txt = re.sub(re_str,'',txt,flags=re.MULTILINE)
     # txt = re.sub(r'\n([ \t]*\n)+','\n',txt,flags=re.MULTILINE)
     # print('Content after filter : \n' + txt)
-    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+::)?'+funcname+r')\b\s*(\((.*?)\s*\))?\s*;(.*?)\bend\4\b'
+    re_str = r'(?s)()(?:\b(protected|local)\s+)?(\bvirtual\s+)?\b(function|task)\s+((?:\w+\s+)?(?:\w+\s+|\[[\d:]+\]\s+)?)\b((?:\w+\s*::\s*)?'+funcname+r')\b\s*(\((.*?)\s*\))?\s*;(.*?)\bend\4\b'
     fl += re.findall(re_str,txt,flags=re.MULTILINE)
     for ( f_def, f_access, f_virtual, f_type, f_return,f_name,f_args_,f_args, f_content) in fl:
         # print('Parsing function {} {}'.format(f_name,f_args_))

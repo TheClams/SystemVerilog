@@ -85,7 +85,6 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         elif view.classify(tmp_r.b) & (sublime.CLASS_PUNCTUATION_END | 8192 | 4096):
             #print('[SV:on_query_completions] tmp_r={0} => "{1}" ==>'.format(tmp_r,view.substr(tmp_r)))
             tmp_r.a = view.find_by_class(tmp_r.b,False,sublime.CLASS_PUNCTUATION_START)
-            # print('[SV:on_query_completions] (punct end) tmp_r={0} => "{1}" '.format(tmp_r,view.substr(tmp_r)))
             prev_symb = view.substr(tmp_r).strip()
             if not prev_symb :
                 tmp_r.b = view.find_by_class(tmp_r.a,False,sublime.CLASS_LINE_START | sublime.CLASS_PUNCTUATION_END | sublime.CLASS_WORD_END)
@@ -135,7 +134,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if completion is not None and len(completion) == 0:
                 completion = None
         elif prev_symb=='::':
-            # print('[SV:completion] Scope')
+            if not prev_word:
+                tmp_r.a = view.find_by_class(tmp_r.a,False,sublime.CLASS_WORD_START)
+                prev_word = view.substr(tmp_r).strip()
+            if prev_word:
+                flag = sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS
+            # print(f'[SV:completion] Scope of {prev_word}')
             completion =  self.scope_completion(view,prev_word)
         elif prev_symb.endswith(')'):
             # print('[SV:completion] Case ?')
@@ -208,8 +212,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         # if flag!=0 and isinstance(completion,list) and len(completion) == 0:
         #     completion = None
         # Ensure completion from sublime are available if there was a prefix
-        # print(completion)
-        if completion == None and prefix != '' or prev_char.strip()=='':
+        if completion == None and (prefix != '' or prev_char.strip()==''):
             completion = []
         return (completion, flag)
 

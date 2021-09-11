@@ -3,7 +3,7 @@ import os
 import pprint
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'verilogutil'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'verilogutil')))
 import verilog_beautifier
 class BeautifyConfig():
 
