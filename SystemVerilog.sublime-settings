@@ -25,6 +25,8 @@
 	"sv.mod_import_same_line"  : false, // When aligning module declaration, put import statement on same line as module
 	"sv.alignment_ignore_tick" : false, // Ignore line identation for every line starting with `ifdef,`elsif,...
 	"sv.align_comma_semicolon" : true,  // Aligne comma/semi-colon for signal/port declaration
+	"sv.align_paren"           : false, // Aligne closing parenthesis for module instance
+	"sv.param_port_alignment"  : true,  // Control if parameters/ports binding are align together
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
 	"sv.rst_name"           : "rst",    // Default reset active high
@@ -45,7 +47,6 @@
 	"sv.autoconnect"             : true,  // Control if signals are created and connected in module instantiation
 	"sv.param_explicit"          : false, // Control if parameter setting is explicit (appears in module instantiation even when default is used)
 	"sv.param_propagate"         : false, // Control if parameter setting is explicit (appear in module instantiation even when default is used)
-	"sv.param_port_alignment"    : true,  // Control if parameters/ports are align together
 	"sv.autoconnect_allow_prefix": true,  // True to expand search for signal to \w+_port
 	"sv.autoconnect_allow_suffix": true,  // True to expand search for signal to port_\w+
 	"sv.autoconnect_port_prefix" : [],    // List of prefix to remove from the port before looking for a signal connection

@@ -30,7 +30,7 @@ def split_on_comma(txt) :
 #
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True):
         self.settings = {'nbSpace': nbSpace,
                         'useTab':useTab,
                         'oneBindPerLine':oneBindPerLine,
@@ -43,6 +43,7 @@ class VerilogBeautifier():
                         'importSameLine' : importSameLine,
                         'ignoreTick' : ignoreTick,
                         'alignComma' : alignComma,
+                        'alignParen' : alignParen,
         }
         self.indentSpace = ' ' * nbSpace
         if useTab:
@@ -702,7 +703,7 @@ class VerilogBeautifier():
             txt_new += ' '
         txt_new += '(\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
-        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var|ref\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
+        re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var|wire\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'
         # print(re_str)
         # handle case of multiple input/output declared on same line
         # TODO : use a function to split text in code/comment and apply substitution only on the code part
@@ -722,8 +723,8 @@ class VerilogBeautifier():
         # Get Var length, if any
         len_var = 0
         for x in decl:
-            if x[1] != '':
-                len_var = 3
+            if len(x[1]) > len_var:
+                len_var = len(x[1])
         # Get bitwidth length, if any
         port_bw_l  = [re.findall(r'\[(.+?)\]',re.sub(r'\s*','',x[4])) for x in decl]
         len_bw_a = []
@@ -751,22 +752,23 @@ class VerilogBeautifier():
         len_type = 0
         len_type_user = 0
         for x in decl:
-            if x[3]=='' and x[4]=='' and x[2] not in ['logic', 'wire', 'reg', 'signed', 'unsigned']:
+            if x[3]=='' and x[4]=='' and x[2] not in ['logic', 'reg', 'signed', 'unsigned']:
                 if len_type_user < len(x[2]) :
                     len_type_user = len(x[2])
             else :
-                if len_type < len(x[2]) and  x[2] not in ['signed','unsigned']:
+                if len_type < len(x[2]) and x[2] not in ['signed','unsigned']:
                     len_type = len(x[2])
             if x[2] in ['signed','unsigned'] and len_sign<len(x[2]):
                 len_sign = len(x[2])
             elif x[3] in ['signed','unsigned'] and len_sign<len(x[3]):
                 len_sign = len(x[3])
+            # print('{} -> user_type={}, type={}, sign={}'.format(x,len_type_user,len_type,len_sign))
         len_type_full = len_type
         if len_var > 0 or len_bw > 0 or len_sign > 0 :
             if len_type > 0:
                 len_type_full +=1
-            if len_var > 0:
-                len_type_full += 4
+            # if len_var > 0:
+            #     len_type_full += len_var+1
             if len_bw > 0:
                 len_type_full += len_bw
             if len_sign > 0:
@@ -777,14 +779,19 @@ class VerilogBeautifier():
         else :
             max_len = len_type_user
         # Adjust IF length compare to the other
-        if len_if < max_len+len_dir+1:
-            len_if = max_len+len_dir+1
+        total = max_len+len_dir+1
+        if len_var > 0:
+            total += len_var+1
+        if len_if < total:
+            len_if = total
         else :
             max_len = len_if-len_dir-1
+            if len_var > 0:
+                max_len -= (len_var+1)
         if len_type_user < max_len:
             len_type_user = max_len
-        if len_var > 0 :
-            len_type_user -= len_var+1
+        # if len_var > 0 :
+        #     len_type_user -= len_var+1
         # print('Len:  dir=' + str(len_dir) + ' if=' + str(len_if) + ' type=' + str(len_type) + ' sign=' + str(len_sign) + ' bw=' + str(len_bw) + ' type_user=' + str(len_type_user) + ' port=' + str(max_port_len) + ' max_len=' + str(max_len) + ' len_type_full=' + str(len_type_full))
         # Rewrite block line by line with padding for alignment
         lines = txt_port.splitlines()
@@ -806,7 +813,7 @@ class VerilogBeautifier():
                         l_new += m_port.group('dir').ljust(len_dir)
                         if len_var>0:
                             if m_port.group('var'):
-                                l_new += ' ' + m_port.group('var')
+                                l_new += ' ' + m_port.group('var').ljust(len_var)
                             else:
                                 l_new += ' '.ljust(len_var+1)
                         # Align userdefined type differently from the standard type
@@ -1029,7 +1036,7 @@ class VerilogBeautifier():
                 max_port_len_impl = max(ports_impl_len)
                 if max_port_len_impl > max_port_len:
                     max_port_len = max_port_len_impl
-        if sigs_len and self.settings['instAlignPort']:
+        if sigs_len and self.settings['instAlignPort'] and self.settings['alignParen'] :
             max_sig_len = max(sigs_len)
         #TODO: if the .* is at the beginning make sure it is not follow by another binding
         lines = txt.strip().splitlines()
