@@ -4,3 +4,9 @@ SystemVerilog 3.1.0 Changelog:
   - Alignement:
     * New option sv.align_paren to enable/disable alignement of closing parenthesis in instance
     * Fix mis-alignement in port declaration when using the var keyword
+  - Popup :
+    * Add link to struct/enum definition
+    * Fix case of one letter class definition for static field access
+  - Navigation:
+    * Goto Declaration now works on field
+    * Better handling of unsave file

@@ -44,6 +44,11 @@ def type_info(view,txt,varname):
     return ti
 
 def type_info_file(view,fname,varname):
+    if fname.startswith('<') :
+        v = view.window().find_open_file(fname)
+        if v:
+            txt = v.substr(sublime.Region(0,v.size()))
+            return type_info(v,txt,varname)
     ti = verilogutil.get_type_info_file(fname,varname)
     if not ti or not ti['type']:
         with open(fname) as f:
@@ -130,16 +135,29 @@ def type_info_on_hier(view,varname,txt=None,region=None):
     va = varname.split('.')
     ti = None
     scope = ''
+    fname = ''
     if not txt and region:
         txt = view.substr(sublime.Region(0, view.line(region).b))
     for i in range(0,len(va)):
+        loc = ti['fname'] if ti and 'fname' in ti else None
         v = va[i].split('[')[0] # retrieve name without array part
         # Get type definition: first iteration is done inside current file
         if i==0:
             if region:
                 scope = view.scope_name(region.a)
             ti = {'type':None}
-            # If in a function body: check for a definition in the fubction first
+            # Check if a scope was provided
+            if '::' in v:
+                vs = v.split('::')
+                pkg_info = lookup_type(view,vs[0])
+                v = vs[1]
+                if pkg_info and pkg_info['type'] in ['package','class']:
+                    if 'fname' in pkg_info:
+                        ti = type_info_file(view,pkg_info['fname'][0],v)
+                        if ti and 'fname' not in ti:
+                            ti['fname'] = pkg_info['fname']
+                    # print('Found defintion in package : {}'.format(pkg_info))
+            # If in a function body: check for a definition in the function first
             if 'meta.function.body' in scope:
                 r_func = sublimeutil.expand_to_scope(view,'meta.function.body',region)
                 ti = type_info(view,view.substr(r_func),varname)
@@ -167,8 +185,9 @@ def type_info_on_hier(view,varname,txt=None,region=None):
                 else : # not found
                     ti = None
             elif ti['type']!='class':
-                # print ('[type_info_on_hier] Looking for type {}'.format(ti))
+                # print ('[SV.type_info_on_hier] Looking for type {}'.format(ti))
                 ti = lookup_type(view,ti['type'])
+                # print ('-> {}'.format(ti))
                 if ti and ti['type']:
                     if ti['tag']=='typedef':
                         bti = lookup_type(view,ti['type'])
@@ -179,6 +198,8 @@ def type_info_on_hier(view,varname,txt=None,region=None):
         if not ti:
             return None
         if ti['type']=='struct' :
+            if 'fname' in ti:
+                loc = ti['fname']
             m = re.search(r'\{(.*)\}', ti['decl'])
             til = verilogutil.get_all_type_info(m.groups()[0])
             ti = None
@@ -187,12 +208,16 @@ def type_info_on_hier(view,varname,txt=None,region=None):
                     ti = e
                     break
         elif 'fname' in ti:
-            fname = ti['fname'][0]
+            loc = ti['fname']
+            fname = loc[0]
             ti = type_info_file(view,fname,v)
             if ti['type'] in ['function', 'task']:
                 with open(fname) as f:
                     flines = verilogutil.clean_comment(f.read())
                 ti = verilogutil.parse_function(flines,v)
+        # Propagate the file location
+        if ti and loc and 'fname' not in ti :
+            ti['fname'] = loc
         # print ('[type_info_on_hier] => type info of {0} = {1}'.format(v,ti))
     return ti
 
@@ -215,8 +240,15 @@ def lookup_package(view,pkgname):
     # t0 = time.time()
     sl = [s for s in view.window().symbol_locations(pkgname) if s.syntax == 'SystemVerilog' and s.kind[2]=='Type']
     for s in sl:
-        fname = sublimeutil.normalize_fname(s.path)
-        mi = verilogutil.parse_package_file(fname,pkgname)
+        mi = None
+        if s.path.startswith('<') :
+            v = view.window().find_open_file(s.path)
+            if v:
+                txt = v.substr(sublime.Region(0,v.size()))
+                mi = verilogutil.parse_package(txt,pkgname)
+        else:
+            fname = sublimeutil.normalize_fname(s.path)
+            mi = verilogutil.parse_package_file(fname,pkgname)
         if mi:
             pi = {'type': 'package', 'member': mi, 'fname':(fname,s.row,s.col)}
             break
@@ -246,38 +278,29 @@ def lookup_type(view, t):
     pkg_fl = []
     if '::' in t:
         ts = t.split('::')
-        pkg_fl = view.window().lookup_symbol_in_index(ts[0])
+        locs = view.window().lookup_symbol_in_index(ts[0])
+        pkg_fl = [l.path for l in locs]
         # print('[lookup_type] Package {} defined in {}'.format(ts[0],pkg_fl))
-        # Try to retrieve package filename
         t = ts[-1]
-    filelist = view.window().lookup_symbol_in_index(t)
-    if pkg_fl :
-        fl = []
-        fl_name = [x[0] for x in filelist]
-        filelist = [x for x in pkg_fl if x[0] in fl_name]
-    if filelist:
-        # Check if symbol is defined in current file first
-        fname = view.file_name()
-        flist_norm = [sublimeutil.normalize_fname(f[0]) for f in filelist]
-        if fname in flist_norm:
-            _,_,rowcol = filelist[flist_norm.index(fname)]
-            # print(t + ' defined in current file' + str(fname))
-            ti = type_info_file(view,fname,t)
-        if ti and ti['type'] and ti['tag']!='typedef' :
-            ti['fname'] = (fname,rowcol[0],rowcol[1])
-        # Consider first file with a valid type definition to be the correct one
+
+    locs = view.window().symbol_locations(t, sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
+    # if pkg_fl :
+    #     fl_name = [x[0] for x in filelist]
+    #     filelist = [x for x in pkg_fl if x[0] in fl_name]
+    for loc in locs:
+        if loc.syntax != 'SystemVerilog':
+            continue
+        ti = None
+        if loc.path.startswith('<') :
+            v = view.window().find_open_file(loc.path)
+            if v:
+                txt = v.substr(sublime.Region(0,v.size()))
+                ti = type_info(v,txt,t)
         else:
-            settings = view.settings()
-            file_ext = tuple(settings.get('sv.v_ext','v') + settings.get('sv.sv_ext','sv') + settings.get('sv.vh_ext','vh') + settings.get('sv.svh_ext','svh'))
-            for f in filelist:
-                fname, display_fname, rowcol = f
-                fname = sublimeutil.normalize_fname(fname)
-                if fname.lower().endswith(file_ext):
-                    ti = type_info_file(view,fname,t)
-                    if ti['type'] and ti['tag']!='typedef' :
-                        ti['fname'] = (fname,rowcol[0],rowcol[1])
-                        break
-    # print('[SV:lookup_type] Found {} in {}'.format(t, time.time()-t0))
+            ti = type_info_file(view,loc.path,t)
+        if ti and ti['type'] and ti['tag']!='typedef' :
+            ti['fname'] = (loc.path,loc.row,loc.col)
+            break;
     # print('[SV:lookup_type] {0}'.format(ti))
     return ti
 

@@ -131,6 +131,23 @@ class VerilogOnLoadEventListener(sublime_plugin.EventListener):
             callbacks_on_load[view.file_name()]()
             del callbacks_on_load[view.file_name()]
 
+# Extend a region to include parent (word before the .) and scope (wword before ::)
+def sel_extend_parent(view, region) :
+    # Optionnaly extend selection to parent object (parent.var)
+    if 'support.function.port' not in view.scope_name(region.a):
+        while region.a>1 and view.substr(sublime.Region(region.a-1,region.a))=='.' :
+            c = view.substr(sublime.Region(region.a-2,region.a-1))
+            # Array selection -> extend to start of array
+            if c == ']':
+                region.a = view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
+            if view.classify(region.a-2) & sublime.CLASS_WORD_START:
+                region.a = region.a-2
+            else :
+                region.a = view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
+    # Optionnaly extend selection to scope specifier
+    if region.a>2 and view.substr(sublime.Region(region.a-2,region.a))=='::' :
+        region.a = view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
+    return region
 
 ############################################################################
 # Display type of the signal/variable under the cursor into the status bar #
@@ -149,22 +166,10 @@ class VerilogTypePopup :
             if (self.view.classify(region.b) & sublime.CLASS_WORD_END)==0:
                 region.b = self.view.find_by_class(region.b,True,sublime.CLASS_WORD_END)
         # Optionnaly extend selection to parent object (parent.var)
-        if 'support.function.port' not in self.view.scope_name(region.a):
-            while region.a>1 and self.view.substr(sublime.Region(region.a-1,region.a))=='.' :
-                c = self.view.substr(sublime.Region(region.a-2,region.a-1))
-                # Array selection -> extend to start of array
-                if c == ']':
-                    region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
-                if self.view.classify(region.a-2) & sublime.CLASS_WORD_START:
-                    region.a = region.a-2
-                else :
-                    region.a = self.view.find_by_class(region.a-2,False,sublime.CLASS_WORD_START)
-        # Optionnaly extend selection to scope specifier
-        if region.a>2 and self.view.substr(sublime.Region(region.a-2,region.a))=='::' :
-            region.a = self.view.find_by_class(region.a-3,False,sublime.CLASS_WORD_START)
+        region = sel_extend_parent(self.view, region)
         v = self.view.substr(region)
         if debug:  print('[SV:Popup.show] Word to show = {0}'.format(v));
-        if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v): # Check this is a valid word
+        if re.match(r'^([A-Za-z_]\w*::|(([A-Za-z_]\w*(\[.+\])?)\.)+)?[A-Za-z_]\w*$',v.strip()): # Check this is a valid word
             s,ti,colored,is_local = self.get_type(v,region)
             # print('s={},is_local={}, ti={},colored={}'.format(s,is_local,ti,colored))
             ref_name = ''
@@ -183,7 +188,13 @@ class VerilogTypePopup :
                         s += self.add_info(ti['port'])
                     if ti['type']=='interface':
                         if 'signal' not in ti and 'fname' in ti:
-                            ti = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
+                            if ti['fname'][0].startswith('<') :
+                                v = self.view.window().find_open_file(ti['fname'][0])
+                                if v:
+                                    txt = v.substr(sublime.Region(0,v.size()))
+                                    ti = verilogutil.parse_module(txt,ti['name'])
+                            else :
+                                ti = verilogutil.parse_module_file(ti['fname'][0],ti['name'])
                         if ti:
                             if 'signal' in ti:
                                 s += self.add_info([x for x in ti['signal'] if x['tag']=='decl'])
@@ -201,7 +212,7 @@ class VerilogTypePopup :
                         s += m.groups()[2]
                     else:
                         s += v
-                    s,tti = self.color_str(s=s, addLink=True)
+                    s,tti = self.color_str(s=s, addLink=True,ti_var=ti)
                     if ti['tag'] == 'enum':
                         s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
                     else :
@@ -211,7 +222,13 @@ class VerilogTypePopup :
                 elif ti and ti['type']=='class':
                     ref_name = ti['name']
                     if 'fname' in ti:
-                        ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                        if ti['fname'][0].startswith('<') :
+                            v = self.view.window().find_open_file(ti['fname'][0])
+                            if v:
+                                txt = v.substr(sublime.Region(0,v.size()))
+                                ci = verilogutil.parse_class(txt,ti['name'])
+                        else :
+                            ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
                     else :
                         txt = self.view.substr(sublime.Region(0, self.view.size()))
                         ci = verilogutil.parse_class(txt,ti['name'])
@@ -263,7 +280,14 @@ class VerilogTypePopup :
                                 if 'modport' in mi:
                                     s += self.add_info(mi['modport'],fieldTemplate='modport {0}', field='name')
                         elif ti['type']=='class':
-                            ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
+                            if 'fname' in ti:
+                                if ti['fname'][0].startswith('<') :
+                                    v = self.view.window().find_open_file(ti['fname'][0])
+                                    if v:
+                                        txt = v.substr(sublime.Region(0,v.size()))
+                                        ci = verilogutil.parse_class(txt,ti['name'])
+                                else:
+                                    ci = verilogutil.parse_class_file(ti['fname'][0],ti['name'])
                             if ci:
                                 s += self.add_info([x for x in ci['member'] if 'access' not in x])
                                 s += self.add_info([x for x in ci['function'] if 'access' not in x and x['name']!='new'],field='name',template=s_func, useColor=False)
@@ -321,7 +345,8 @@ class VerilogTypePopup :
         ti = None
         colored = False
         txt = ''
-        if debug: print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
+        if debug:
+            print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
         # In case of field, retrieve parent type
         if '.' in var_name:
             ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
@@ -391,7 +416,7 @@ class VerilogTypePopup :
             if ti:
                 txt = ti['decl']
         # Get structure/interface
-        elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope or 'storage.type.interface' in scope:
+        elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope or 'storage.type.interface' in scope or 'entity.other.inherited-class' in scope :
             ti = verilog_module.lookup_type(self.view,var_name)
             if ti:
                 txt = ti['decl']
@@ -405,19 +430,18 @@ class VerilogTypePopup :
             ti = verilog_module.lookup_package(self.view,var_name)
             if ti:
                 txt = 'package {0}'.format(var_name)
+            else :
+                ti = verilog_module.lookup_type(self.view,var_name)
+                if ti:
+                    txt = ti['decl']
         # Get Macro text
         elif 'constant.other.define' in scope:
             txt,_ = verilog_module.lookup_macro(self.view,var_name)
-        # Get Base Class
-        elif 'entity.other.inherited-class' in scope:
-            ti = verilog_module.lookup_type(self.view,var_name)
-            if ti:
-                txt = ti['decl']
         # Variable inside a scope
         elif vs:
             if len(vs)==2:
                 ti = verilog_module.lookup_type(self.view,vs[0])
-                if ti and ti['type']=='package':
+                if ti and ti['type'] in ['package','class']:
                     ti = verilog_module.type_info_file(self.view,ti['fname'][0],vs[1])
                     if ti:
                         txt = ti['decl']
@@ -599,13 +623,33 @@ class VerilogGotoDeclarationCommand(sublime_plugin.TextCommand):
         region = self.view.sel()[0]
         # If nothing is selected expand selection to word
         if region.empty() : region = self.view.word(region);
-        v = self.view.substr(region).strip()
-        sl = [verilogutil.re_decl + v + r'\b', verilogutil.re_enum + v + r'\b', verilogutil.re_union + v + r'\b', verilogutil.re_inst + v + '\b']
-        for s in sl:
-            r = self.view.find(s,0)
-            if r:
-                sublimeutil.move_cursor(self.view,r.b-1)
-                return
+        # Check if field or class/package menber
+        region = sel_extend_parent(self.view, region)
+        #
+        txt = self.view.substr(region).strip()
+        if '.' in txt or '::' in txt :
+            ti = verilog_module.type_info_on_hier(self.view,txt,region=region)
+            # print('[SV.GotoDeclaration] Info from hierarchy : {}'.format(ti))
+            name = ti['name'] if 'name' in ti else txt.split('.')[-1]
+            if ti and 'fname' in ti:
+                v = self.view.window().find_open_file(ti['fname'][0])
+                if v :
+                    self.view.window().focus_view(v)
+                    goto_first_occurence(v,name)
+                else :
+                    v = self.view.window().open_file(ti['fname'][0],sublime.ENCODED_POSITION)
+                    global callbacks_on_load
+                    callbacks_on_load[ti['fname'][0]] = lambda v=v, var_name=name: goto_first_occurence(v,var_name)
+            # No filename -> suppose it was declared in this view
+            else :
+                goto_first_occurence(self.view,name)
+        else :
+            sl = [verilogutil.re_decl + txt + r'\b', verilogutil.re_enum + txt + r'\b', verilogutil.re_union + txt + r'\b', verilogutil.re_inst + txt + '\b']
+            for s in sl:
+                r = self.view.find(s,0)
+                if r:
+                    sublimeutil.move_cursor(self.view,r.b-1)
+                    return
 
 ##############################################################
 # Move cursor to the driver of the signal currently selected #
