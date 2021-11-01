@@ -25,7 +25,7 @@
 	"sv.mod_import_same_line"  : false, // When aligning module declaration, put import statement on same line as module
 	"sv.alignment_ignore_tick" : false, // Ignore line identation for every line starting with `ifdef,`elsif,...
 	"sv.align_comma_semicolon" : true,  // Aligne comma/semi-colon for signal/port declaration
-	"sv.align_paren"           : false, // Aligne closing parenthesis for module instance
+	"sv.align_paren"           : true, // Aligne closing parenthesis for module instance
 	"sv.param_port_alignment"  : true,  // Control if parameters/ports binding are align together
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
