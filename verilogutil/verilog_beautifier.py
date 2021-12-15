@@ -765,10 +765,8 @@ class VerilogBeautifier():
             # print('{} -> user_type={}, type={}, sign={}'.format(x,len_type_user,len_type,len_sign))
         len_type_full = len_type
         if len_var > 0 or len_bw > 0 or len_sign > 0 :
-            if len_type > 0:
+            if len_type > 0 and len_bw > 0:
                 len_type_full +=1
-            # if len_var > 0:
-            #     len_type_full += len_var+1
             if len_bw > 0:
                 len_type_full += len_bw
             if len_sign > 0:

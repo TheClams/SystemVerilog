@@ -1,0 +1,8 @@
+SystemVerilog 3.1.2 Changelog:
+
+## Bug Fixes ##
+  - Alignement:
+    * Fix mis-alignement in port declaration when using the var keyword in some conditions
+  - Popup :
+    * Fix issue with structure definition using scope
+

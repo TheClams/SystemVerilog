@@ -278,8 +278,8 @@ def lookup_type(view, t):
     pkg_fl = []
     if '::' in t:
         ts = t.split('::')
-        locs = view.window().lookup_symbol_in_index(ts[0])
-        pkg_fl = [l.path for l in locs]
+        locs_pkg = view.window().symbol_locations(ts[0], sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
+        pkg_fl = [l.path for l in locs_pkg]
         # print('[lookup_type] Package {} defined in {}'.format(ts[0],pkg_fl))
         t = ts[-1]
 
@@ -289,6 +289,8 @@ def lookup_type(view, t):
     #     filelist = [x for x in pkg_fl if x[0] in fl_name]
     for loc in locs:
         if loc.syntax != 'SystemVerilog':
+            continue
+        if len(pkg_fl) > 0 and loc.path not in pkg_fl:
             continue
         ti = None
         if loc.path.startswith('<') :

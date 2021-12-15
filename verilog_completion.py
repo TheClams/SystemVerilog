@@ -338,7 +338,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                         if mi:
                             break
                     is_param = 'meta.block.bind.param' in scope
-                    print (f'{scope=}')
+                    # print (f'{scope=}')
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
             else :
                 return completion
