@@ -1122,8 +1122,9 @@ class VerilogHelper():
         if not m:
             print('[SV:get_case_template] Could not parse ' + sig_name)
             return (None,None)
+        txt = view.substr(sublime.Region(0, view.size()))
         if not ti:
-            ti = verilog_module.type_info_on_hier(view,m.group('name'),view.substr(sublime.Region(0, view.size())))
+            ti = verilog_module.type_info_on_hier(view,m.group('name'),txt)
         if not ti['type']:
             print('[SV:get_case_template] Could not retrieve type of ' + m.group('name'))
             return (None,None)
@@ -1135,7 +1136,9 @@ class VerilogHelper():
             print('[get_case_template] ti = {0}'.format(ti))
         if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
-            tti = verilog_module.type_info(view,view.substr(sublime.Region(0, view.size())),ti['type'])
+            tti = verilog_module.type_info(view,txt,ti['type'])
+            if tti['type'] and tti['type'] in ['input', 'output', 'inout', 'ref'] :
+                tti = verilog_module.type_info_from_import(view,txt,t)
             # Not in current file ? look in index
             if not tti['type']:
                 filelist = view.window().lookup_symbol_in_index(ti['type'])
