@@ -3,4 +3,7 @@ SystemVerilog 3.1.3 Changelog:
 ## Bug Fixes ##
   - Completion:
     * Fix case autocomplete for I/O signals
+  - Highlight:
+    * Fix highlight of array index inside packed dimension
+    * Suport highlight of dist outside of constraint (can be used in iff statement)
 

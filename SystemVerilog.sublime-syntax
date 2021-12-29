@@ -50,7 +50,6 @@ contexts:
     - match: \(
       scope: punctuation.section.group.begin.systemverilog
       push:
-        # - meta_scope: meta.brackets.systemverilog
         - match: \)
           scope: punctuation.section.group.end.systemverilog
           pop: true
@@ -269,7 +268,7 @@ contexts:
           scope: keyword.control.systemverilog
           pop: true
         - include: general
-    - match: \s*\b(begin|end|fork|disable|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft)\b
+    - match: \s*\b(begin|end|fork|disable|wait|force|release|posedge|negedge|edge|forever|repeat|while|for|if|iff|else|default|endcase|return|break|continue|do|foreach|with|inside|clocking|cover|property|randcase|matches|solve|assert|assume|before|expect|cross|ref|first_match|srandom|struct|packed|final|alias|tagged|extern|throughout|timeprecision|timeunit|priority|type|union|wait_order|triggered|randsequence|import|export|context|pure|intersect|wildcard|within|new|enum|this|super|forkjoin|unique|unique0|priority|soft|dist)\b
       captures:
         1: keyword.control.systemverilog
   # Misc keyword with just basic handling (to be improved)
@@ -801,6 +800,7 @@ contexts:
           scope: keyword.operator.range.systemverilog
         - include: constants
         - include: macro-call
+        - include: group
         - include: operators
         - include: system-task
 

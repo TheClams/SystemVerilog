@@ -228,6 +228,10 @@ logic [3:0]  sig_logic = 4'shC + toto[4];
 //                               ^ -storage.type
 interconnect [0:1] iBus;
 // <- storage.type.systemverilog
+logic [WIDTH[i]-1:0] array;
+//            ^ punctuation.section.brackets.end.systemverilog
+//                 ^ punctuation.section.brackets.end.systemverilog
+
 /*------------------------------------------------------------------------------
 --  PSL
 ------------------------------------------------------------------------------*/
