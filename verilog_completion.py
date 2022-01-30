@@ -374,7 +374,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             if not ti or (ti['type'] is None and 'meta.module.port.systemverilog' not in scope):
                 return completion
             #Provide completion for different type
-            if ti['array']!='' and array_depth==0:
+            if 'array' in ti and ti['array']!='' and array_depth==0:
                 completion = self.array_completion(ti['array'])
             elif ti['type']=='string':
                 completion = self.string_completion()
@@ -403,25 +403,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 else:
                     t = ti['type']
 
-                tti = None
-                t = re.sub(r'\w+\:\:','',t) # remove scope from type. TODO: use the scope instead of rely on global lookup
-                filelist = view.window().lookup_symbol_in_index(t)
-                # print(' Filelist for ' + t + ' = ' + str(filelist))
-                if filelist:
-                    file_ext = tuple(self.settings.get('sv.v_ext','v') + self.settings.get('sv.sv_ext','sv') + self.settings.get('sv.vh_ext','vh') + self.settings.get('sv.svh_ext','svh'))
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        # Parse only verilog files. Check might be a bit too restrictive ...
-                        if fname.lower().endswith(file_ext):
-                            # print(w + ' of type ' + t + ' defined in ' + str(fname))
-                            tti = verilog_module.type_info_file(view,fname,t)
-                            # print(tti)
-                            if tti['type']:
-                                if tti['tag']=='typedef':
-                                    tti = verilog_module.lookup_type(view,tti['type'])
-                                    if tti:
-                                        fname = tti['fname'][0]
-                                break
+                tti = verilog_module.lookup_type(view, t)
                 # print(tti)
                 if not tti:
                     return None
@@ -1125,8 +1107,9 @@ class VerilogHelper():
         txt = view.substr(sublime.Region(0, view.size()))
         if not ti:
             ti = verilog_module.type_info_on_hier(view,m.group('name'),txt)
-        if not ti['type']:
-            print('[SV:get_case_template] Could not retrieve type of ' + m.group('name'))
+            # print('[SV:get_case_template] Searching through hierarchy -> {}'.format(ti))
+        if not ti or not ti['type']:
+            print('[SV:get_case_template] Could not retrieve type of {} ({})'.format(m.group('name'), ti))
             return (None,None)
         length = 0
         if m.group('h'):

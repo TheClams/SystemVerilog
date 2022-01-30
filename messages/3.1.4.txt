@@ -1,0 +1,6 @@
+SystemVerilog 3.1.4 Changelog:
+
+## Improvement ##
+  - Popup/Completion:
+    * When a type is defined in multipled package now properly select the package given in scope or in the list of import package
+

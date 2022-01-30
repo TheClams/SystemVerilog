@@ -272,6 +272,15 @@ def lookup_function(view,funcname):
     # print('[SV:lookup_function] Found {} in {}'.format(funcname, time.time()-t0))
     return fi
 
+def get_import_list(view):
+    pkg_fl = []
+    txt = view.substr(sublime.Region(0,view.size()))
+    for m in re.finditer(r'\bimport\s+(.+?);',txt,flags=re.MULTILINE):
+        for mp in re.finditer(r'\b(\w+)(\:\:[\w\*]+)+',m.groups()[0],flags=re.MULTILINE):
+            locs_pkg = view.window().symbol_locations(mp.groups()[0], sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
+            pkg_fl += [l.path for l in locs_pkg]
+    return pkg_fl
+
 def lookup_type(view, t):
     ti = None
     t0 = time.time()
@@ -284,12 +293,15 @@ def lookup_type(view, t):
         t = ts[-1]
 
     locs = view.window().symbol_locations(t, sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
+    locs = [l for l in locs if l.syntax == 'SystemVerilog']
+    # Get list of impport package if the symbol is defined in more than place and no scope was found
+    if len(locs)>0 and len(pkg_fl)==0:
+        pkg_fl = get_import_list(view)
+    # print('Package list = {}'.format(pkg_fl))
     # if pkg_fl :
     #     fl_name = [x[0] for x in filelist]
     #     filelist = [x for x in pkg_fl if x[0] in fl_name]
     for loc in locs:
-        if loc.syntax != 'SystemVerilog':
-            continue
         if len(pkg_fl) > 0 and loc.path not in pkg_fl:
             continue
         ti = None
