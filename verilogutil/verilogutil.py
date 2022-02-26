@@ -60,6 +60,8 @@ def get_type_info_file_cache(fname, var_name, fdate):
 def get_type_info(txt,var_name,search_decl=True):
     ti_not_found = {'decl':None,'type':None,'array':"",'bw':"", 'name':var_name, 'tag': '', 'value':None}
     txt = clean_comment(txt)
+    txt = re.sub(r'^\s*\n', '', txt, flags=re.MULTILINE) # Remove all empty lines to avoid issues with regexp
+    # txt = txt.strip()
     m = re.search(r'(?s)'+re_enum+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
     # print('[get_type_info] var = {}'.format(var_name))
     # print('[get_type_info] text = {}'.format(txt))
@@ -94,9 +96,11 @@ def get_type_info(txt,var_name,search_decl=True):
         return get_type_info_from_match(var_name,m,3,4,5,9,'decl')[0]
     # Instances
     m = re.search(re_inst+r'('+var_name+r')\b.*$', txt, flags=re.MULTILINE)
+    # print('[get_type_info] RE instance = {}'.format(re_inst+r'('+var_name+r')\b.*$'))
     if m:
         # print('[get_type_info] {} type is an instance'.format(var_name))
         return get_type_info_from_match(var_name,m,3,4,5,9,'inst')[0]
+    # print('[get_type_info] NOT FOUNG')
     return ti_not_found
 
 # Extract the macro content from `define name macro_content

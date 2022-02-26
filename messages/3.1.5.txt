@@ -1,0 +1,8 @@
+SystemVerilog 3.1.5 Changelog:
+
+## Fixes ##
+  - Parsing:
+    * fix issue with macro defined in current file
+    * Fix issue with files containing larges commented text portion
+  - Dot Completion: fix regression introduce in 3.1.4
+

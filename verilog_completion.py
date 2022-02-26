@@ -407,6 +407,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 # print(tti)
                 if not tti:
                     return None
+                if 'fname' in tti:
+                    fname = tti['fname'][0]
                 if tti['type']=='interface':
                     return self.interface_completion(fname,tti['name'], modport_only)
                 elif tti['type'] == 'class':
@@ -694,12 +696,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def class_completion(self, fname,cname, txt=None, publicOnly=True):
         if fname:
             ci = verilogutil.parse_class_file(fname,cname)
-        else:
+        elif txt:
             ci = verilogutil.parse_class(txt,cname)
+        else:
+            print('[SV:class_completion] Class completion called with no filename nor text !')
+            return []
         # print('[SV:class_completion] Class {0} in file {1} = \n {2}'.format(cname,fname,ci))
         c = []
         if ci:
-            #TODO: parse also the extended class (up to a limit ?)
             for x in ci['member']:
                 # filter out local and protected variable
                 if 'access' not in x:
@@ -714,6 +718,12 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 snippet+= ')${0}'
                 if ('access' not in x or not publicOnly) and x['name'] != 'new':
                     c.append(sublime.CompletionItem(x['name'],x['type'], snippet,kind=MYKIND_FUNCTION, completion_format=1))
+            # Parse also the extended class if completion is small
+            if len(c) == 0 and 'extend' in ci and ci['extend']:
+                bci = verilog_module.lookup_type(self.view,ci['extend'])
+                # print('[SV:class_completion] Looking for Extended Class {}'.format(ci['extend']))
+                if bci:
+                    return self.class_completion(bci['fname'][0],ci['extend'],'',False)
         return c
 
     def module_completion(self, fname, mname):
