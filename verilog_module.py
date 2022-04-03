@@ -274,7 +274,7 @@ def lookup_function(view,funcname):
 
 def get_import_list(view):
     pkg_fl = []
-    txt = view.substr(sublime.Region(0,view.size()))
+    txt = verilogutil.clean_comment(view.substr(sublime.Region(0,view.size())))
     for m in re.finditer(r'\bimport\s+(.+?);',txt,flags=re.MULTILINE):
         for mp in re.finditer(r'\b(\w+)(\:\:[\w\*]+)+',m.groups()[0],flags=re.MULTILINE):
             locs_pkg = view.window().symbol_locations(mp.groups()[0], sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
@@ -294,16 +294,24 @@ def lookup_type(view, t):
 
     locs = view.window().symbol_locations(t, sublime.SYMBOL_SOURCE_ANY, sublime.SYMBOL_TYPE_DEFINITION)
     locs = [l for l in locs if l.syntax == 'SystemVerilog']
+    locs_path = [l.path for l in locs]
+    # print('locs {}'.format(locs))
     # Get list of impport package if the symbol is defined in more than place and no scope was found
-    if len(locs)>0 and len(pkg_fl)==0:
+    if len(locs) > 1 and len(pkg_fl)==0:
         pkg_fl = get_import_list(view)
+    #
+    if len(pkg_fl) > 0:
+        pkg_fl = [l for l in pkg_fl if l in locs_path]
     # print('Package list = {}'.format(pkg_fl))
-    # if pkg_fl :
-    #     fl_name = [x[0] for x in filelist]
-    #     filelist = [x for x in pkg_fl if x[0] in fl_name]
+    prev_pos = -1
     for loc in locs:
-        if len(pkg_fl) > 0 and loc.path not in pkg_fl:
-            continue
+        if len(pkg_fl) > 0 and loc.path in pkg_fl:
+            pos = pkg_fl.index(loc.path)
+            # Ignore definition which are defined in later package
+            if prev_pos > 0 and pos > prev_pos:
+                continue
+        else :
+            pos = -1
         ti = None
         if loc.path.startswith('<') :
             v = view.window().find_open_file(loc.path)
@@ -314,8 +322,11 @@ def lookup_type(view, t):
             ti = type_info_file(view,loc.path,t)
         if ti and ti['type'] and ti['tag']!='typedef' :
             ti['fname'] = (loc.path,loc.row,loc.col)
-            break;
-    # print('[SV:lookup_type] {0}'.format(ti))
+            prev_pos = pos
+            # Stop on first match which when there is no package import or first match inside a package
+            if len(pkg_fl) == 0 or pos >= 0:
+                break;
+    # print('[SV:lookup_type] (pos {}) : {}'.format(prev_pos, ti))
     return ti
 
 def lookup_macro(view, name):

@@ -143,6 +143,7 @@ def get_all_type_info(txt,no_inst=False):
     txt = re.sub(r'(?s)^[ \t]*(import|export)[ \t]*(\".*?\"[ \t]*)?(pure)?[ \t]*(?P<block>function|task)\b.*?;','',txt, flags=re.MULTILINE)
     txt = re.sub(r'(?s)^[ \t\w]*extern\b[^;]+;','',txt, flags=re.MULTILINE)
     txt = re.sub(r'(?s)^[ \t\w]*(?P<block>function|task)\b.*?\bend(?P=block)\b.*?$','',txt, flags=re.MULTILINE)
+    txt = re.sub(r'(?s)^[ \t]*covergroup\b.*?\bendgroup\b.*?$','',txt, flags=re.MULTILINE)
     # Cleanup constraint definition
     # print('[get_all_type_info] Cleanup constraint')
     # txt = re.sub(r'(?s)constraint\s+\w+\s*\{\s*(?:[^\{\}]+(?:\{[^\{\}]*\})?)*?\s*\}','',txt,  flags=re.MULTILINE)

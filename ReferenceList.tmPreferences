@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>scope</key>
-    <string>support.function.generic.systemverilog,storage.type.module.systemverilog</string>
+    <string>support.function.generic.systemverilog, storage.type.module.systemverilog</string>
     <key>settings</key>
     <dict>
         <key>showInIndexedReferenceList</key>

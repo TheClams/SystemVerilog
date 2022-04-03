@@ -1,0 +1,8 @@
+SystemVerilog 3.1.6 Changelog:
+
+## Bug Fixes ##
+  - Completion:
+    * Fix module parameter completion when using non-standard extension
+    * Prevent covergroup bins name appearing in module/interface completion list
+    * Fix missing completion of interface/module when an import package is present
+

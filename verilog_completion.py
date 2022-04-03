@@ -330,16 +330,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     mname = words[2]
                 else:
                     mname = words[0]
-                filelist = view.window().lookup_symbol_in_index(mname)
-                if filelist:
-                    for f in filelist:
-                        fname = sublimeutil.normalize_fname(f[0])
-                        mi = verilogutil.parse_module_file(fname,mname)
-                        if mi:
-                            break
+                mi = verilog_module.lookup_module(view,mname)
+                if mi:
                     is_param = 'meta.block.bind.param' in scope
                     # print (f'{scope=}')
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
+                else :
+                    print("[SV:dot_completion] Unable to find definition for {}".format(mname))
             else :
                 return completion
         else :
@@ -372,6 +369,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             ti = verilog_module.type_info_on_hier(view,w,txt,r)
             # print('[SV:dot_completion] Type = {}'.format(ti))
             if not ti or (ti['type'] is None and 'meta.module.port.systemverilog' not in scope):
+                print("[SV:dot_completion] Unable to find definition for {} ({})".format(w,'None' if 'type' not in ti else ti['type']))
                 return completion
             #Provide completion for different type
             if 'array' in ti and ti['array']!='' and array_depth==0:
@@ -406,6 +404,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 tti = verilog_module.lookup_type(view, t)
                 # print(tti)
                 if not tti:
+                    print("[SV:dot_completion] Unable to find definition for type {} of {}".format(t,w))
                     return None
                 if 'fname' in tti:
                     fname = tti['fname'][0]
