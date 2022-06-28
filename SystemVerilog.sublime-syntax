@@ -1415,7 +1415,7 @@ contexts:
             1: support.type.scope.systemverilog
             2: keyword.operator.scope.systemverilog
             3: storage.type.userdefined.systemverilog
-    - match: \s*(?:\b(import|export)\s+((")[^"]+(")\s+))?(?:(pure)\s+)?(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic|static))?
+    - match: \s*(?:\b(import|export)\s+((")[^"]+(")\s+))?(?:(pure|context)\s+)?(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(function)\b(?:\s+(automatic|static))?
       captures:
         1: keyword.control.systemverilog
         2: string.quoted.double.systemverilog
@@ -1519,6 +1519,25 @@ contexts:
         4: keyword.control.systemverilog
         5: keyword.control.systemverilog
         6: keyword.control.systemverilog
+      push:
+        - meta_scope: meta.task.prototype.systemverilog
+        - match: '\b({{id}})\b'
+          captures:
+            1: entity.name.function.systemverilog
+          set: task-port
+        # - include: base-grammar
+    - match: \s*(?:\b(import|export)\s+((")[^"]+(")\s+))?(?:(context)\s+)?(?:(virtual)\s+)?(?:(static|local|protected)\s+)?(?:(virtual)\s+)?\s*\b(task)\b(?:\s+(automatic|static))?
+      captures:
+        1: keyword.control.systemverilog
+        2: string.quoted.double.systemverilog
+        3: punctuation.definition.string.begin.systemverilog
+        4: punctuation.definition.string.end.systemverilog
+        5: keyword.control.systemverilog
+        6: keyword.control.systemverilog
+        7: keyword.control.systemverilog
+        8: keyword.control.systemverilog
+        9: keyword.control.systemverilog
+        10: keyword.control.systemverilog
       push:
         - meta_scope: meta.task.prototype.systemverilog
         - match: '\b({{id}})\b'

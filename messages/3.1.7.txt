@@ -1,0 +1,7 @@
+SystemVerilog 3.1.7 Changelog:
+
+## Bug Fixes ##
+  - Highlight:
+    * support context keyword in import "DPI"
+    * support import/export "DPI" for tasks
+
