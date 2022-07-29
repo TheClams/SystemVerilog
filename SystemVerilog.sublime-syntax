@@ -826,6 +826,8 @@ contexts:
           # meta_scope: meta.module.bind.port.systemverilog
           set:
             - - include: terminator
+            - - match: (?=\S)
+                pop: 2
             - - meta_scope: meta.module.bind.port.systemverilog
               - include: binding-block
         - include: comments

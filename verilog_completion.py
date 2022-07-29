@@ -337,6 +337,18 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,is_param)
                 else :
                     print("[SV:dot_completion] Unable to find definition for {}".format(mname))
+            # Partial instance declaration with parameters -> find previous word
+            elif 'meta.block.bind.param' in scope :
+                r = sublimeutil.expand_to_scope(view,'meta.block.bind.param',r)
+                r.a = view.find_by_class(r.a,False,sublime.CLASS_WORD_START)
+                txt = str.rstrip(verilogutil.clean_comment(view.substr(r)))
+                mname = txt.split()[0]
+                mi = verilog_module.lookup_module(view,mname)
+                # print(f'[SV:dot_completion] Partial instance with only params: "{txt}" -> {mi=}')
+                if mi:
+                    completion = self.module_binding_completion(view.substr(r),txt, mi,start_pos-r.a,True)
+                else :
+                    print("[SV:dot_completion] Unable to find definition for {}".format(mname))
             else :
                 return completion
         else :
@@ -369,7 +381,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             ti = verilog_module.type_info_on_hier(view,w,txt,r)
             # print('[SV:dot_completion] Type = {}'.format(ti))
             if not ti or (ti['type'] is None and 'meta.module.port.systemverilog' not in scope):
-                print("[SV:dot_completion] Unable to find definition for {} ({})".format(w,'None' if 'type' not in ti else ti['type']))
+                print("[SV:dot_completion] Unable to find definition for {} ({})".format(w,'None' if not ti or 'type' not in ti else ti['type']))
                 return completion
             #Provide completion for different type
             if 'array' in ti and ti['array']!='' and array_depth==0:
@@ -766,7 +778,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         if not minfo:
             return c
-        # print(txt_raw)
+        # print(f'[module_binding_completion] {txt_raw=}')
         # Select parameter or port for completion
         if is_param:
             l = minfo['param']
