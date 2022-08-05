@@ -557,8 +557,14 @@ constraint constraint_c {
     if (mode == little)
 //  ^^ meta.block.constraint.systemverilog keyword.other.systemverilog
         len < 10;
-    else if (mode == big)
-        len > 100;
+    else if (mode == big) {
+        if (y < 50) {
+//      ^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+//                  ^ meta.block.constraint.systemverilog punctuation.section.block.begin.systemverilog
+            len > 100;
+        } else
+            len > 200;
+    }
     length == count_ones( v ) ;
 //            ^^^^^^^^^^ meta.block.constraint.systemverilog support.function.generic.systemverilog
 }
@@ -571,9 +577,9 @@ constraint C::proto1 { x inside {-4, 5, [y:2*y]}; }
 //          ^^ keyword.operator.scope.systemverilog
 //            ^^^^^^ meta.block.constraint.systemverilog entity.name.section.systemverilog
 //                       ^^^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
-//                                ^ meta.block.constraint.systemverilog meta.brackets.systemverilog constant.numeric.decimal.systemverilog
-//                                          ^ meta.block.constraint.systemverilog meta.brackets.systemverilog keyword.operator.arithmetic.systemverilog
-//                                             ^ meta.brackets.systemverilog keyword.operator.array.end.systemverilog
+//                                ^ meta.block.constraint.systemverilog constant.numeric.decimal.systemverilog
+//                                          ^ meta.block.constraint.systemverilog keyword.operator.arithmetic.systemverilog
+//                                             ^ punctuation.section.block.end.systemverilog
 
 p.randomize() with { length inside [512:1512]; mode dist {1:=4, [2:3]:/3} ;}
 // ^^^^^^^^ support.function.generic.systemverilog

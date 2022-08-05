@@ -33,6 +33,7 @@ contexts:
     - include: macro
     - include: all-types
     - include: struct-assign
+    - include: concat
     - include: group
     - include: operators
     - include: port-dir
@@ -50,6 +51,7 @@ contexts:
     - match: \(
       scope: punctuation.section.group.begin.systemverilog
       push:
+        - meta_scope: meta.group.systemverilog
         - match: \)
           scope: punctuation.section.group.end.systemverilog
           pop: true
@@ -59,6 +61,7 @@ contexts:
     - match: '\['
       scope: punctuation.section.brackets.begin.systemverilog
       push:
+        - meta_scope: meta.group.systemverilog
         - match: '\]'
           scope: punctuation.section.brackets.end.systemverilog
           pop: true
@@ -1300,28 +1303,25 @@ contexts:
       push: constraint_block
   constraint_block:
         - meta_scope: meta.block.constraint.systemverilog
-        - match: \b(solve|before|soft|if|else|foreach|disable|dist|inside|unique)\b
-          scope: keyword.other.systemverilog
         - match: '\}'
           scope: punctuation.section.block.constraint.end.systemverilog
           pop: true
-        - match : \{
-          scope: keyword.operator.array.begin.systemverilog
-          push :
-            - meta_scope: meta.brackets.systemverilog
-            - match: \}
-              scope: keyword.operator.array.end.systemverilog
-              pop: true
-            - include: comments
-            - include: macro
-            - include: constants
-            - include: operators
-        - include: comments
-        - include: operators
-        - include: macro
-        - include: constants
-        - include: function-call
-        - include: strings
+        - include: constraint_subblock
+  constraint_subblock:
+    - match: \}
+      scope:  punctuation.section.block.end.systemverilog
+      pop: true
+    - match: \b(solve|before|soft|if|else|foreach|disable|dist|inside|unique)\b
+      scope: keyword.other.systemverilog
+    - match : \{
+      scope:  punctuation.section.block.begin.systemverilog
+      push : constraint_subblock
+    - include: comments
+    - include: operators
+    - include: macro
+    - include: constants
+    - include: function-call
+    - include: strings
 
 # Extern declaration
   extern-decl:
