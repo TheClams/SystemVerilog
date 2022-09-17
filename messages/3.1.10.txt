@@ -1,0 +1,10 @@
+SystemVerilog 3.1.10 Changelog:
+
+## Bug Fixes ##
+  - Completion:
+    * the begin..end completion now works after if() statement
+    * end completioin  (endclass/endmodule,...) now use the new ST4 styling and properly respect 
+      the "sv.end_label_comment" setting to use // or : for the label
+    * end label completion search now properly exclude comments
+  - Highlight:
+    * Support user-defined type in default parameter value of classes and port function

@@ -589,6 +589,11 @@ contexts:
     - include: function-call
     - match: \b(virtual)\b
       scope: keyword.control.systemverilog
+    # Handle parameterized type in parameter list
+    - match: '({{id}})\s*(#)'
+      captures:
+        1: storage.type.userdefined.systemverilog
+        2: keyword.operator.other.param.systemverilog
 
   # Block definition
   module-def:
@@ -1471,6 +1476,11 @@ contexts:
             3: storage.type.systemverilog
             4: storage.type.systemverilog
         - include: base-grammar
+        - match: '({{id}})\s*(#)'
+          captures:
+            1: storage.type.userdefined.systemverilog
+            2: keyword.operator.other.param.systemverilog
+
     - include: comments
     - include: else-pop
   function-body:
