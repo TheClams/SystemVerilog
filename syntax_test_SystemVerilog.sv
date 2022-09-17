@@ -360,6 +360,8 @@ class class_param #(parameter int A=1, string t_name={"cp_",int_to_string(NB_CLK
 endclass: class_param
 
 class uvm_push_driver #(type REQ=uvm_sequence_item,
+                        type t = my_type#(REQ),
+//                               ^ storage.type.userdefined.systemverilog
                         type RSP=REQ) extends uvm_component;
 //                      ^^^^ keyword.other.systemverilog
 

@@ -146,6 +146,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
             m = re.search(r'^\s*case\s*\((.+?)\)$',l)
             if m:
                 completion = self.case_completion(m.groups()[0])
+            elif prefix.startswith('b'):
+                completion.append(sublime.CompletionItem('begin','block', "begin\n\t$0\nend",kind=sublime.KIND_SNIPPET,completion_format=1) )
         # elif (prev_symb in ['?',':'] or '=' or prev_symb) and not prefix:
         # elif prev_symb in ['=','?',':'] and not prefix:
         elif (prev_symb in ['?',':'] or '=' in prev_symb):
@@ -208,6 +210,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 # ]
         elif prev_symb.endswith(','):
             completion = None
+
         # print(f'[SV:on_query_completions] Nb completion = {len(completion)} | {flag=}')
         # if flag!=0 and isinstance(completion,list) and len(completion) == 0:
         #     completion = None
@@ -886,10 +889,11 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
 
     # Completion for endfunction, endtask, endclass, endmodule, endpackage, endinterface with label
     def end_completion(self,view,r,prefix):
+        # print('[SV:Completion] end')
         re_str = None
         kw = ''
         if prefix == 'end':
-            # Extract line to get indentation. Start region one character to the righft to be sure we do not take previous line
+            # Extract line to get indentation. Start region one character to the right to be sure we do not take previous line
             l = self.view.substr(view.line(sublime.Region(r.a+1,r.b)))
             m = re.match(r'(\s*)',l)
             re_str = r'^' + m.groups()[0] + r'((\w+.*)?(begin)\s*(:\s*(\w+))?|(?:virtual\s+)?(function)\s+(?:(?:automatic|static)\s+)?(?:\w+\s+)?(?:\w+\:\:)?(\w+)\s*\(|(class)\s+(\w+)|(module)\s+(\w+)|(package)\s+(?:(?:automatic|static)\s+)?(\w+)|(interface)\s+(\w+)|(?:virtual\s+)?(task)\s+(?:\w+\:\:)?(\w+)|(case)\s*\((.+)\)|(generate)|(covergroup)\s+(\w+))'
@@ -940,14 +944,14 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         ra = view.find_all(re_str,0,'$1',nl)
         name = ''
         if ra:
-            # print(nl)
             for (rf,n) in zip(ra,nl):
-                if rf.a < r.a:
+                if 'comment' in self.view.scope_name(rf.a):
+                    continue
+                elif rf.a < r.a:
                     name = n
                 else:
                     break
         # Process keyword if not properly defined yet
-        sep  = '//' if self.settings.get("sv.end_label_comment") else ':'
         if kw == 'endc?' :
             m = re.match(re_str[1:].strip(),name,flags=re.MULTILINE)
             if m:
@@ -1007,10 +1011,13 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     name = m.groups()[21]
         # Provide completion with optional label
         if name:
+            kw_comment = self.settings.get("sv.end_label_comment")
+            sep  = '//' if kw_comment and kw in kw_comment else ':'
             c_str = f'{kw} {sep} {name.strip()}'
         else:
             c_str = kw
-        return [[kw+'\t'+c_str,c_str]]
+        return [sublime.CompletionItem(kw,c_str,c_str,kind=MYKIND_KEYWORD, completion_format=1)]
+        # return [[kw+'\t'+c_str,c_str]]
 
 
 ##############################################
