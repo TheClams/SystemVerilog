@@ -1049,7 +1049,7 @@ contexts:
         - match: |
             (?x)%
             (-?\d+)?                     # minimum field width
-            [bBcCdDeEfFgGhHoOpPsSuUxXzZ]   # conversion type
+            [bBcCdDeEfFgGhHoOpPsStTuUxXzZ]   # conversion type
           scope: constant.other.placeholder.systemverilog
         - match: |
             (?x)%
@@ -1057,7 +1057,7 @@ contexts:
             (\.-?\d+)?   # precision
             [eEfFgG]     # conversion type
           scope: constant.other.placeholder.float.systemverilog
-        - match: '%[lLmMtTvV%]'
+        - match: '%[lLmMvV%]'
           scope: constant.other.placeholder.systemverilog
         - match: "%"
           scope: invalid.illegal.placeholder.systemverilog
