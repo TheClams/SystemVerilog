@@ -35,6 +35,7 @@
 	"sv.always_ff_begin_end": true,     // Enclose the whole always block with begin/end
 	"sv.always_one_cursor"  : false,    // Enclose the whole always block with begin/end
 	"sv.always_label"       : true,     // Enable label for always block (only if begin/end are present)
+	"sv.always_end_label"   : false,     // Enable end label for always block (only if begin/end are present and always_lavel is true)
 	"sv.always_sv_only"     : true,     // In .sv file only display completion for always_comb, always_ff or always_latch (no simple always)
 	"sv.clk_en_name"        : "clk_en", // Default clock enable name : empty string if you do not want a clock enable in the snippet
 	"sv.always_ce_auto"     : true,     // Detect if the clk_en signal is declared in the buffer: if not, do not use it in the always block

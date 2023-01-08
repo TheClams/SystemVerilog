@@ -1,0 +1,6 @@
+SystemVerilog 3.1.11 Changelog:
+
+## Bug Fixes ##
+  - Completion:
+    * always block now supports an optional end label. Set sv.always_end_label to true to enable
+    * Improve the always_comb/latch snippets to position cursor after properly once snippets is complete

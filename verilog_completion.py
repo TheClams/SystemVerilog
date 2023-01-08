@@ -223,7 +223,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         c = []
         (a_l,a_h,a_nr) = VerilogHelper.get_always_template(self.view)
         if self.settings.get('sv.always_label',True):
-            begin_end = 'begin : proc_$0\n\nend'
+            begin_end = 'begin : proc_$1\n\t$0\nend'
+            if self.settings.get('sv.always_end_label',True):
+                begin_end += ' : proc_$1'
         else:
             begin_end = 'begin\n\nend'
         #Provide completion specific to the file type
@@ -1033,6 +1035,7 @@ class VerilogHelper():
         always_name_auto  = settings.get('sv.always_name_auto',True)
         always_ce_auto    = settings.get('sv.always_ce_auto',True)
         always_label      = settings.get('sv.always_label',True)
+        always_end_label  = settings.get('sv.always_end_label',False)
         always_begin_end  = settings.get('sv.always_ff_begin_end',True)
         always_one_cursor = settings.get('sv.always_one_cursor',True)
         indent_style      = settings.get('sv.indent_style','1tbs')
@@ -1120,6 +1123,10 @@ class VerilogHelper():
         a_nr+= ';\nend\n'
         if always_begin_end and clk_en_name:
             a_nr+= 'end'
+        if always_begin_end and always_label and always_end_label:
+            a_l +=  ' : proc_$1'
+            a_nr +=  ' : proc_$1'
+        print('Always flag = begin_end={}, begin_label={}, end_label={} -> {}'.format(always_begin_end, always_label, always_end_label, a_nr))
         a_l = beautifier.beautifyText(a_l)
         # define basic always block with asynchronous reset active high
         a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
