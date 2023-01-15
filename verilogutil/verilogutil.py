@@ -51,7 +51,7 @@ def get_type_info_file(fname,var_name):
 
 @functools.lru_cache(maxsize=32)
 def get_type_info_file_cache(fname, var_name, fdate):
-    with open(fname) as f:
+    with open(fname, 'r', encoding='utf-8') as f:
         flines = f.read()
         ti = get_type_info(flines, var_name)
     return ti
@@ -399,7 +399,7 @@ def parse_module_file(fname,mname=r'\w+',inst_only=False,no_inst=False):
 
 @functools.lru_cache(maxsize=32)
 def parse_module_file_cache(fname, mname, fdate,inst_only=False,no_inst=False):
-    with open(fname) as f:
+    with open(fname, 'r', encoding='utf-8') as f:
         flines = f.read()
         minfo = parse_module(flines, mname,inst_only,no_inst)
     return minfo
@@ -507,7 +507,7 @@ def parse_package_file(fname,pname=r'\w+'):
 
 @functools.lru_cache(maxsize=32)
 def parse_package_file_cache(fname, pname, fdate):
-    with open(fname) as f:
+    with open(fname, 'r', encoding='utf-8') as f:
         flines = f.read()
         minfo = parse_package(flines, pname)
     return minfo
@@ -542,7 +542,7 @@ def parse_class_file(fname,cname=r'\w+'):
 
 @functools.lru_cache(maxsize=32)
 def parse_class_file_cache(fname, cname, fdate):
-    with open(fname) as f:
+    with open(fname, 'r', encoding='utf-8') as f:
         contents = f.read()
         flines = clean_comment(contents)
         info = parse_class(flines, cname)

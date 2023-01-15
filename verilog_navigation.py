@@ -1264,7 +1264,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             re_str = r'class\s+' + name_ + r'\b([^;]+);'
             for fname, display_fname, rowcol in filelist:
                 fname = sublimeutil.normalize_fname(fname)
-                with open(fname) as f:
+                with open(fname, 'r', encoding='utf-8') as f:
                     flines = f.read()
                     m = re.search(re_str,flines,flags=re.MULTILINE)
                     if m :
@@ -1678,7 +1678,7 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
         re_str = r'^(\s*'+mname+r'\s+(#\s*\(.*\)\s*)?(\w+).*$)'
         p = re.compile(re_str,re.MULTILINE)
         for fn in verilog_module.list_module_files[projname]:
-            with open(fn) as f:
+            with open(fn, 'r', encoding='utf-8') as f:
                 txt = f.read()
                 if mname in txt:
                     for m in re.finditer(p,txt):

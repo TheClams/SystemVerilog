@@ -101,7 +101,7 @@ class VerilogBeautifier():
     def beautifyFile(self,fnameIn,fnameOut=''):
         if not fnameOut:
             fnameOut = fnameIn
-        with open(fnameIn, "r") as f:
+        with open(fnameIn, 'r', encoding='utf-8') as f:
             txt = f.read()
         txt = self.beautifyText(txt)
         with open(fnameOut, "w") as f:

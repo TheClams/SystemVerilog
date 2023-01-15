@@ -39,9 +39,9 @@ class Tests(unittest.TestCase):
                                                  instAlignPort=cfg.instAlignPort,
                                                  ignoreTick=cfg.ignoreTick
                                                  )
-        with open(fname_in) as f:
+        with open(fname_in, 'r', encoding='utf-8') as f:
             txt = f.read()
-        with open(fname_exp) as f:
+        with open(fname_exp, 'r', encoding='utf-8') as f:
             expected = f.read()
 
         actual = b.beautifyText(txt)

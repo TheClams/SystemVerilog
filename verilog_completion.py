@@ -867,7 +867,7 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                 el = re.findall(r"(\w+).*?(,|$)",m.groups()[0])
                 c = [[x[0],x[0]] for x in el]
         elif ti['type'] == 'package':
-            with open(ti['fname'][0], 'r') as f:
+            with open(ti['fname'][0], 'r', encoding='utf-8') as f:
                 flines = str(f.read())
             ti = verilogutil.parse_package(flines)
             if ti:

@@ -51,7 +51,7 @@ def type_info_file(view,fname,varname):
             return type_info(v,txt,varname)
     ti = verilogutil.get_type_info_file(fname,varname)
     if not ti or not ti['type']:
-        with open(fname) as f:
+        with open(fname, 'r', encoding='utf-8') as f:
             flines = f.read()
             ti = type_info_from_import(view,flines,varname)
     return ti
@@ -212,7 +212,7 @@ def type_info_on_hier(view,varname,txt=None,region=None):
             fname = loc[0]
             ti = type_info_file(view,fname,v)
             if ti['type'] in ['function', 'task']:
-                with open(fname) as f:
+                with open(fname, 'r', encoding='utf-8') as f:
                     flines = verilogutil.clean_comment(f.read())
                 ti = verilogutil.parse_function(flines,v)
         # Propagate the file location
@@ -262,7 +262,7 @@ def lookup_function(view,funcname):
     sl = [s for s in view.window().symbol_locations(funcname) if s.syntax == 'SystemVerilog' and s.kind[2]=='Function']
     for s in sl:
         fname = sublimeutil.normalize_fname(s.path)
-        with open(fname,'r') as f:
+        with open(fname, 'r', encoding='utf-8') as f:
             flines = str(f.read())
         flines = verilogutil.clean_comment(flines)
         fi = verilogutil.parse_function(flines,funcname)
@@ -342,7 +342,7 @@ def lookup_macro(view, name):
         else:
             for fi in filelist:
                 fname = sublimeutil.normalize_fname(fi[0])
-                with open(fname,'r') as f:
+                with open(fname, 'r', encoding='utf-8') as f:
                     flines = str(f.read())
                 txt,params = verilogutil.get_macro(flines,name)
                 if txt:
@@ -430,7 +430,7 @@ class VerilogModuleInstCommand(sublime_plugin.TextCommand):
         if index >= 0:
             fname = list_module_files[projname][index]
             try:
-                with open(fname, "r") as f:
+                with open(fname, 'r', encoding='utf-8') as f:
                     flines = str(f.read())
                 self.ml=re.findall(r'^\s*module\s+(\w+)',flines,re.MULTILINE);
                 if len(self.ml)<2:
