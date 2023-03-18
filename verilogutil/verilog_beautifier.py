@@ -30,7 +30,7 @@ def split_on_comma(txt) :
 #
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True, groupDecl=False):
         self.settings = {'nbSpace': nbSpace,
                         'useTab':useTab,
                         'oneBindPerLine':oneBindPerLine,
@@ -44,6 +44,7 @@ class VerilogBeautifier():
                         'ignoreTick' : ignoreTick,
                         'alignComma' : alignComma,
                         'alignParen' : alignParen,
+                        'groupDecl' : groupDecl,
         }
         self.indentSpace = ' ' * nbSpace
         if useTab:
@@ -181,8 +182,10 @@ class VerilogBeautifier():
             # Identify split statement
             if w=='\n':
                 block_ended = False
+                line_skipped = False
                 # Pop comment line
                 if self.state in ['comment_line','ignore_line']:
+                    line_skipped = True
                     self.stateUpdate()
                     if not self.block_state:
                         block_handled = True
@@ -227,12 +230,17 @@ class VerilogBeautifier():
                                         # print('[Beautify] Incrementing split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}" ({split})'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl, split=split))
                                         split[ilvl][0] += 1
                 if self.block_state == 'decl' and not self.re_decl.match(line.strip()):
-                    if self.settings['reindentOnly']:
-                        txt_new += block
-                    else :
-                        txt_new += self.alignDecl(block)
-                    block = ''
-                    self.block_state = ''
+                    skip = False
+                    if self.settings['groupDecl']:
+                        if line.strip() == '' or line_skipped:
+                            skip = True
+                    if not skip:
+                        if self.settings['reindentOnly']:
+                            txt_new += block
+                        else :
+                            txt_new += self.alignDecl(block)
+                        block = ''
+                        self.block_state = ''
                 # print('[Beautify] {line_cnt:4}: "{line:<140}" => state={block_state}.{state} -- ilvl={ilvl} (split={split}'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl, split=split))
                 block += line.rstrip() + '\n'
                 line = ''
@@ -1109,10 +1117,10 @@ class VerilogBeautifier():
         len_max = {}
         one_decl_per_line = self.settings['oneDeclPerLine']
         # Process each line to identify a signal declaration, save the match information in an array, and process the max length for each field
+        ilvl = 0
         for l in lines:
             m = self.re_decl.search(l)
             if m:
-                # print('[alignDecl] {0} => {1}'.format(l,m.groups()))
                 ilvl = self.getIndentLevel(l)
                 if ilvl not in len_max:
                     len_max[ilvl] = {'param':0,'scope':0,'type':0,'type_full':0,'type_user':0,'type_user_pa':0,'sign':0,'bw':[],'name':0,'array':[], 'array_sum':0, 'bw_sum':0, 'sig_list':0,'comment':0, 'init':0}
@@ -1159,7 +1167,8 @@ class VerilogBeautifier():
                     if len_full > len_max[ilvl]['type_full'] :
                         len_max[ilvl]['type_full'] = len_full
             else:
-                ilvl = 0
+                if not l.strip().startswith('//'):
+                    ilvl = 0
             lines_match.append((l,m,ilvl))
 
         # Get total length for array
@@ -1262,7 +1271,10 @@ class VerilogBeautifier():
                 if m.group('comment'):
                     l += ' ' + m.group('comment').strip()
             else : # Not a declaration ? don't touch
-                l = line
+                if ilvl==0:
+                    l = line
+                else:
+                    l = self.indent*ilvl + line.strip()
             txt_new += l.rstrip() + '\n'
         if txt[-1]!='\n':
             txt_new = txt_new[:-1]

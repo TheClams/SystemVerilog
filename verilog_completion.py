@@ -1126,7 +1126,7 @@ class VerilogHelper():
         if always_begin_end and always_label and always_end_label:
             a_l +=  ' : proc_$1'
             a_nr +=  ' : proc_$1'
-        print('Always flag = begin_end={}, begin_label={}, end_label={} -> {}'.format(always_begin_end, always_label, always_end_label, a_nr))
+        # print('Always flag = begin_end={}, begin_label={}, end_label={} -> {}'.format(always_begin_end, always_label, always_end_label, a_nr))
         a_l = beautifier.beautifyText(a_l)
         # define basic always block with asynchronous reset active high
         a_h = a_l.replace('neg','pos').replace(rst_n_name,rst_name).replace('~','')
