@@ -1326,6 +1326,7 @@ contexts:
     - include: macro
     - include: constants
     - include: function-call
+    - include: casting
     - include: strings
 
 # Extern declaration

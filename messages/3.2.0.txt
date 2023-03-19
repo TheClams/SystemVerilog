@@ -1,0 +1,10 @@
+SystemVerilog 3.2.0 Changelog:
+
+## Feature ##
+ - Alignement: add option (sv.align_group_decl) to align all successive declaration even when separated by empty line or comment line
+ - Completion: add basic template for typedef enum
+
+
+## Bug Fixes ##
+  - Completion: fix case completion when type is an input var defined in a package
+  - Synctax Highlight: support casting in constraint block

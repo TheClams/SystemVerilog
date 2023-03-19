@@ -1155,6 +1155,8 @@ class VerilogHelper():
         if t not in ['enum','logic','bit','reg','wire','input','output','inout']:
             #check first in current file
             tti = verilog_module.type_info(view,txt,ti['type'])
+            if debug:
+                print('Searching for {} -> tti={}'.format(t,tti))
             if tti['type'] and tti['type'] in ['input', 'output', 'inout', 'ref'] :
                 tti = verilog_module.type_info_from_import(view,txt,t)
             # Not in current file ? look in index

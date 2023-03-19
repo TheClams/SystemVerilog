@@ -206,6 +206,7 @@
 		["package"    , "declaration" , "package ${1:${TM_FILENAME/(.+)\\..+|.*/$1/:name}};\n\t$0\nendpackage : $1" , [], []],
 		["task"       , "declaration" , "task ${1:taskname}($2);\n\t$0\nendtask : ${1}", [], []],
 		["import"     , "declaration" , "import ${1:pkgname}::${2:*};\n$0", [], []],
+		["typdefenum" , "declaration" , "typedef enum logic [$1:0] {$0} e_$2;\n", [], []],
 		["forkj"      , "fork..join"  ,"fork\n\t$0\njoin"            , [], []],
 		["forkn"      , "fork..none"  ,"fork\n\t$0\njoin_none"       , [], []],
 		["forka"      , "fork..any"   ,"fork\n\t$0\njoin_any"        , [], []],
