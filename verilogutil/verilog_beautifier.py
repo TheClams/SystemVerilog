@@ -531,7 +531,7 @@ class VerilogBeautifier():
         elif self.block_state=='text':
             tmp = verilogutil.clean_comment(txt).strip()
             m = self.re_inst.match(tmp)
-            if m and m.group('itype') not in ['else', 'begin', 'end', 'assert', 'cover'] and m.group('iname') not in ['if','for','foreach']:
+            if m and m.group('itype') not in ['else', 'begin', 'end', 'assert', 'cover', 'unique'] and m.group('iname') not in ['if','for','foreach']:
                 self.block_state = 'instance'
             elif re.match(r'\s*\b(typedef\s+)?(struct|union)\b',tmp, flags=re.MULTILINE):
                 self.block_state = 'struct'

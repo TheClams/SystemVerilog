@@ -1,0 +1,4 @@
+SystemVerilog 3.2.1 Changelog:
+
+## Bug Fixes ##
+  - Alignement: fix issue with unique keyword

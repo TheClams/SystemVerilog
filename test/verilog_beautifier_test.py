@@ -160,3 +160,7 @@ class Tests(unittest.TestCase):
     def test_beautifyModuleParam(self):
         cfg = BeautifyConfig(nbSpace=4)
         self.runBeautifyTest(self.path_test+"module_param.sv", self.path_test+"module_param_exp.sv", cfg)
+
+    def test_uniqueCase(self):
+        cfg = BeautifyConfig(useTab=True)
+        self.runBeautifyTest(self.path_test+"unique_case.sv", self.path_test+"unique_case_exp.sv", cfg)
