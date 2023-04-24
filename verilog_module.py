@@ -39,7 +39,7 @@ def reload():
 # Helper function: retrieve type info with support for import statement
 def type_info(view,txt,varname):
     ti = verilogutil.get_type_info(txt,varname)
-    if not ti or not ti['type'] or ti['type'] in ['wire', 'var']:
+    if not ti or not ti['type'] or ti['type'] in ['var']:
         ti = type_info_from_import(view,txt,varname)
     return ti
 

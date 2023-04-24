@@ -1,0 +1,4 @@
+SystemVerilog 3.2.2 Changelog:
+
+## Bug Fixes ##
+  - Popup: fix regression for signal declared as wire
