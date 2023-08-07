@@ -7,4 +7,4 @@ SystemVerilog 3.2.0 Changelog:
 
 ## Bug Fixes ##
   - Completion: fix case completion when type is an input var defined in a package
-  - Synctax Highlight: support casting in constraint block
+  - Syntax Highlight: support casting in constraint block

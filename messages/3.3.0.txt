@@ -1,0 +1,7 @@
+SystemVerilog 3.3.0 Changelog:
+
+## Bug Fixes ##
+  - Syntax highlight:
+    * Macro string: highlight variable
+    * Scope: fix missing highlight for local/restricted or inside constraint
+  - Alignement: Fix issue when trying to find begin/end boundary

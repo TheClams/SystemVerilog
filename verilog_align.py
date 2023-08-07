@@ -146,6 +146,8 @@ class VerilogAlign(sublime_plugin.TextCommand):
                                     cnt_diff -= 1
                                 if cnt_diff > 0:
                                     idx += 1
+                            if idx==len(rl):
+                                idx -= 1
                             region.b = rl[idx].b
                         # More end than begin ? Expand backward for the missing begin
                         else:
@@ -155,7 +157,7 @@ class VerilogAlign(sublime_plugin.TextCommand):
                             if idx>0:
                                 idx -= 1
                             # Iterate over following begin/end until the difference of begin end is 0
-                            while idx<len(rl) and cnt_diff<0 :
+                            while idx>0 and cnt_diff<0 :
                                 if wl[idx] == 'begin':
                                     cnt_diff += 1
                                 else :

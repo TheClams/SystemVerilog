@@ -459,10 +459,13 @@ contexts:
         2: support.variable.systemverilog
     - match: '`(celldefine|else|elsif|endcelldefine|endif|include|line|nounconnected_drive|resetall|timescale|unconnected_drive|undef|begin_\w+|end_\w+|remove_\w+|restore_\w+)\b'
       scope: constant.other.preprocessor.systemverilog
-    - match: '``\b({{id}})\b'
-      scope: variable.macro.systemverilog
+    - match: '(``)\b({{id}})\b(``)?'
+      captures:
+        1: punctuation.section.interpolation.end.systemverilog
+        2: variable.macro.systemverilog
+        3: punctuation.section.interpolation.end.systemverilog
     - include: macro-call
-
+    - include: macro-strings
   macro-call:
     - match: '`\b({{id}})\b'
       scope: constant.other.define.systemverilog
@@ -714,7 +717,7 @@ contexts:
     - match: (?:^\s*|\b)bind\b
       scope: keyword.control.systemverilog
       push: [module-inst-type, bind-path]
-    - match: ^\s*(?={{id}}\s*(\b\w|#[^#]|\[|\n))
+    - match: (?={{id}}\s*(\b\w|#[^#]|\[|\n))
       branch_point: bp-module
       branch:
         - test-var-name
@@ -780,8 +783,11 @@ contexts:
 
   obj-inst-type--bpid:
     - meta_scope: meta.obj.inst.systemverilog
-    - match: '{{id}}'
-      scope : storage.type.userdefined.systemverilog
+    - match: '({{id}}(::))?({{id}})'
+      captures:
+        1 : support.type.scope.systemverilog
+        2 : keyword.operator.scope.systemverilog
+        3 : storage.type.userdefined.systemverilog
       set : [obj-inst-name--bpid, opt-packed-dim, opt-param-bind]
     - include: comments
     - match: (?=\S)
@@ -961,7 +967,9 @@ contexts:
     - match: (=)
       scope: keyword.operator.assignment.systemverilog
     - match: (:=|:/)(?!/)
-      scope: keyword.operator.constraint.systemverilog
+      scope: keyword.operator.constraint.dist.systemverilog
+    - match: ->
+      scope: keyword.operator.constraint.implies.systemverilog
     - match: (\-|\+|\*|\/|<<|>>|%)
       scope: keyword.operator.arithmetic.systemverilog
     - match: (!|&&|\|\|)
@@ -1036,31 +1044,48 @@ contexts:
     - include: system-task
   strings:
     - match: '"'
-      captures:
-        0: punctuation.definition.string.begin.systemverilog
+      scope: punctuation.definition.string.begin.systemverilog
       push:
         - meta_scope: string.quoted.double.systemverilog
         - match: '"'
           captures:
             0: punctuation.definition.string.end.systemverilog
           pop: true
-        - match: \\.
-          scope: constant.character.escape.systemverilog
-        - match: |
-            (?x)%
-            (-?\d+)?                     # minimum field width
-            [bBcCdDeEfFgGhHoOpPsSuUxXzZ]   # conversion type
-          scope: constant.other.placeholder.systemverilog
-        - match: |
-            (?x)%
-            (-?\d+)?     # minimum field width
-            (\.-?\d+)?   # precision
-            [eEfFgG]     # conversion type
-          scope: constant.other.placeholder.float.systemverilog
-        - match: '%[lLmMtTvV%]'
-          scope: constant.other.placeholder.systemverilog
-        - match: "%"
-          scope: invalid.illegal.placeholder.systemverilog
+        - include: string-placeholder
+  macro-strings:
+    - match: '`"'
+      scope: punctuation.definition.string.begin.systemverilog
+      push:
+        - meta_scope: string.quoted.double.systemverilog
+        - match: '`"'
+          captures:
+            0: punctuation.definition.string.end.systemverilog
+          pop: true
+        - match: '(``)\b({{id}})\b(``)?'
+          captures:
+            1: punctuation.section.interpolation.end.systemverilog
+            2: variable.macro.systemverilog
+            3: punctuation.section.interpolation.end.systemverilog
+        - include: string-placeholder
+  string-placeholder:
+    - match: \\.
+      scope: constant.character.escape.systemverilog
+    - match: |
+        (?x)%
+        (-?\d+)?                     # minimum field width
+        [bBcCdDeEfFgGhHoOpPsStTuUxXzZ]   # conversion type
+      scope: constant.other.placeholder.systemverilog
+    - match: |
+        (?x)%
+        (-?\d+)?     # minimum field width
+        (\.-?\d+)?   # precision
+        [eEfFgG]     # conversion type
+      scope: constant.other.placeholder.float.systemverilog
+    - match: '%[lLmMvV%]'
+      scope: constant.other.placeholder.systemverilog
+    - match: "%"
+      scope: invalid.illegal.placeholder.systemverilog
+
   struct_decl:
     - match: '\s*\b(?:(struct|union(?:\s+(tagged))?)|(`\w+))\b'
       captures:
@@ -1328,6 +1353,7 @@ contexts:
     - include: function-call
     - include: casting
     - include: strings
+    - include: scoping
 
 # Extern declaration
   extern-decl:

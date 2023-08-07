@@ -232,6 +232,12 @@ logic [WIDTH[i]-1:0] array;
 //            ^ punctuation.section.brackets.end.systemverilog
 //                 ^ punctuation.section.brackets.end.systemverilog
 
+local wst_analog_sim_pkg::wst_analog_seq m_ana_seq;
+// ^ keyword.other.systemverilog
+//    ^ support.type.scope.systemverilog
+//                       ^ keyword.operator.scope.systemverilog
+//                                     ^ storage.type.userdefined.systemverilog
+
 /*------------------------------------------------------------------------------
 --  PSL
 ------------------------------------------------------------------------------*/
@@ -369,6 +375,10 @@ class uvm_push_driver #(type REQ=uvm_sequence_item,
 //^ storage.type.userdefined.systemverilog
 //                            ^ storage.type.userdefined.systemverilog
 endclass: uvm_push_driver
+
+class titi extends toto;
+    mytype m_var;
+endclass: titi
 
 /*------------------------------------------------------------------------------
 --  Task & functions
@@ -556,6 +566,14 @@ constraint constraint_c {
 //  ^ keyword.other
     x dist { [100:102] := 1, 200 := 2, 300 :/ 5};
 //    ^^^^ meta.block.constraint.systemverilog keyword.other.systemverilog
+//                     ^^ keyword.operator.constraint.dist.systemverilog
+//                                         ^^ keyword.operator.constraint.dist.systemverilog
+    y > 0 -> x == my_pkg::my_type'(x);
+//        ^^ keyword.operator.constraint.implies.systemverilog
+//                ^^^^^^meta.scope.systemverilog support.type.scope.systemverilog
+//                      ^^ keyword.operator.scope.systemverilog
+//                        ^^^^^^^ meta.cast.systemverilog storage.type.systemverilog
+//                               ^ keyword.operator.cast.systemverilog
     if (mode == little)
 //  ^^ meta.block.constraint.systemverilog keyword.other.systemverilog
         len < 10;
@@ -597,11 +615,15 @@ assert(a.randomize(ack) with {}; );
 ------------------------------------------------------------------------------*/
 
   $sformatf("%s %h %b %c %d %l %m %o %p %x %u %t %v %z %e %f %g %%1 ");
+//           ^^ constant.other.placeholder.systemverilog
+//                                                                ^ string.quoted.double.systemverilog -constant
   $sformatf("%S %H %B %C %D %L %M %O %P %X %U %T %V %Z %E %F %G");
 
   $sformatf("%0d %1h %2s", 4'b01xz);
   $sformatf("%4.3f %3e %-5.4g", a,b,c);
-
+//           ^^^^^ constant.other.placeholder.float.systemverilog
+//                 ^^^ constant.other.placeholder.systemverilog
+//                     ^^^^^^ constant.other.placeholder.float.systemverilog
    nettype t_mytype mytype with myresolve;
 // ^ keyword.control
 //         ^ storage.type
@@ -609,6 +631,10 @@ assert(a.randomize(ack) with {}; );
 //                         ^ keyword.control
 //                              ^ support.function.resolve
 
+// Macro interpolation
+`define macro(ARG0, ARG1=0, ARG2=test, PARENT=this, PATH="") \
+   this.m_``ARG0````ARG1 = ``PATH````ARG2``::type_id::create(`"``ARG0```", null, get_full_name()); \
+//          ^^^^ variable.macro.systemverilog
 
 fork
 join_any
