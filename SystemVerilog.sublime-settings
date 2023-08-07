@@ -12,6 +12,7 @@
 	"sv.vh_ext" : ["vh" ],
 	"sv.svh_ext": ["svh"],
 
+	"sv.status" : true, // True to display Current context in the status bar (Module/class/function/task name)
 	"sv.tooltip" : true, // True to display information in a tooltip (sublime 3072+), false to use the status bar instead
 	"sv.tooltip_hide_on_move" : true, // True to hide the tooltip when the mouse move away from the tooltip
 	"sv.tooltip_show_module_on_port" : false, // True to include module type and instance when showing tooltip for a port

@@ -1,7 +1,12 @@
 SystemVerilog 3.3.0 Changelog:
 
+## Features ##
+ - Status bar: display current context (function/task, module, ...)
+    Can be disabled in settings with `sv.status = False`
+
 ## Bug Fixes ##
   - Syntax highlight:
+    * Support sized %t format string
     * Macro string: highlight variable
     * Scope: fix missing highlight for local/restricted or inside constraint
   - Alignement: Fix issue when trying to find begin/end boundary

@@ -51,8 +51,9 @@ def expand_to_scope(view, scope_name, region):
     while scope_name not in scope and p<region.a:
         p=p+1
         scope = view.scope_name(p)
-    if view.classify(p) & sublime.CLASS_LINE_START == 0:
-        region.a = p-1
+    region.a = p
+    if view.classify(p) & (sublime.CLASS_LINE_START | sublime.CLASS_WORD_END ) == 0:
+        region.a -= 1
     # print('Retract done:' + str(p) + ' => text = ' + view.substr(region))
     # print(' Selected region = ' + str(region) + ' => text = ' + view.substr(region))
     return region
