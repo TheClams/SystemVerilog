@@ -1,5 +1,8 @@
 // SYNTAX TEST "SystemVerilog.sublime-syntax"
-
+`timescale 1.8 ns / 1ps
+// <- constant.other.preprocessor.systemverilog
+//         ^^^^^^ constant.numeric.time.systemverilog
+//                  ^^^ constant.numeric.time.systemverilog
 `define my_macro ;
 // <- constant.other.preprocessor
 //      ^ entity.name.type.define

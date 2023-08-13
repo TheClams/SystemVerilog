@@ -428,6 +428,8 @@ contexts:
           captures:
             0: punctuation.definition.attribute.systemverilog
   constants:
+    - match: \b\d+(\.\d+)?\s*(fs|ps|ns|us|ms|s)\b
+      scope: constant.numeric.time.systemverilog
     - match: '(\b\d+)?''(s?[bB]\s*[0-1xXzZ?][0-1_xXzZ?]*|s?[oO]\s*[0-7xXzZ?][0-7_xXzZ?]*|s?[dD]\s*[0-9xXzZ?][0-9_xXzZ?]*|s?[hH]\s*[0-9a-fA-FxXzZ?][0-9a-fA-F_xXzZ?]*)((e|E)(\+|-)?[0-9]+)?(?!''|\w)'
       scope: constant.numeric.systemverilog
     - match: "'[01xXzZ]"
@@ -436,8 +438,6 @@ contexts:
       scope: constant.numeric.exp.systemverilog
     - match: '\b(\d[\d_]*)\b'
       scope: constant.numeric.decimal.systemverilog
-    - match: \b(\d+(fs|ps|ns|us|ms|s)?)\b
-      scope: constant.numeric.time.systemverilog
     - match: '\b([A-Z][A-Z0-9_]*)\b'
       scope: constant.other.net.systemverilog
     - match: \b(null)\b
