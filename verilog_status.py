@@ -19,10 +19,10 @@ class VerilogStatus(sublime_plugin.ViewEventListener):
     def is_applicable(cls,settings):
         return settings.get('sv.status', False) and settings.get('syntax') == 'Packages/SystemVerilog/SystemVerilog.sublime-syntax'
 
-    def on_selection_modified(self):
+    def on_selection_modified_async(self):
         self.show_context()
 
-    def on_activated(self):
+    def on_activated_async(self):
         self.show_context()
 
     def show_context(self):
