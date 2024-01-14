@@ -205,16 +205,19 @@ class VerilogTypePopup :
                     for p in ti['port']:
                         x = '{} {}'.format(p['type'],p['name'])
                         s += '<br><span class="extra-info">{}{}</span>'.format('&nbsp;'*4,self.color_str(x)[0])
-                elif ti and 'tag' in ti and (ti['tag'] == 'enum' or ti['tag']=='struct'):
+                elif ti and 'tag' in ti and (ti['tag'] in ['enum','struct','enum value']):
                     m = re.search(r'(?s)^(.*)\{(.*)\}\s*(\w+)?', ti['decl'])
-                    s = m.groups()[0].strip() + ' '
-                    if m.groups()[2]:
-                        s += m.groups()[2]
-                    else:
-                        s += v
-                    s,tti = self.color_str(s=s, addLink=True,ti_var=ti)
-                    if ti['tag'] == 'enum':
-                        s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
+                    if m:
+                        s = m.groups()[0].strip() + ' '
+                        if m.groups()[2]:
+                            s += m.groups()[2]
+                        else:
+                            s += v
+                        s,tti = self.color_str(s=s, addLink=True,ti_var=ti)
+                        if ti['tag'] == 'enum':
+                            s+='<br><span class="extra-info">{0}{1}</span>'.format('&nbsp;'*4,m.groups()[1])
+                    if ti['tag'] == 'enum value':
+                        s+='<br><span class="extra-info">{}{}</span>'.format('&nbsp;'*4,ti['value'])
                     else :
                         fti = verilogutil.get_all_type_info(m.groups()[1])
                         if fti:
@@ -444,9 +447,17 @@ class VerilogTypePopup :
                 if ti and ti['type'] in ['package','class']:
                     ti = verilog_module.type_info_file(self.view,ti['fname'][0],vs[1])
                     if ti:
-                        txt = ti['decl']
-                        if 'value' in ti and ti['value']:
-                            txt += ' = {0}'.format(ti['value'])
+                        if 'tag' in ti and ti['tag']=='enum value':
+                            tti = verilog_module.lookup_type(self.view,ti['type'])
+                            val = '{} = {}'.format(var_name,ti['value'])
+                            ti = tti
+                            ti['tag'] = 'enum value'
+                            ti['value'] = val
+                            txt = ti['decl']
+                        else :
+                            txt = ti['decl']
+                            if 'value' in ti and ti['value']:
+                                txt += ' = {0}'.format(ti['value'])
         # Simply lookup in the file before the use of the variable
         else :
             #If inside a function try first in the function body
@@ -471,13 +482,20 @@ class VerilogTypePopup :
             elif ti['tag'] == 'decl' :
                 is_local = True
             # Type not found in current file ? fallback to sublime index
-            if not ti['decl']:
+            if ti and not ti['decl']:
                 ti = verilog_module.lookup_type(self.view,var_name)
-            elif ti['type'] and ti['type'].split()[0] not in ['struct','enum','logic','bit','reg','wire','input','output','inout','int']:
+            # Optional type information for user-defined type
+            if ti and ti['decl'] and ti['type'] and ti['type'].split()[0] not in ['struct','enum','logic','bit','reg','wire','input','output','inout','int']:
                 t = ti['type']
                 tti = verilog_module.lookup_type(self.view,t)
                 if tti:
-                    ti = tti
+                    if 'tag' in ti and ti['tag']=='enum value':
+                        val = '{} = {}'.format(var_name,ti['value'])
+                        ti = tti
+                        ti['tag'] = 'enum value'
+                        ti['value'] = val
+                    else :
+                        ti = tti
             if ti:
                 txt = ti['decl']
                 if 'value' in ti and ti['value']:

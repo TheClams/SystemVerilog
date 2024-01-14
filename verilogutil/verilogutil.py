@@ -100,7 +100,29 @@ def get_type_info(txt,var_name,search_decl=True):
     if m:
         # print('[get_type_info] {} type is an instance'.format(var_name))
         return get_type_info_from_match(var_name,m,3,4,5,9,'inst')[0]
-    # print('[get_type_info] NOT FOUNG')
+    # Enum value
+    re_str = r'enum[^{]*{([^}]*'+ var_name + r'[^}]*)}\s*(\w+)'
+    m = re.search(re_str, txt, flags=re.MULTILINE)
+    if m:
+        values = re.sub(r'\s+','', m.group(1), flags=re.MULTILINE).split(',')
+        values = [x.split('=') for x in values]
+        val = 0
+        offset = 0
+        for v in values:
+            if len(v)==2:
+                val = v[1] # TODO: use function to convert string to int
+                offset = 0
+            if v[0] == var_name:
+                if offset!=0:
+                    if isinstance(val,int):
+                        val += offset
+                    else:
+                        val = ''
+                break
+            offset += 1
+        # print('[get_type_info] {} type is an enum value of type {}. All values are: {} -> {}'.format(var_name, m.group(2), values, val))
+        return {'decl': 'enum ' + m.group(2),'type': m.group(2), 'array':"",'bw':"", 'name':var_name, 'tag': 'enum value', 'value': val}
+    # print('[get_type_info] NOT FOUND')
     return ti_not_found
 
 # Extract the macro content from `define name macro_content
