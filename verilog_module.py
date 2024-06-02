@@ -715,13 +715,14 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                         p['declSig'] = re.sub(r'\b'+k+r'\b',v,p['declSig'])
                 # try to cleanup the array size: [16-1:0] should give a proper [15:0]
                 # Still very basic, but should be ok for most cases
-                fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',p['declSig'])
-                for f in fa:
-                    if f[3]=='+':
-                        value = int(f[2])+int(f[4])
-                    else:
-                        value = int(f[2])-int(f[4])
-                    p['declSig'] = p['declSig'].replace(f[0],f[1]+str(value))
+                p['declSig'] = clean_decl(p['declSig'])
+                # fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',p['declSig'])
+                # for f in fa:
+                #     if f[3]=='+':
+                #         value = int(f[2])+int(f[4])
+                #     else:
+                #         value = int(f[2])-int(f[4])
+                #     p['declSig'] = p['declSig'].replace(f[0],f[1]+str(value))
             # Check for extended match : prefix
             if ti['decl'] is None:
                 if settings.get('sv.autoconnect_allow_prefix',False):
@@ -767,6 +768,16 @@ class VerilogDoModuleInstCommand(sublime_plugin.TextCommand):
                         # print(wc[p['name']])
         return (decl,ac,wc)
 
+def clean_decl(decl):
+    fa = re.findall(r'((\[|:)\s*(\d+)\s*(\+|-)\s*(\d+))',decl)
+    for f in fa:
+        if f[3]=='+':
+            value = int(f[2])+int(f[4])
+        else:
+            value = int(f[2])-int(f[4])
+        decl = decl.replace(f[0],f[1]+str(value))
+    return decl
+
 def check_connect(port,sig):
     # print('Check {} vs {}'.format(port['decl'],sig['decl']))
     # Check port direction
@@ -784,6 +795,7 @@ def check_connect(port,sig):
     # remove () for interface
     if '$' not in d:
         d = re.sub(r'\(|\)','',d)
+        ds = re.sub(r'\(|\)','',ds)
     if sig['type'].startswith(('input','output','inout')) and not ds.startswith('logic '):
         ds = 'logic ' + ds
     elif '.' in ds: # For interface remove modport
@@ -801,7 +813,7 @@ def check_connect(port,sig):
     #     ds = re.sub(r'\b' + ac[port['name']] + r'\b', pname,ds)
     if sig['name'] != port['name']:
         ds = re.sub(r'\b' + sig['name'] + r'\b', port['name'],ds)
-    if ds!=d :
+    if d!=ds :
         warn = 'Signal/port not matching : Expecting ' + d + ' -- Found ' + ds
         return False,re.sub(r'\b'+port['name']+r'\b','',warn) # do not display port name
     return True,''
