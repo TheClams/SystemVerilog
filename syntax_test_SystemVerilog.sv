@@ -652,7 +652,8 @@ join : f_label
 //     ^^^^^^^ entity.label
 
 
-always_ff @(posedge clk or negedge rst_n) begin : proc_
+always_ff @(posedge clk /*comment*/ or negedge rst_n) begin : proc_
+//                      ^^^^^^^^^^^ comment.block.systemverilog
     if (~rst_n)
         a <= '0;
 else if (en)

@@ -996,6 +996,7 @@ contexts:
         - match: \)
           scope: punctuation.section.group.end.systemverilog
           pop: true
+        - include: comments
         - include: event-expression
         - include: constants
     - match: (#|@)
