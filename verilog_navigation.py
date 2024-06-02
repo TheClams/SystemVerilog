@@ -779,10 +779,10 @@ def goto_driver(view,signal):
     # look for an input or an interface of the current module, and for an assignement
     sl = [r'input\s+(\w+\s+)?(\w+\s+)?([A-Za-z_][\w\:]*\s+)?(\[[\w\:\-`\s]+\])?\s*([A-Za-z_][\w=,\s]*,\s*)?' + signal + r'\b']
     sl.append(r'^\s*\w+\.\w+\s+' + signal + r'\b')
-    sl.append(r'\b' + signal + r'\b(\[[^\]]*\])*\s*<?\=[^\=]')
+    sl.append(r'(^|\s)\b' + signal + r'\b(\[[^\]]*\]|\.\w+)*\s*<?\=[^\=]')
     for s in sl:
         r = view.find(s,0)
-        # print('searching ' + s + ' => ' + str(r))
+        print('searching ' + s + ' => ' + str(r))
         if r:
             # For input check if cursor was already at the declaration
             if 'input' in view.substr(r) :

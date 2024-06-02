@@ -3,3 +3,5 @@ SystemVerilog 3.3.4 Changelog:
 ## Features ##
  - Alignement: fix issue with module instance (issue #73)
  - Highlight: Fix comment not recognize in sensitivity list
+ - Instance: Fix warning type when width contains parenthesis (issue #74)
+ - Navigation: improve goto driver for structure
