@@ -980,7 +980,7 @@ class VerilogBeautifier():
     # Alignement for module instance
     def alignInstance(self,txt,ilvl):
         # Check if parameterized module
-        m = re.search(r'(?s)(?P<emptyline>\n*)(?P<mtype>^[ \t]*(bind\s+[\w\.]+\s+)?\w+)\s*(?P<paramsfull>#\s*\((?P<params>.*)\s*\))?\s*(?P<mname>\w+)\s*\(\s*(?P<ports>.*)\s*\)\s*;(?P<comment>.*)$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<emptyline>\n*)(?P<mtype>^[ \t]*(bind\s+[\w\.]+\s+)?\w+)\s*(?P<paramsfull>#\s*\((?P<params>.*)\s*\))?\s*(?P<mname>\w+)\s*((?P<comment_name>//[^\n]*)\s*)?\((?P<port_lead_space>\s*)(?P<ports>.*)\s*\)\s*;(?P<comment>.*)$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         # Add module type
@@ -997,17 +997,32 @@ class VerilogBeautifier():
                 txt_new += p
             txt_new += ')'
         # Add module name
-        txt_new += ' ' + m.group('mname') + ' ('
+        txt_new += ' ' + m.group('mname') + ' ( '
+        ports = m.group('ports')
+        if m.group('comment_name'):
+            txt_new += m.group('comment_name').strip()
+        # Identify case were a comment is put right after the open parenthesis
+        elif '\n' not in m.group('port_lead_space') and ports :
+            if ports.lstrip().startswith('//') :
+                idx = ports.find('\n')
+                if idx ==-1 :
+                    idx = len(ports)-1
+                    txt_new += ports
+                    ports = None
+                else:
+                    txt_new += ports[:idx]
+                    ports = ports[idx+1:-1]
+        txt_new = txt_new.rstrip()
         # Add ports binding
-        if m.group('ports'):
+        if ports:
             # if port binding starts with a .* let it on the same line
-            if not m.group('ports').startswith('.*') and '\n' in m.group('ports').rstrip():
+            if not ports.startswith('.*') and '\n' in ports.rstrip():
                 txt_new += '\n'
-            if '\n' in m.group('ports').strip() :
-                txt_new += self.alignInstanceBinding(m.group('ports'),ilvl+1)
+            if '\n' in ports.strip() :
+                txt_new += self.alignInstanceBinding(ports,ilvl+1)
                 txt_new += self.indent*(ilvl)
             else:
-                p = m.group('ports').strip()
+                p = ports.strip()
                 p = re.sub(r'\s+','',p)
                 p = re.sub(r'\),',r'), ',p)
                 txt_new += p
@@ -1044,15 +1059,18 @@ class VerilogBeautifier():
                     max_port_len = max_port_len_impl
         if sigs_len and self.settings['instAlignPort'] and self.settings['alignParen'] :
             max_sig_len = max(sigs_len)
-        #TODO: if the .* is at the beginning make sure it is not follow by another binding
+        #TODO: if the .* is at the beginning make sure it is not followed by another binding
         lines = txt.strip().splitlines()
+        lines_clean = verilogutil.clean_comment(txt).strip().splitlines()
         txt_new = ''
+        last_line = lines_clean[-1].strip()
         # for each line apply alignment
         for i,line in enumerate(lines):
             # Remove leading and trailing space. add end of line
             l = line.strip()
             # ignore empty line at the begining and the end of the connection
             if (i!=(len(lines)-1) and i!=0) or l !='':
+                is_last = verilogutil.clean_comment(line).strip() == last_line
                 # Look for a binding
                 m = re.search(r'^'+re_str_bind_port+re_str_bind_sig,l)
                 is_split = False
@@ -1079,8 +1097,11 @@ class VerilogBeautifier():
                     if not is_split:
                         if 'signal' in m.groupdict():
                             txt_new += ')'
-                        if i!=(len(lines)-1): # Add comma for all lines except last
-                            txt_new += ','
+                        # if i!=(len(lines)-1): # Add comma for all lines except last
+                        if not is_last: # Add comma for all lines except last
+                            txt_new += ', '
+                        else:
+                            txt_new += '  '
                     if 'comment' in m.groupdict() and m.group('comment'):
                         if txt_new[-1] != ',':
                             txt_new += ' '
@@ -1096,7 +1117,8 @@ class VerilogBeautifier():
                                 txt_new += m.group('signal').strip().ljust(max_sig_len) + ')'
                             else :
                                 txt_new += ''.strip().ljust(max_sig_len) + ')'
-                            if m.group('comma') and i!=(len(lines)-1):
+                            # if m.group('comma') and i!=(len(lines)-1):
+                            if m.group('comma') and not is_last:
                                 txt_new += ', '
                             else:
                                 txt_new += '  '
@@ -1106,6 +1128,7 @@ class VerilogBeautifier():
                             txt_new += l
                     else :
                         txt_new += l
+                txt_new = txt_new.rstrip()
                 was_split = is_split
                 txt_new += '\n'
         return txt_new
