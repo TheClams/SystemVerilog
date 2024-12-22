@@ -547,9 +547,6 @@ contexts:
       scope: keyword.control.systemverilog
 
   block-param-bind:
-    # - match: '#(?!#)'
-    #   scope: keyword.operator.other.param.systemverilog
-    #   push: binding-block
     - match: (#)\s*(\()
       captures:
         1: keyword.operator.other.param.systemverilog
@@ -826,7 +823,6 @@ contexts:
   opt-param-bind:
     - match: '#(?!#)'
       scope: keyword.operator.other.param.systemverilog
-      # push: binding-block
       push:
         - meta_content_scope: meta.block.bind.param.systemverilog
         - include: binding-block
@@ -987,6 +983,15 @@ contexts:
       captures:
         1: keyword.operator.delay.systemverilog
         2: keyword.other.systemverilog
+    - match: (##)
+      scope: keyword.operator.delay.systemverilog
+    - match: (#)
+      scope: keyword.operator.delay.systemverilog
+      push:
+        - meta_scope: meta.delay.systemverilog
+        - include: constants
+        - match: ''
+          pop: true
     - match: (@)\s*(\()
       captures:
         1: keyword.operator.other.systemverilog
