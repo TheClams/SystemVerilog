@@ -547,7 +547,7 @@ class VerilogBeautifier():
     # Align ANSI style port declara3ion of a module
     def alignModulePort(self,txt, ilvl):
         # Extract parameter and ports
-        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)(?P<import>\s+import\s+.*?;)?\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*?)\s*\))?\s*(\(\s*(?P<ports>.*)\s*\))?\s*;$',txt,flags=re.MULTILINE)
+        m = re.search(r'(?s)(?P<module>^[ \t]*module)\s*(?P<mname>\w+)(?P<import>\s+import\s+.*?;)?\s*(?P<paramsfull>#\s*\(\s*(?P<params>.*?)\s*\))?\s*(?P<comment_pp>//.*?\n\s*)?(\(\s*(?P<ports>.*)\s*\))?\s*;$',txt,flags=re.MULTILINE)
         if not m:
             return ''
         txt_new = self.indent*(ilvl) + 'module ' + m.group('mname').strip()
@@ -563,12 +563,13 @@ class VerilogBeautifier():
         # Add optional parameter declaration
         if m.group('params'):
             param_txt = m.group('params').strip()
+            # print(f'Params = {param_txt}')
             # param_txt = re.sub(r'(^|,)\s*parameter','',param_txt) # remove multiple parameter declaration
             # re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[\w\:`\'\+\-\*\/\(\)\" \$\.]+)\s*(?P<sep>,)?[ \t]*(?P<list>(?:[\w\:]+[ \t]+)?\w+[ \t]*=[ \t]*[\w\.\:`\'\+\-\*\/\(\)\"\$]+(,)?[ \t]*)*(?P<comment>.*?$)'
             re_param_str = r'^[ \t]*(?:(?P<parameter>parameter|localparam)\s+)?(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<param>\w+)\b\s*=\s*(?P<value>[^\n]*?)(?P<comment>$|//.*?$)'
             re_param = re.compile(re_param_str,flags=re.MULTILINE)
             decl = re_param.findall(param_txt)
-            # print('Decl : {}'.format(decl))
+            # print(f'Decl : {decl}')
             len_bw_a = []
             if not decl:
                 # No recognisable parameter: will simply indent line
@@ -700,15 +701,17 @@ class VerilogBeautifier():
                 if len_comment > 0 :
                     txt_new += '\n' + self.indent*(ilvl)
             txt_new += ')'
-            #
+            # Handle case of comment between parameters and ports declaration
+            if m.group('comment_pp'):
+                txt_new += ' ' + m.group('comment_pp').strip() + '\n'
         # Handle special case of no ports
-        if not m.group('ports'):
-            if not self.settings['reindentOnly']:
-                txt_new += ' ()'
-            return txt_new + ';'
-        # Add port list declaration
         if txt_new[-1]!='\n':
             txt_new += ' '
+        if not m.group('ports'):
+            if not self.settings['reindentOnly']:
+                txt_new += '()'
+            return txt_new + ';'
+        # Add port list declaration
         txt_new += '(\n'
         # Port declaration: direction type? signess? buswidth? list ,? comment?
         re_str = r'^[ \t]*(?P<dir>[\w\.]+)[ \t]+(?P<var>var|wire\b)?[ \t]*(?P<type>[\w\:]+\b)?[ \t]*(?P<sign>signed|unsigned\b)?[ \t]*(?P<bw>(?:\['+verilogutil.re_bw+r'\][ \t]*)*)[ \t]*(?P<ports>(?P<port1>\w+)[\w, \t\[\]\*\-\+\$\(\)\'\:)]*)[ \t]*(?P<comment>.*)'

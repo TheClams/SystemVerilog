@@ -21,3 +21,24 @@ module my_module
    parameter  A = 1,
    parameter  B = 2
 ) ();
+
+endmodule
+
+module my_module
+   import first_pkg::*, second_pkg::*;
+   #(
+   parameter  A = 1,
+   parameter  B = 2
+) // Comment
+   ();
+endmodule
+
+module my_module
+   import first_pkg::*, second_pkg::*;
+   #(
+   parameter  A = 1,
+   parameter  B = 2 ) // Comment
+   (
+      input clk
+   );
+endmodule
