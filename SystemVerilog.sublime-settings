@@ -29,6 +29,7 @@
 	"sv.align_paren"           : true,  // Align closing parenthesis for module instance
 	"sv.align_group_decl"      : false, // Group declaration separated by empty line or comments
 	"sv.param_port_alignment"  : true,  // Control if parameters/ports binding are align together
+	"sv.align_space_bind"      : false, // Add space after a port binding in module instantiation
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
 	"sv.rst_name"           : "rst",    // Default reset active high

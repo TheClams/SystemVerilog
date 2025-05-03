@@ -30,7 +30,7 @@ def split_on_comma(txt) :
 #
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True, groupDecl=False):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True, groupDecl=False, spaceBind=False):
         self.settings = {'nbSpace': nbSpace,
                         'useTab':useTab,
                         'oneBindPerLine':oneBindPerLine,
@@ -45,6 +45,7 @@ class VerilogBeautifier():
                         'alignComma' : alignComma,
                         'alignParen' : alignParen,
                         'groupDecl' : groupDecl,
+                        'spaceBind' : spaceBind,
         }
         self.indentSpace = ' ' * nbSpace
         if useTab:
@@ -1051,6 +1052,7 @@ class VerilogBeautifier():
         sigs_len = [len(x[2].strip()) for x in binds]
         ports_impl = None
         binds_impl = re.findall(re_str_bind_implicit,txt,flags=re.MULTILINE)
+        spaceBind = ' ' if self.settings['spaceBind'] else ''
         if binds_impl:
             ports_impl = [x[1] for x in binds_impl]
         if ports_len and self.settings['instAlignPort']:
@@ -1093,6 +1095,7 @@ class VerilogBeautifier():
                     # print('Line ' + str(i) + '/' + str(len(lines)) + ' : ' + str(m.groups()) + ' => split = ' + str(is_split))
                     txt_new += self.indent*(ilvl)
                     txt_new += '.' + m.group('port').ljust(max_port_len)
+                    txt_new += spaceBind
                     if 'signal' in m.groupdict():
                         txt_new += '(' + m.group('signal').strip().ljust(max_sig_len)
                     elif max_sig_len>0 and i!=(len(lines)-1):
