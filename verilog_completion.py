@@ -806,7 +806,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
         eot = verilogutil.clean_comment(txt_raw[pos:])
         has_binding = re.match(r'^\.\w*\b',eot) is not None
         if not has_binding:
-            is_last = re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*(;|\w+)',eot,flags=re.MULTILINE) is not None
+            is_last = len(set([p['name'] for p in l]) - set(b)) <= 1 and \
+                re.match(r'(?s)^\.\w*\s*(?:\([^\)]+\))?\s*\)\s*(;|\w+)?',eot,flags=re.MULTILINE) is not None
         # print('End text = \n{0}\nHas_binding={1}, is_last={2}'.format(eot,has_binding,is_last))
         for x in l:
             if x['name'] not in b:
@@ -818,7 +819,9 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
                     def_val = x['name']
                 s = x['name']
                 if not has_binding:
-                    s = s.ljust(len_port)+'(${0:' + def_val + '})'
+                    if self.settings.get("sv.align_binding_completion", True):
+                        s = s.ljust(len_port)
+                    s = s+'(${0:' + def_val + '})'
                     if not is_last:
                         s = s+','
                 c.append(sublime.CompletionItem(x['name'],tips,s,kind=MYKIND_FIELD, completion_format=1))

@@ -19,17 +19,18 @@
 	"sv.tooltip_show_refs" : true, // True to show reference to module/interface/...
 	"sv.tooltip_show_signal_links" : false, // True to show links to driver/reference for signals
 	// SystemVerilog Alignment configuration
-	"sv.one_bind_per_line"     : true,  // When aligning module instantiation force only one binding per line
-	"sv.one_decl_per_line"     : false, // When aligning signal declaration force only one signal per line
-	"sv.max_line_length"       : 120,   // Use by alignment plugin to split one line into multiple if too long
-	"sv.strip_empty_line"      : true,  // Strip empty line inside Module declaration/alignement
-	"sv.mod_import_same_line"  : false, // When aligning module declaration, put import statement on same line as module
-	"sv.alignment_ignore_tick" : false, // Ignore line identation for every line starting with `ifdef,`elsif,...
-	"sv.align_comma_semicolon" : true,  // Align comma/semi-colon for signal/port declaration
-	"sv.align_paren"           : true,  // Align closing parenthesis for module instance
-	"sv.align_group_decl"      : false, // Group declaration separated by empty line or comments
-	"sv.param_port_alignment"  : true,  // Control if parameters/ports binding are align together
-	"sv.align_space_bind"      : false, // Add space after a port binding in module instantiation
+	"sv.one_bind_per_line"       : true,  // When aligning module instantiation force only one binding per line
+	"sv.one_decl_per_line"       : false, // When aligning signal declaration force only one signal per line
+	"sv.max_line_length"         : 120,   // Use by alignment plugin to split one line into multiple if too long
+	"sv.strip_empty_line"        : true,  // Strip empty line inside Module declaration/alignment
+	"sv.mod_import_same_line"    : false, // When aligning module declaration, put import statement on same line as module
+	"sv.alignment_ignore_tick"   : false, // Ignore line indentation for every line starting with `ifdef,`elsif,...
+	"sv.align_comma_semicolon"   : true,  // Align comma/semi-colon for signal/port declaration
+	"sv.align_paren"             : true,  // Align closing parenthesis for module instance
+	"sv.align_group_decl"        : false, // Group declaration separated by empty line or comments
+	"sv.param_port_alignment"    : true,  // Control if parameters/ports binding are align together
+	"sv.align_space_bind"        : false, // Add space after a port binding in module instantiation
+	"sv.align_binding_completion": true,  // Align port and parameter bindings in module instantiation autocompletion
 	// SystemVerilog always block completion configuration
 	"sv.clk_name"           : "clk",    // Default clock name
 	"sv.rst_name"           : "rst",    // Default reset active high
