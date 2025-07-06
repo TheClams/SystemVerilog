@@ -1,0 +1,4 @@
+SystemVerilog 3.3.6 Changelog:
+
+## Features ##
+ - Alignement: Fix issue with some comments at odd position in module declaration

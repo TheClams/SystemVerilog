@@ -1,0 +1,4 @@
+SystemVerilog 3.3.8 Changelog:
+
+## Features ##
+ - Alignement: merge contribution (Jay Oster) to control auto-alignment during auto-completion of port/param: sv.align_binding_completion (true by default)

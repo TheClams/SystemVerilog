@@ -1,0 +1,4 @@
+SystemVerilog 3.3.7 Changelog:
+
+## Features ##
+ - Alignement: add option to space port binding by one space : sv.align_space_bind

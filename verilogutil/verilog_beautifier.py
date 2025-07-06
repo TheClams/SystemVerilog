@@ -997,7 +997,7 @@ class VerilogBeautifier():
             else :
                 p = m.group('params').strip()
                 p = re.sub(r'\s+','',p)
-                p = re.sub(r'\),',r'), ',p)
+                p = re.sub(r'\),','), ',p)
                 txt_new += p
             txt_new += ')'
         # Add module name

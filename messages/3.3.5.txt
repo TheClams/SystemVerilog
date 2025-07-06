@@ -1,0 +1,4 @@
+SystemVerilog 3.3.5 Changelog:
+
+## Features ##
+ - Highlight: support delay followed by parenthesis

@@ -1087,7 +1087,7 @@ contexts:
         (\.-?\d+)?   # precision
         [eEfFgG]     # conversion type
       scope: constant.other.placeholder.float.systemverilog
-    - match: '%[lLmMvV%]'
+    - match: '%[lLmMtTvV%]'
       scope: constant.other.placeholder.systemverilog
     - match: "%"
       scope: invalid.illegal.placeholder.systemverilog
