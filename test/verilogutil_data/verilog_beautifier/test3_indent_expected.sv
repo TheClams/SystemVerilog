@@ -83,11 +83,11 @@ module my_module (
             if(test[2])
               cnt <= 4'h2; // splitception o0
           end
-      else begin
-        testbus <= cnt;
-        if(cnt[16])
-          cnt <= cnt + 1;
-      end
+        else begin
+          testbus <= cnt;
+          if(cnt[16])
+            cnt <= cnt + 1;
+        end
     end
   end
 

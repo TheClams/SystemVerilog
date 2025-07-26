@@ -161,6 +161,10 @@ class Tests(unittest.TestCase):
         cfg = BeautifyConfig(nbSpace=3)
         self.runBeautifyTest(self.path_test+"generate.sv", self.path_test+"generate_exp.sv", cfg)
 
+    def test_beautifyGenerate2(self):
+        cfg = BeautifyConfig(nbSpace=3)
+        self.runBeautifyTest(self.path_test+"generate2.sv", self.path_test+"generate2_exp.sv", cfg)
+
     def test_beautifyModuleParam(self):
         cfg = BeautifyConfig(nbSpace=4)
         self.runBeautifyTest(self.path_test+"module_param.sv", self.path_test+"module_param_exp.sv", cfg)
@@ -168,3 +172,7 @@ class Tests(unittest.TestCase):
     def test_uniqueCase(self):
         cfg = BeautifyConfig(useTab=True)
         self.runBeautifyTest(self.path_test+"unique_case.sv", self.path_test+"unique_case_exp.sv", cfg)
+
+    def test_ifElseNoBegin(self):
+        cfg = BeautifyConfig(nbSpace=4)
+        self.runBeautifyTest(self.path_test+"ifelse_nobegin.sv", self.path_test+"ifelse_nobegin_exp.sv", cfg)
