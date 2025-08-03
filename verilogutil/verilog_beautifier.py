@@ -220,16 +220,16 @@ class VerilogBeautifier():
                         if not m:
                             if tmp.startswith('always'):
                                 split_always = 1
-                                # print('[Beautify] Always split on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
+                                self.block_state = 'always'
+                                # print(f'[Beautify] Always split on line {line_cnt:4} => state={self.block_state}.{self.states}: "{line:<140}"')
                             elif ilvl==ilvl_prev and self.state != '(' :
-                            # elif (ilvl==ilvl_prev or tmp.startswith('end')) and self.state != '(' and (self.state != '' or self.block_state=='always') :
                                 # print('[Beautify] confirming ...')
                                 if ilvl not in split:
                                     if self.state == 'case' and re.match(r'\s*\w+\s*,$',tmp):
                                         # print('[Beautify] Multiple state case at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.states, block_state=self.block_state, ilvl=ilvl))
                                         pass
                                     else:
-                                        # print(f'[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={
+                                        # print(f'[Beautify] First split at ilvl {ilvl} on line {line_cnt:4} => state={self.block_state}.{self.states}')
                                         split[ilvl] = [1,tmp]
                                 # Exclude the @(event) cases
                                 elif not split[ilvl][1].strip().startswith('@') :
@@ -272,7 +272,7 @@ class VerilogBeautifier():
                             ilvl_tmp += x[0]
                         if ilvl not in split:
                             tmp = verilogutil.clean_comment(line).strip()
-                            # print('[Beautify] Adding split at ilvl {ilvl} on line {line_cnt:4} => state={block_state}.{state}: "{line:<140}"'.format(line_cnt=line_cnt, line=line, state=self.state, block_state=self.block_state, ilvl=ilvl))
+                            # print(f'[Beautify] Adding split at ilvl {ilvl} on line {line_cnt:4} => state={self.block_state}.{self.state}: "{line:<140}"')
                             split[ilvl] = [1,tmp]
                         else:
                             split[ilvl][0] += 1
@@ -343,7 +343,7 @@ class VerilogBeautifier():
             # Handle the end of self.state
             if state_end:
                 # Check if this was not already handled
-                # print('[Beautify] state {0}.{1} end on word {2}, ilvl={3}'.format(self.states,self.block_state,w,ilvl))
+                # print(f'[Beautify] state {self.states}.{self.block_state} end on word "{w}"" | ilvl={ilvl}')
                 if self.block_state == 'generate' :
                     block_tmp = block
                     if not self.settings['reindentOnly']:
