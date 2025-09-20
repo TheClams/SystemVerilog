@@ -317,7 +317,7 @@ contexts:
       captures:
         1: punctuation.definition.comment.systemverilog
     # Attributes
-    - match: ^\s*(\(\*)\s*\w
+    - match: (\(\*)\s*\w
       captures:
         1: punctuation.definition.attribute.systemverilog
       push:
