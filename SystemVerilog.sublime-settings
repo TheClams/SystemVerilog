@@ -71,6 +71,7 @@
 	"sv.navbar_show_module_port"   : true, // Show all ports of current module
 	"sv.navbar_show_module_signal" : false, // Show all signal declared in a module
 	"sv.navbar_show_interface_cb"  : false, // Show all clocking block in an interface
+	"sv.search_incl"  : true, // When looking for a type name, search for include file in all the project folders
 	// Debug option
 	"sv.autocomplete_max_lvl": 5, // Max hierachy level for autocompletion (class.struct.field.sub-field == 4 level) , -1 for no limit
 	"sv.disable_autocomplete": false,

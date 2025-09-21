@@ -1,13 +1,14 @@
 import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, imp, time, threading
 import json
-
+from pathlib import Path
 
 from .verilogutil import verilogutil
 from .verilogutil import sublimeutil
 
 list_module_files = {}
 lmf_update_ongoing = False
+sv_settings = None
 
 def plugin_loaded():
     r = threading.Thread(target=reload, daemon=True)
@@ -33,6 +34,10 @@ def reload():
         except:
             cnt -= 1
             time.sleep(2)
+    global sv_settings
+    sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
+    sv_settings.clear_on_change('reload')
+    sv_settings.add_on_change('reload',plugin_loaded)
 
 
 ############################################################################
@@ -41,6 +46,8 @@ def type_info(view,txt,varname):
     ti = verilogutil.get_type_info(txt,varname)
     if not ti or not ti['type'] or ti['type'] in ['var']:
         ti = type_info_from_import(view,txt,varname)
+        if ti['decl'] is None:
+            ti = type_info_from_include(view,txt,varname)
     return ti
 
 def type_info_file(view,fname,varname):
@@ -70,6 +77,24 @@ def type_info_from_import(view,txt,varname):
         if ti['type']:
             break
     return ti
+
+def type_info_from_include(view,txt,varname):
+    search_incl = sv_settings.get('sv.search_incl', False) if sv_settings else False
+    for m in re.finditer(r'`include\s+"(.+?)"',txt,flags=re.MULTILINE):
+        fname = m.group(1)
+        if os.path.exists(fname):
+            ti = verilogutil.get_type_info_file(fname,varname)
+        elif search_incl:
+            full_path = ''
+            for folder in sublime.active_window().folders():
+                for full_path in Path(folder).rglob(fname):
+                    ti = verilogutil.get_type_info_file(str(full_path),varname)
+                    if ti['type']:
+                        return ti
+        if ti['type']:
+            return ti
+    # Not found
+    return {'decl':None,'type':None,'array':"",'bw':"", 'name':varname, 'tag':None, 'value':None}
 
 def type_info_from_base(view,r,varname):
     ti = None

@@ -1,0 +1,8 @@
+SystemVerilog 3.3.11 Changelog:
+
+## Features ##
+ - Popup: now search for include files when a variable definition is not found.
+ 	The new settings `sv.search_incl` allows to search the include file in the whole project instead of the local directory
+
+## Bug Fixes ##
+ - Alignement: Fix interface port alignement

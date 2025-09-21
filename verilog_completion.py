@@ -594,7 +594,8 @@ class VerilogAutoComplete(sublime_plugin.EventListener):
     def listbased_completion(self, name):
         l = self.get_listbased_info(name)
         if not l:
-            print('[listbased_completion] No completion found for {}'.format(name))
+            if self.settings.get('sv.debug', False):
+                print('[listbased_completion] No completion found for {}'.format(name))
             return []
         k = sublime.KIND_SNIPPET if name in ['tick','core'] else MYKIND_FUNCTION
         c = []
