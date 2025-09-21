@@ -176,3 +176,7 @@ class Tests(unittest.TestCase):
     def test_ifElseNoBegin(self):
         cfg = BeautifyConfig(nbSpace=4)
         self.runBeautifyTest(self.path_test+"ifelse_nobegin.sv", self.path_test+"ifelse_nobegin_exp.sv", cfg)
+
+    def test_interface(self):
+        cfg = BeautifyConfig(nbSpace=4)
+        self.runBeautifyTest(self.path_test+"interface.sv", self.path_test+"interface.sv", cfg)

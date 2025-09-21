@@ -525,7 +525,7 @@ class VerilogBeautifier():
             else :
                 self.stateUpdate(w)
             # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
-            if w in ['module','package', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
+            if w in ['module', 'package', 'interface', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
                 self.block_state = w
                 return "incr_ilvl_flush"
             else:
