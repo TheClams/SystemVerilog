@@ -597,10 +597,11 @@ contexts:
 
   # Block definition
   module-def:
-    - match: '\s*(module)\s+\b({{id}})\b'
+    - match: '\b(module)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
         1: keyword.control.systemverilog
-        2: entity.name.type.module.systemverilog
+        2: keyword.other.lifetime.systemverilog
+        3: entity.name.type.module.systemverilog
       set: [module-body , module-port]
   module-port:
     - meta_scope: meta.module.port.systemverilog
@@ -638,10 +639,11 @@ contexts:
     - include: general
 
   interface-def:
-    - match: '\s*(interface)\s+\b({{id}})\b'
+    - match: '\b(interface)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
         1: keyword.other.systemverilog
-        2: entity.name.type.interface.systemverilog
+        2: keyword.other.lifetime.systemverilog
+        3: entity.name.type.interface.systemverilog
       set: [interface-body , interface-port]
   interface-port:
     - meta_scope: meta.interface.port.systemverilog
