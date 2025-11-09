@@ -280,7 +280,7 @@ contexts:
       scope: meta.definition.systemverilog
       captures:
         1: keyword.other.systemverilog
-        2: keyword.other.systemverilog
+        2: keyword.other.lifetime.systemverilog
         3: entity.name.type.class.systemverilog
     - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|iff|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|showcancelled|specify|specparam|table|use)\b
       captures:
@@ -390,9 +390,9 @@ contexts:
     - include: constants
     - include: strings
     - include: nettype
-    - match: '^\s*(?:(static)\s+)?(?:(var|wire)\s+)?(({{id}})\s*(::)\s*)?({{id}})\s+{{id}}'
+    - match: '^\s*(?:(static|automatic)\s+)?(?:(var|wire)\s+)?(({{id}})\s*(::)\s*)?({{id}})\s+{{id}}'
       captures:
-        1: keyword.other.static.systemverilog
+        1: keyword.other.lifetime.systemverilog
         2: storage.type.net.systemverilog
         4: support.type.scope.systemverilog
         5: keyword.operator.scope.systemverilog
