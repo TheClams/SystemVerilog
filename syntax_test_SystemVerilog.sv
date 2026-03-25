@@ -59,7 +59,8 @@ endinterface /* my_interface1 */
         );
 
     endinterface : my_interface2
-//                 ^^^^^^^^^^^^^ meta.interface.body.systemverilog entity.label.systemverilog
+//  ^  keyword.control.systemverilog
+//                 ^ meta.interface.body.systemverilog entity.label.systemverilog
 
   interface class ihello;
 
@@ -145,6 +146,13 @@ typedef union tagged packed {
 /*------------------------------------------------------------------------------
 --  Module declaration
 ------------------------------------------------------------------------------*/
+
+module automatic module_with_litfime();
+//     ^^^^^^^^^ keyword.other.lifetime.systemverilog
+
+endmodule : module_with_litfime
+// <- meta.module.body.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
+//          ^ meta.module.body.systemverilog meta.object.end.systemverilog entity.label.systemverilog
 
 module my_module
 // <- keyword.control
@@ -279,6 +287,7 @@ my_interface1#(1) if1(clk,rst_n);
 //                              ^^^ -entity
 
 my_module i_my_module
+// <- meta.module.body.systemverilog meta.module.inst.systemverilog storage.type.module.systemverilog
 //        ^^^^^^^^^^^ meta.module.inst.systemverilog entity.name.type.module.systemverilog
   (
     .if1(if1),
@@ -343,6 +352,9 @@ protected const mystruct c_var = '{a:0, b:1, c:4'hD, default:0, e: mytype'(50)};
 //                                                   ^^^^^^^ meta.struct.assign keyword.control
 
 endmodule : my_module
+// <- meta.module.body.systemverilog meta.object.end.systemverilog keyword.control.systemverilog
+//        ^ keyword.operator.systemverilog
+//          ^ meta.module.body.systemverilog meta.object.end.systemverilog entity.label.systemverilog
 
 /*------------------------------------------------------------------------------
 --  Class

@@ -280,9 +280,9 @@ contexts:
       scope: meta.definition.systemverilog
       captures:
         1: keyword.other.systemverilog
-        2: keyword.other.systemverilog
+        2: keyword.other.lifetime.systemverilog
         3: entity.name.type.class.systemverilog
-    - match: \s*\b(automatic|cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|iff|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|showcancelled|specify|specparam|table|use)\b
+    - match: \s*\b(cell|config|deassign|defparam|design|disable|endconfig|endgenerate|endspecify|endtable|generate|iff|ifnone|incdir|instance|liblist|library|macromodule|noshowcancelled|pulsestyle_onevent|pulsestyle_ondetect|showcancelled|specify|specparam|table|use)\b
       captures:
         1: keyword.other.systemverilog
     - match: \s*\b(endtask|endmodule|endfunction|endprimitive|endsequence|endprogram|endclocking|endproperty|endchecker)\b(\s*(:)\s*(\w+))?
@@ -391,8 +391,9 @@ contexts:
     - include: strings
     - include: nettype
     - match: '^\s*(?:(static)\s+)?(?:(var|wire)\s+)?(({{id}})\s*(::)\s*)?({{id}})\s+{{id}}'
+    # - match: '^\s*(?:(static|automatic)\s+)?(?:(var|wire)\s+)?(({{id}})\s*(::)\s*)?({{id}})\s+{{id}}'
       captures:
-        1: keyword.other.static.systemverilog
+        1: keyword.other.lifetime.systemverilog
         2: storage.type.net.systemverilog
         4: support.type.scope.systemverilog
         5: keyword.operator.scope.systemverilog
@@ -597,10 +598,11 @@ contexts:
 
   # Block definition
   module-def:
-    - match: '\s*(module)\s+\b({{id}})\b'
+    - match: '\s*\b(module)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
         1: keyword.control.systemverilog
-        2: entity.name.type.module.systemverilog
+        2: keyword.other.lifetime.systemverilog
+        3: entity.name.type.module.systemverilog
       set: [module-body , module-port]
   module-port:
     - meta_scope: meta.module.port.systemverilog
@@ -626,7 +628,7 @@ contexts:
     - include: ifmodport
   module-body:
     - meta_scope: meta.module.body.systemverilog
-    - match: \b(endmodule)(?:\s*(:)\s*(?:(\2)\b|({{id}})))?
+    - match: \b(endmodule)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
       captures:
         0: meta.object.end.systemverilog
         1: keyword.control.systemverilog
@@ -638,10 +640,11 @@ contexts:
     - include: general
 
   interface-def:
-    - match: '\s*(interface)\s+\b({{id}})\b'
+    - match: '\s*\b(interface)\s+(?:(static|automatic)\s+)?\b({{id}})\b'
       captures:
         1: keyword.other.systemverilog
-        2: entity.name.type.interface.systemverilog
+        2: keyword.other.lifetime.systemverilog
+        3: entity.name.type.interface.systemverilog
       set: [interface-body , interface-port]
   interface-port:
     - meta_scope: meta.interface.port.systemverilog
@@ -667,7 +670,7 @@ contexts:
     - include: ifmodport
   interface-body:
     - meta_scope: meta.interface.body.systemverilog
-    - match: \b(endinterface)(?:\s*(:)\s*(?:(\2)\b|({{id}})))?
+    - match: \b(endinterface)(?:\s*(:)\s*(?:(\3)\b|({{id}})))?
       captures:
         0: meta.object.end.systemverilog
         1: keyword.control.systemverilog

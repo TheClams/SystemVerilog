@@ -1,0 +1,4 @@
+SystemVerilog 3.3.12 Changelog:
+
+## Bug Fixes ##
+ - Highlight: support static/automatic with module and interface
