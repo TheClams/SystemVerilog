@@ -2,6 +2,7 @@ SystemVerilog 3.3.12 Changelog:
 
 ## Features ##
  - Alignement: Add option `sv.args_indent` to control if argument list of a task/function are indented by one level
+ - Completion: Add option `sv.spaced_if` to control if autocompletion for always_ff add a space between if and (
 
 ## Bug Fixes ##
  - Highlight: support static/automatic with module and interface

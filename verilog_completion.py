@@ -1043,6 +1043,7 @@ class VerilogHelper():
         always_begin_end  = settings.get('sv.always_ff_begin_end',True)
         always_one_cursor = settings.get('sv.always_one_cursor',True)
         indent_style      = settings.get('sv.indent_style','1tbs')
+        spaced_if         = settings.get('sv.spaced_if',False)
         beautifier = verilog_beautifier.VerilogBeautifier(useTab=True, indentSyle=indent_style)
         txt = ''
         # try to retrieve name of clk/reset base on buffer content (if enabled in settings)
@@ -1094,6 +1095,8 @@ class VerilogHelper():
             r = view.find(verilogutil.re_decl+clk_en_name,0)
             if not r :
                 clk_en_name = ''
+        #
+        if_sep = ' ' if spaced_if else ''
         # define basic always block with asynchronous reset
         a_l = 'always @(posedge '+clk_name+' or negedge ' + rst_n_name +')'
         if always_begin_end:
@@ -1101,11 +1104,11 @@ class VerilogHelper():
             if always_label :
                 a_l +=  ' : proc_$1'
         a_l +=  '\n'
-        a_l += 'if(~'+rst_n_name + ') begin\n'
+        a_l += f'if{if_sep}(~{rst_n_name}) begin\n'
         a_l += '$1 <= 0;'
         a_l += '\nend else '
         if clk_en_name != '':
-            a_l += 'if(' + clk_en_name + ') '
+            a_l += f'if{if_sep}({clk_en_name}) '
         a_l+= 'begin\n'
         if not always_one_cursor:
             a_l += '$1 <= $2;'
@@ -1120,7 +1123,7 @@ class VerilogHelper():
                 a_nr +=  ' : proc_$1'
         a_nr +=  '\n'
         if clk_en_name != '':
-            a_nr += 'if(' + clk_en_name + ') begin\n'
+            a_nr += f'if{if_sep}({clk_en_name}) begin'
         a_nr += '$1'
         if not always_one_cursor:
             a_nr += ' <= $2'
