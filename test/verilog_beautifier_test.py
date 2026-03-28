@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 import verilog_beautifier
 class BeautifyConfig():
 
-    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True,ignoreTick=False):
+    def __init__(self, nbSpace=4, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True,ignoreTick=False, argsIndent=True):
         self.nbSpace        = nbSpace
         self.useTab         = useTab
         self.oneBindPerLine = oneBindPerLine
@@ -18,6 +18,7 @@ class BeautifyConfig():
         self.stripEmptyLine = stripEmptyLine
         self.instAlignPort  = instAlignPort
         self.ignoreTick     = ignoreTick
+        self.argsIndent     = argsIndent
 
 class Tests(unittest.TestCase):
 
@@ -37,7 +38,8 @@ class Tests(unittest.TestCase):
                                                  reindentOnly=cfg.reindentOnly,
                                                  stripEmptyLine=cfg.stripEmptyLine,
                                                  instAlignPort=cfg.instAlignPort,
-                                                 ignoreTick=cfg.ignoreTick
+                                                 ignoreTick=cfg.ignoreTick,
+                                                 argsIndent=cfg.argsIndent,
                                                  )
         with open(fname_in, 'r', encoding='utf-8') as f:
             txt = f.read()
@@ -180,3 +182,11 @@ class Tests(unittest.TestCase):
     def test_interface(self):
         cfg = BeautifyConfig(nbSpace=4)
         self.runBeautifyTest(self.path_test+"interface.sv", self.path_test+"interface.sv", cfg)
+
+    def test_taskNoIndent(self):
+        cfg = BeautifyConfig(useTab=True,argsIndent=False)
+        self.runBeautifyTest(self.path_test+"task.sv", self.path_test+"task_exp.sv", cfg)
+
+    def test_taskIndent(self):
+        cfg = BeautifyConfig(useTab=True,argsIndent=True)
+        self.runBeautifyTest(self.path_test+"task.sv", self.path_test+"task_indent_exp.sv", cfg)

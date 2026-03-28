@@ -62,6 +62,7 @@
 	"sv.decl_end"                : "/*----", // Pattern to find just after start to insert signal declaration before. Empty string to use first empty line after start pattern
 	"sv.decl_indent"             : 1, // Number of indentation level for signal declaration
 	"sv.proc_indent"             : 1, // Number of indentation level for process
+	"sv.args_indent"             : true, // Indent argument list of a task/function
 	// Popup config
 	"sv.hover_max_size" : -1, // Max size of the file (in byte) to display popup info. Set to -1 to disable the limit (default), 0 to disable feature.
 	// Navigation config

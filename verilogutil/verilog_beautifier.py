@@ -30,7 +30,8 @@ def split_on_comma(txt) :
 #
 class VerilogBeautifier():
 
-    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False, stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True, groupDecl=False, spaceBind=False):
+    def __init__(self, nbSpace=3, useTab=False, oneBindPerLine=True, oneDeclPerLine=False, paramOneLine=True, indentSyle='1tbs', reindentOnly=False,
+            stripEmptyLine=True, instAlignPort=True, ignoreTick=True,importSameLine=False,alignComma=True,alignParen=True, groupDecl=False, spaceBind=False, argsIndent=True):
         self.settings = {'nbSpace': nbSpace,
                         'useTab':useTab,
                         'oneBindPerLine':oneBindPerLine,
@@ -46,6 +47,7 @@ class VerilogBeautifier():
                         'alignParen' : alignParen,
                         'groupDecl' : groupDecl,
                         'spaceBind' : spaceBind,
+                        'argsIndent' : argsIndent,
         }
         self.indentSpace = ' ' * nbSpace
         if useTab:
@@ -92,7 +94,7 @@ class VerilogBeautifier():
             return True
         if (self.state=='{' and w=='}') :
             return True
-        if (self.state=='(' and w==')') :
+        if (self.state in ['(','(+'] and w==')') :
             return True
         if (self.state.startswith('`') and w in ['`elsif', '`else', '`endif']) :
             return True
@@ -128,6 +130,7 @@ class VerilogBeautifier():
         split_always = 0
         last_split = None # last split that was pop
         split_else = False # If next word is else this means the split continue
+        delayed_incr_ilvl = False
         self.always_state = ''
         # Split all text in word, special character, space and line return
         words = re.findall(r"`?\w+|[^\w\s]|[ \t]+|\n", txt, flags=re.MULTILINE)
@@ -147,10 +150,12 @@ class VerilogBeautifier():
                         block+=w
                     has_indent = w!='\n'
                 if state_end:
+                    # print(f'[Beautify] line {line_cnt}: State end with "{w}"" => split={split} states={self.states} -> {self.state} block={self.block_state} => ilvl={ilvl}, SA={split_always} : "{line}"')
+                    if self.state=='(+':
+                        delayed_incr_ilvl = True
                     self.stateUpdate()
                     assert ilvl>0, '[Beautify] Block end with already no indentation ! Line {line_cnt:4}: "{line:<150}" => state={state:<16} -- ilvl={ilvl}'.format(line_cnt=line_cnt, line=line, state=self.state)
                     ilvl-=1
-                    # print(f'[Beautify] line {line_cnt}: State end with "{w}"" => split={split} states={self.states} block={self.block_state} => ilvl={ilvl}, SA={split_always} : "{line}"')
                 # Handle end of self.block_state
                 if self.block_state=='assign' and w!='assign' and not re.match(r'[\t ]+',w):
                     txt_new += self.alignAssign(block,2)
@@ -195,6 +200,9 @@ class VerilogBeautifier():
             if w=='\n':
                 block_ended = False
                 line_skipped = False
+                if delayed_incr_ilvl:
+                    ilvl += 1
+                    delayed_incr_ilvl = False
                 # Pop comment line
                 if self.state in ['comment_line','ignore_line']:
                     line_skipped = True
@@ -222,7 +230,7 @@ class VerilogBeautifier():
                                 split_always = 1
                                 self.block_state = 'always'
                                 # print(f'[Beautify] Always split on line {line_cnt:4} => state={self.block_state}.{self.states}: "{line:<140}"')
-                            elif ilvl==ilvl_prev and self.state != '(' :
+                            elif ilvl==ilvl_prev and self.state not in ['(', '(+'] :
                                 # print('[Beautify] confirming ...')
                                 if ilvl not in split:
                                     if self.state == 'case' and re.match(r'\s*\w+\s*,$',tmp):
@@ -305,7 +313,7 @@ class VerilogBeautifier():
             else :
                 mod_import = False
             # Handle the self.block_state and call appropriate alignement function
-            if w==';' and self.state not in ['comment_line','ignore_line','comment_block','attribute','string', '('] and not mod_import:
+            if w==';' and self.state not in ['comment_line','ignore_line','comment_block','attribute','string', '(', '(+'] and not mod_import:
                 if self.block_state in ['text','decl','struct_assign'] and self.re_decl.match(line.strip()):
                     self.block_state = 'decl'
                     # print('Setting Block state to decl on line "{0}"'.format(line))
@@ -524,11 +532,18 @@ class VerilogBeautifier():
                 self.stateUpdate('case')
             else :
                 self.stateUpdate(w)
-            # print('Block {0} detected in "{1}". Prev= "{2}" => state = {3}'.format(w,txt,w_prev,self.states))
-            if w in ['module', 'package', 'interface', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
+            # print(f'Block {w} detected in "{txt}". Prev= "{w_prev}" => state = {self.states}: {self.state} | args_indent={self.settings["argsIndent"]}')
+            if w == '(' and not self.settings['argsIndent'] and (w_prev[0] in  ['function', 'task'] or w_prev[1] in  ['function', 'task']):
+                # print(f'[processWord] state={self.states} ({self.state})Ignoring ilvl_flush: w={w}, prev={w_prev}, end={state_end}, txt={txt} -> delayed_incr_ilvl')
+                self.states[-1] = '(+'
+                self.state = '(+'
+                return "delayed_incr_ilvl"
+            elif w in ['module', 'package', 'interface', 'generate', 'function', 'task', 'property', 'sequence', 'checker']:
                 self.block_state = w
+                # print(f'[processWord] w={w}, prev={w_prev}, end={state_end}, txt={txt} -> incr_ilvl_flush')
                 return "incr_ilvl_flush"
             else:
+                # print(f'[processWord] w={w}, prev={w_prev}, end={state_end}, txt={txt} -> incr_lvl')
                 return "incr_ilvl"
         # Identify self.block_state
         if not self.block_state:

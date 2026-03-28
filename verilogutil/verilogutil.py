@@ -536,7 +536,7 @@ def parse_package_file_cache(fname, pname, fdate):
 
 def parse_package(flines,pname=r'\w+'):
     # print("Parsing for package " + pname + ' in \n' + flines)
-    m = re.search(r"(?s)(?P<type>package)\s+(?P<name>"+pname+")\s*;\s*(?P<content>.+?)(?P<ending>endpackage)", flines, re.MULTILINE)
+    m = re.search(r"(?s)(?P<type>package)\s+(?P<name>"+pname+r")\s*;\s*(?P<content>.+?)(?P<ending>endpackage)", flines, re.MULTILINE)
     if m is None:
         return None
     txt = clean_comment(m.group('content'))

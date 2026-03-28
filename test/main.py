@@ -25,6 +25,8 @@ suite = unittest.TestSuite()
 for aclass in all_test_classes:
     for method_name in dir(aclass()):
         if method_name.startswith("test_") and re.search(args.pattern, method_name):
+            # if not method_name.startswith('test_'):
+            #     continue
             t = aclass(method_name)
             if method_name in skipped_tests:
                 setattr(t, 'setUp', lambda: t.skipTest("not implemented yet"))
