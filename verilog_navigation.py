@@ -4,7 +4,7 @@ import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, pprint, imp, time, threading
 from collections import Counter
 
-from . import verilog_module
+from .verilogutil import lookup
 from .verilogutil import verilogutil
 from .verilogutil import sublimeutil
 from .color_scheme_util import st_color_scheme_matcher
@@ -33,12 +33,11 @@ def reload():
     while cnt > 0:
         try:
             time.sleep(1)
-            from . import verilog_module
+            from .verilogutil import lookup
             from .verilogutil import verilogutil, verilog_beautifier, sublimeutil
             from .color_scheme_util import st_color_scheme_matcher, rgba
             imp.reload(verilogutil)
             imp.reload(sublimeutil)
-            imp.reload(verilog_module)
             imp.reload(st_color_scheme_matcher)
             # print('[SV] Navigation Loaded')
             cnt = 0
@@ -272,7 +271,7 @@ class VerilogTypePopup :
                                 if fti:
                                     s += self.add_info(fti)
                         elif ti['decl'] and 'interface' in ti['decl']:
-                            mi = verilog_module.lookup_module(self.view,ti['name'])
+                            mi = lookup.lookup_module(self.view,ti['name'])
                             if mi :
                                 # pprint.pprint(mi)
                                 if 'param' in mi:
@@ -351,7 +350,7 @@ class VerilogTypePopup :
             print ('[SV:Popup.get_type] var={0} scope="{1}"'.format(var_name,scope));
         # In case of field, retrieve parent type
         if '.' in var_name:
-            ti = verilog_module.type_info_on_hier(self.view,var_name,region=region)
+            ti = lookup.type_info_on_hier(self.view,var_name,region=region)
             if ti:
                 # print('[SV:get_type] Return {0}'.format(ti))
                 txt = ti['decl']
@@ -370,7 +369,7 @@ class VerilogTypePopup :
             mname = m.group(1)
             iname = m.group(2)
             # print('[get_type] Find module with name {} (instance {})'.format(mname,iname))
-            mi = verilog_module.lookup_module(self.view,mname)
+            mi = lookup.lookup_module(self.view,mname)
             if mi:
                 colored = True
                 found = False
@@ -400,12 +399,12 @@ class VerilogTypePopup :
             l = self.view.substr(sublime.Region(start_line,region.a)).strip()
             m = re.search(r'\b(?P<varname>[\w\[\]\.\(\)\+\-\*]+)\s*(\[.+\]\s*)?(<?=)',l)
             if m:
-                ti = verilog_module.type_info_on_hier(self.view,m.group('varname'),region=sublime.Region(0, start_line))
+                ti = lookup.type_info_on_hier(self.view,m.group('varname'),region=sublime.Region(0, start_line))
                 if ti:
                     if ti['type'] in ['struct','enum','logic','bit','reg','wire','input','output','inout']:
                         tti = ti
                     else :
-                        tti = verilog_module.lookup_type(self.view,ti['type'])
+                        tti = lookup.lookup_type(self.view,ti['type'])
                     if tti:
                         m = re.search(r'\{(.*)\}', tti['decl'])
                         if m is not None:
@@ -413,41 +412,41 @@ class VerilogTypePopup :
                             txt = fti['decl']
         # Get function I/O
         elif 'support.function.generic' in scope or 'entity.name.function' in scope:
-            ti = verilog_module.lookup_function(self.view,var_name)
+            ti = lookup.lookup_function(self.view,var_name)
             if debug: print ('[get_type] Function: {0}'.format(ti))
             if ti:
                 txt = ti['decl']
         # Get structure/interface
         elif 'storage.type.userdefined' in scope or 'storage.type.uvm' in scope or 'storage.type.interface' in scope or 'entity.other.inherited-class' in scope :
-            ti = verilog_module.lookup_type(self.view,var_name)
+            ti = lookup.lookup_type(self.view,var_name)
             if ti:
                 txt = ti['decl']
         # Get Module I/O
         elif 'storage.type.module' in scope:
-            ti = verilog_module.lookup_module(self.view,var_name)
+            ti = lookup.lookup_module(self.view,var_name)
             if ti:
                 txt = ti['type'] + ' ' + var_name
         # Get Package info
         elif 'support.type.scope' in scope:
-            ti = verilog_module.lookup_package(self.view,var_name)
+            ti = lookup.lookup_package(self.view,var_name)
             if ti:
                 txt = 'package {0}'.format(var_name)
             else :
-                ti = verilog_module.lookup_type(self.view,var_name)
+                ti = lookup.lookup_type(self.view,var_name)
                 if ti:
                     txt = ti['decl']
         # Get Macro text
         elif 'constant.other.define' in scope:
-            txt,_ = verilog_module.lookup_macro(self.view,var_name)
+            txt,_ = lookup.lookup_macro(self.view,var_name)
         # Variable inside a scope
         elif vs:
             if len(vs)==2:
-                ti = verilog_module.lookup_type(self.view,vs[0])
+                ti = lookup.lookup_type(self.view,vs[0])
                 if ti and ti['type'] in ['package','class']:
-                    ti = verilog_module.type_info_file(self.view,ti['fname'][0],vs[1])
+                    ti = lookup.type_info_file(self.view,ti['fname'][0],vs[1])
                     if ti:
                         if 'tag' in ti and ti['tag']=='enum value':
-                            tti = verilog_module.lookup_type(self.view,ti['type'])
+                            tti = lookup.lookup_type(self.view,ti['type'])
                             val = '{} = {}'.format(var_name,ti['value'])
                             ti = tti
                             ti['tag'] = 'enum value'
@@ -463,30 +462,30 @@ class VerilogTypePopup :
             ti = {'type':None}
             if 'meta.function.body' in scope:
                 r_func = sublimeutil.expand_to_scope(self.view,'meta.function',region)
-                ti = verilog_module.type_info(self.view,self.view.substr(r_func),var_name)
+                ti = lookup.type_info(self.view,self.view.substr(r_func),var_name)
             elif 'meta.task.body' in scope:
                 r_func = sublimeutil.expand_to_scope(self.view,'meta.task',region)
-                ti = verilog_module.type_info(self.view,self.view.substr(r_func),var_name)
+                ti = lookup.type_info(self.view,self.view.substr(r_func),var_name)
             if not ti['type'] :
                 # select whole file until end of current line
                 region = self.view.line(region)
                 lines = self.view.substr(sublime.Region(0, region.b))
                 # Extract type
-                ti = verilog_module.type_info(self.view,lines,var_name)
+                ti = lookup.type_info(self.view,lines,var_name)
             #if not found check for a definition in base class if we this is an extended class
             if not ti['type'] :
-                bti = verilog_module.type_info_from_base(self.view,region,var_name)
+                bti = lookup.type_info_from_base(self.view,region,var_name)
                 if bti:
                     ti = bti
             elif ti['tag'] == 'decl' :
                 is_local = True
             # Type not found in current file ? fallback to sublime index
             if ti and not ti['decl']:
-                ti = verilog_module.lookup_type(self.view,var_name)
+                ti = lookup.lookup_type(self.view,var_name)
             # Optional type information for user-defined type
             if ti and ti['decl'] and ti['type'] and ti['type'].split()[0] not in ['struct','enum','logic','bit','reg','wire','input','output','inout','int']:
                 t = ti['type']
-                tti = verilog_module.lookup_type(self.view,t)
+                tti = lookup.lookup_type(self.view,t)
                 if tti:
                     if 'tag' in ti and ti['tag']=='enum value':
                         val = '{} = {}'.format(var_name,ti['value'])
@@ -536,7 +535,7 @@ class VerilogTypePopup :
                 ws = w.split('::')
                 sh+='<span class="support">{0}</span><span class="operator">::</span>'.format(ws[0])
                 if addLink:
-                    ti = verilog_module.lookup_type(self.view,w)
+                    ti = lookup.lookup_type(self.view,w)
                     if debug: print('[SV:color_str] user-defined type: word={}::{} => ti={}'.format(ws[0],ws[1],ti));
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
@@ -547,7 +546,7 @@ class VerilogTypePopup :
                 ws = w.split('.')
                 if ws[0] and re.match(r'^[A-Za-z_]\w+$',ws[0]):
                     if addLink:
-                        ti = verilog_module.lookup_type(self.view,ws[0])
+                        ti = lookup.lookup_type(self.view,ws[0])
                     if ti and 'fname' in ti:
                         fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
                         sh+='<a href="LINK@{0}" class="storage">{1}</a>'.format(fname,ws[0])
@@ -565,7 +564,7 @@ class VerilogTypePopup :
             # Color type: typically just before the variable or one word earlier in case of array or parameter
             elif ((i == pos_var-1 or (i>0 and ss[i-1]=='typedef')) and m) or (i == pos_var-2 and ('[' in ss[pos_var-1] or '#' in ss[pos_var-1])) :
                 if addLink:
-                    ti = verilog_module.lookup_type(self.view,w)
+                    ti = lookup.lookup_type(self.view,w)
                 #if debug: print('[SV:color_str] word={0} => ti={1}'.format(w,ti));
                 if ti and 'fname' in ti:
                     fname = '{0}:{1}:{2}'.format(ti['fname'][0],ti['fname'][1],ti['fname'][2])
@@ -645,7 +644,7 @@ class VerilogGotoDeclarationCommand(sublime_plugin.TextCommand):
         #
         txt = self.view.substr(region).strip()
         if '.' in txt or '::' in txt :
-            ti = verilog_module.type_info_on_hier(self.view,txt,region=region)
+            ti = lookup.type_info_on_hier(self.view,txt,region=region)
             # print('[SV.GotoDeclaration] Info from hierarchy : {}'.format(ti))
             name = ti['name'] if 'name' in ti else txt.split('.')[-1]
             if ti and 'fname' in ti:
@@ -1392,7 +1391,7 @@ class VerilogShowNavbarCommand(sublime_plugin.TextCommand):
             if href_s[1] in navBar[wid]['childless'] :
                 self.change_phantom(wid,v,int(href_s[4]),'<a>-</a>')
                 return
-            ti = verilog_module.lookup_type(view,href_s[1])
+            ti = lookup.lookup_type(view,href_s[1])
             # print(ti)
             if not ti or 'type' not in ti:
                 navBar[wid]['childless'].append(href_s[1])
@@ -1688,13 +1687,13 @@ class VerilogFindInstanceCommand(sublime_plugin.TextCommand):
 
     def findInstance(self, mname):
         projname = sublime.active_window().project_file_name()
-        if projname not in verilog_module.list_module_files:
-            verilog_module.VerilogModuleInstCommand.get_list_file(self,projname,None)
+        if projname not in lookup.list_module_files:
+            lookup.get_list_file(self.view,projname,None)
         inst_dict = {}
         cnt = 0
         re_str = r'^(\s*'+mname+r'\s+(#\s*\(.*\)\s*)?(\w+).*$)'
         p = re.compile(re_str,re.MULTILINE)
-        for fn in verilog_module.list_module_files[projname]:
+        for fn in lookup.list_module_files[projname]:
             with open(fn, 'r', encoding='utf-8') as f:
                 txt = f.read()
                 if mname in txt:
@@ -1792,7 +1791,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
                 for imp in imps:
                     pkgs += re.findall(r'\b(\w+)::',imp)
                 for pkg in pkgs:
-                    pi = verilog_module.lookup_package(self.view,pkg)
+                    pi = lookup.lookup_package(self.view,pkg)
                     if pi:
                         decl += [x['name'] for x in pi['member'] if x['tag'] in ['decl']]
                         for x in pi['member'] :
