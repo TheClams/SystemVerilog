@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import sublime, sublime_plugin
 import re, string, os, sys, functools, mmap, pprint, imp, time, threading
 from collections import Counter
-from plistlib import readPlistFromBytes
 
 from . import verilog_module
 from .verilogutil import verilogutil
@@ -360,11 +359,11 @@ class VerilogTypePopup :
         elif 'support.function.port' in scope:
             region = sublimeutil.expand_to_scope(self.view,'meta.module.inst',region)
             s = self.view.substr(region)
-            m = re.match(r'^(?s)\s*(\w+)\s+(\w+)',s,re.MULTILINE)
+            m = re.match(r'(?s)^\s*(\w+)\s+(\w+)',s,re.MULTILINE)
             if not m:
-                m = re.match(r'^(?s)\s*(\w+)\s*#(?:.*?)\)\s*(\w+)',s,re.MULTILINE)
+                m = re.match(r'(?s)^\s*(\w+)\s*#(?:.*?)\)\s*(\w+)',s,re.MULTILINE)
                 if not m:
-                    m = re.match(r'^(?s)\s*(\w+)()',s,re.MULTILINE)
+                    m = re.match(r'(?s)^\s*(\w+)()',s,re.MULTILINE)
             if not m:
                 print('[SV:Popup.get_type] Unable to extract the module name in {}'.format(s))
                 return
@@ -1741,7 +1740,7 @@ class VerilogLintingCommand(sublime_plugin.TextCommand):
                 self.find_unused()
         # Print result
         if self.unused:
-            re_str = '(?<!\.)(' + '|'.join(r'\b{0}\b'.format(s) for s in self.unused) + ')'
+            re_str = '(?<!\\.)(' + '|'.join('\b{0}\b'.format(s) for s in self.unused) + ')'
             rl = self.view.find_all(re_str)
             self.view.sel().clear()
             self.view.sel().add_all(rl)
@@ -1838,11 +1837,11 @@ class VerilogDeleteSignalCommand(sublime_plugin.TextCommand):
         cnt = 0
         for s in sl:
             re_str = r'^\s*' + args['sid'][s]['decl']+r'\s*;'
-            re_str = re.sub(r'\s+','\s+',re_str)
-            re_str = re.sub(r'\[','\[',re_str)
-            re_str = re.sub(r'\]','\]',re_str)
-            re_str = re.sub(r'\(','\(',re_str)
-            re_str = re.sub(r'\)','\)',re_str)
+            re_str = re.sub(r'\s+','\\s+',re_str)
+            re_str = re.sub(r'\[','\\[',re_str)
+            re_str = re.sub(r'\]','\\]',re_str)
+            re_str = re.sub(r'\(','\\(',re_str)
+            re_str = re.sub(r'\)','\\)',re_str)
             r = self.view.find(re_str,0)
             if not r.empty():
                 self.view.erase(edit,r)

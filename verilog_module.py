@@ -36,8 +36,11 @@ def reload():
             time.sleep(2)
     global sv_settings
     sv_settings = sublime.load_settings('SystemVerilog.sublime-settings')
-    sv_settings.clear_on_change('reload')
-    sv_settings.add_on_change('reload',plugin_loaded)
+    if sv_settings == None :
+        print("[SV] Unable to locate settings (SystemVerilog.sublime-settings) ! ")
+    else :
+        sv_settings.clear_on_change('reload')
+        sv_settings.add_on_change('reload',plugin_loaded)
 
 
 ############################################################################

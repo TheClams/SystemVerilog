@@ -32,7 +32,7 @@ from .rgba import RGBA, clamp, round_int
 from . import x11colors
 from os import path
 from collections import namedtuple
-from plistlib import readPlistFromBytes
+import plistlib
 import decimal
 
 NEW_SCHEMES = int(sublime.version()) >= 3150
@@ -50,7 +50,7 @@ COLOR_PARTS = {
     "float": r"[+\-]?(?:(?:\d*\.\d+)|\d+)"
 }
 
-RGB_COLORS = r"""(?x)
+RGB_COLORS = r"""
     (?P<hexa>\#(?P<hexa_content>[\dA-Fa-f]{8}))\b |
     (?P<hex>\#(?P<hex_content>[\dA-Fa-f]{6}))\b |
     (?P<hexa_compressed>\#(?P<hexa_compressed_content>[\dA-Fa-f]{4}))\b |
@@ -61,23 +61,23 @@ RGB_COLORS = r"""(?x)
     )\s*\))
 """ % COLOR_PARTS
 
-HSL_COLORS = r"""(?x)
+HSL_COLORS = r"""
     \b(?P<hsl>hsl\(\s*(?P<hsl_content>%(float)s\s*,\s*%(percent)s\s*,\s*%(percent)s)\s*\)) |
     \b(?P<hsla>hsla\(\s*(?P<hsla_content>%(float)s\s*,\s*(?:%(percent)s\s*,\s*){2}(?:%(percent)s|%(float)s))\s*\))
 """ % COLOR_PARTS
 
-VARIABLES = r"""(?x)
+VARIABLES = r"""
     \b(?P<var>var\(\s*(?P<var_content>[-\w][-\w\d]*)\s*\))
 """
 
-COLOR_MOD = r"""(?x)
+COLOR_MOD = r"""
     \b(?P<color>color\((?P<color_content>.*)\))
 """
 
 COLOR_NAMES = r'\b(?P<x11colors>%s)\b(?!\()' % '|'.join([name for name in x11colors.name2hex_map.keys()])
 
 COLOR_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s|%s|%s)' % (
+    r'(?i)(?x)(?:%s|%s|%s|%s|%s)' % (
         RGB_COLORS,
         HSL_COLORS,
         VARIABLES,
@@ -87,7 +87,7 @@ COLOR_RE = re.compile(
 )
 
 COLOR_RGB_SPACE_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s)' % (
+    r'(?i)(?x)(?:%s|%s|%s)' % (
         RGB_COLORS,
         VARIABLES,
         COLOR_NAMES
@@ -354,7 +354,7 @@ class ColorSchemeMatcher(object):
                 with open(packages_path(self.color_scheme), 'rb') as f:
                     content = f.read()
             self.legacy = True
-            self.convert_format(readPlistFromBytes(XML_COMMENT_RE.sub(b'', content)))
+            self.convert_format(plistlib.loads(XML_COMMENT_RE.sub(b'', content)))
         self.overrides = []
         if NEW_SCHEMES:
             self.merge_overrides()

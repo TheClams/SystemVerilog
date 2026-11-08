@@ -4,13 +4,13 @@ import re
 from .verilogutil import sublimeutil
 
 SCOPES = [
-    ('Function' , 'meta.function.body'  , r'^(?s)^\s*.*?\b(\w+)\s*(\(|;)'),
-    ('Task'     , 'meta.task.body'      , r'^(?s)^\s*(\w+)'),
-    ('Instance' , 'meta.module.inst'    , r'^(?s)^\s*(\w+)\s+(?:#\(:?.*?\)\s*)?(\w+)\s*\('),
-    ('Package'  , 'meta.package.body'   , r'^(?s)^\s*package\s+(\w+)'),
-    ('Module'   , 'meta.module.body'    , r'^(?s)^\s*module\s+(\w+)'),
-    ('Interface', 'meta.interface.body' , r'^(?s)^\s*interface\s+(\w+)'),
-    ('Class'    , 'meta.class.body'     , r'^(?s)^\s*class\s+(\w+)'),
+    ('Function' , 'meta.function.body'  , r'(?s)^\s*.*?\b(\w+)\s*(\(|;)'),
+    ('Task'     , 'meta.task.body'      , r'(?s)^\s*(\w+)'),
+    ('Instance' , 'meta.module.inst'    , r'(?s)^\s*(\w+)\s+(?:#\(:?.*?\)\s*)?(\w+)\s*\('),
+    ('Package'  , 'meta.package.body'   , r'(?s)^\s*package\s+(\w+)'),
+    ('Module'   , 'meta.module.body'    , r'(?s)^\s*module\s+(\w+)'),
+    ('Interface', 'meta.interface.body' , r'(?s)^\s*interface\s+(\w+)'),
+    ('Class'    , 'meta.class.body'     , r'(?s)^\s*class\s+(\w+)'),
 ]
 
 class VerilogStatus(sublime_plugin.ViewEventListener):
