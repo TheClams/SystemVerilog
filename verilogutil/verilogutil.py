@@ -572,7 +572,7 @@ def parse_class_file_cache(fname, cname, fdate):
 
 def parse_class(flines,cname=r'\w+'):
     #print("Parsing for class " + cname + ' in \n' + flines)
-    re_str = r"(?s)(?P<type>class)\s+(?P<name>"+cname+r")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>\w+(?:\s*#\(.*?\))?))?\s*;(?P<content>.*?)(?P<ending>endclass)"
+    re_str = r"(?s)(?P<type>class)\s+(?P<name>"+cname+r")\s*(#\s*\((?P<param>.*?)\))?\s*(extends\s+(?P<extend>(?:\w+\s*::\s*)*\w+(?:\s*#\s*\(.*?\))?))?\s*(implements\s+(?P<implements>[^;]+?))?\s*;(?P<content>.*?)(?P<ending>endclass)"
     # print('[parse_class] regexp = {}'.format(re_str))
     re_class = re.compile(re_str, flags=re.MULTILINE)
     m = re_class.search(flines)
